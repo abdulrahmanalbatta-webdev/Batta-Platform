@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Enums;
+
+enum Role: string
+{
+    case Owner = 'owner';
+    case Admin = 'admin';
+    case Editor = 'editor';
+    case Support = 'support';
+    case Accountant = 'accountant';
+
+    /**
+     * The Arabic name shown in the dashboard.
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::Owner => 'مالك',
+            self::Admin => 'مدير',
+            self::Editor => 'محرر محتوى',
+            self::Support => 'دعم فني',
+            self::Accountant => 'محاسب',
+        };
+    }
+
+    public function canManageTeam(): bool
+    {
+        return in_array($this, [self::Owner, self::Admin], true);
+    }
+
+    /**
+     * Roles this role may give to other members: only the owner appoints admins, and nobody appoints an owner.
+     *
+     * @return list<self>
+     */
+    public function assignableRoles(): array
+    {
+        return match ($this) {
+            self::Owner => [self::Admin, self::Editor, self::Support, self::Accountant],
+            self::Admin => [self::Editor, self::Support, self::Accountant],
+            default => [],
+        };
+    }
+}

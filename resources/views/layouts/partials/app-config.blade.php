@@ -1,8 +1,10 @@
-{{-- Route URLs, the API base and the asset base for the dashboard scripts (js/app.js reads window.APP) --}}
+{{-- Route URLs, the API base, the asset base and the signed-in member for the dashboard scripts (js/app.js reads window.APP) --}}
+@use('App\Http\Resources\UserResource')
 @php
     $appConfig = [
         'assets' => asset('assets/dashboard'),
         'api' => url('dashboard/api/v1'),
+        'user' => auth()->check() ? (new UserResource(auth()->user()))->resolve(request()) : null,
         'routes' => [
             'dashboard' => route('dashboard'),
             'analytics' => route('analytics'),

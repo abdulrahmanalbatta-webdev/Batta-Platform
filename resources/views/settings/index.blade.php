@@ -86,7 +86,7 @@
         <div class="tab-panel" data-panel-group="settings" data-panel="team">
           <div class="toolbar">
             <b style="color:var(--fg)">أعضاء الفريق</b><span class="grow"></span>
-            <button type="button" class="btn btn-sm btn-primary" data-open="inviteModal"><i data-icon="plus" class="sm"></i>دعوة عضو</button>
+            <button type="button" class="btn btn-sm btn-primary" id="inviteBtn" data-open="inviteModal" hidden><i data-icon="plus" class="sm"></i>دعوة عضو</button>
           </div>
           <div class="list" id="team"></div>
         </div>
@@ -117,7 +117,7 @@
       <div class="modal-body form-grid">
         <div class="field"><label for="iName">الاسم *</label><input class="input" id="iName"></div>
         <div class="field"><label for="iEmail">البريد *</label><input class="input ltr" id="iEmail" type="email"></div>
-        <div class="field full"><label for="iRole">الصلاحية</label><select class="select" id="iRole"><option>محرر محتوى</option><option>دعم فني</option><option>محاسب</option><option>مدير</option></select></div>
+        <div class="field full"><label for="iRole">الصلاحية</label><select class="select" id="iRole"></select></div>
       </div>
       <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>إلغاء</button><button class="btn btn-primary" type="submit"><i data-icon="send" class="sm"></i>إرسال الدعوة</button></div>
     </form>

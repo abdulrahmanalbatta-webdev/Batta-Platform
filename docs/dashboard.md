@@ -1,15 +1,28 @@
 # لوحة تحكم Batta داخل Laravel
 
 الواجهات صارت Blade في `resources/views` ومقسمة حسب الكيان. التنسيقات والسكربتات والصور في `public/assets/dashboard`.
-البيانات ما زالت تجريبية في `public/assets/dashboard/js/data.js`، ولم تُربط بقاعدة البيانات بعد.
+الدخول والملف الشخصي والفريق والأجهزة المتصلة مربوطة بقاعدة البيانات عبر الـ API.
+باقي البيانات ما زالت تجريبية في `public/assets/dashboard/js/data.js`.
 
 ## التشغيل
 
+يحتاج PHP 8.4 أو أحدث.
+
 ```bash
+composer run setup          # أول مرة: المكتبات، .env، الجداول، رابط storage
+php artisan db:seed         # فريق تجريبي محلي
 php artisan serve
 ```
 
-ثم افتح `http://localhost:8000/dashboard`، أو `http://batta-dashboard.test/dashboard` عبر Herd.
+ثم افتح `http://localhost:8000/dashboard` وادخل بـ `admin@batta.dev` / `password` (من الـ seeder، للتطوير فقط).
+
+على الخادم الحقيقي لا تستخدم الـ seeder، أنشئ المالك بأمر يسألك عن كلمة المرور:
+
+```bash
+php artisan app:create-owner admin@batta.dev "عبدالرحمن البطة"
+```
+
+قائمة "الأجهزة المتصلة" تحتاج `SESSION_DRIVER=database` (الافتراضي في `.env.example`).
 
 ## الواجهات (resources/views)
 
@@ -68,7 +81,10 @@ resources/views/
 | `/dashboard/reviews` | `reviews.index` | `reviews.index` |
 | `/dashboard/settings` | `settings.index` | `settings.index` |
 | `/dashboard/profile` | `profile` | `profile.index` |
-| `/login` | `login` | `auth.login` |
+| `/login` | `login` | `auth.login` (للزوار فقط) |
+| `/reset-password/{token}` | `password.reset` | `auth.reset-password` (رابط الاستعادة ورابط الدعوة `?invite=1`) |
+
+كل روابط `/dashboard` تحتاج تسجيل دخول، والزائر يتحول إلى `/login` ثم يرجع للصفحة اللي كان بدها بعد الدخول.
 
 في صفحات التعديل يصل `{id}` إلى الواجهة، فيضعه الـ layout في `<body data-id="...">` ليقرأه سكربت الصفحة.
 
@@ -135,6 +151,34 @@ try {
   if (e.status === 422) e.errors.title?.[0];              // أخطاء الحقول، الصفحة تعرضها بنفسها
 }
 ```
+
+### النقاط الموجودة
+
+| الطريقة | المسار | الوظيفة |
+|---|---|---|
+| POST | `auth/login` | تسجيل الدخول (`email`, `password`, `remember`) — 5 محاولات خاطئة بالدقيقة |
+| POST | `auth/logout` | تسجيل الخروج |
+| POST | `auth/forgot-password` | إرسال رابط الاستعادة (نفس الرد سواء البريد موجود أو لا) |
+| POST | `auth/reset-password` | تعيين كلمة مرور من رابط الاستعادة أو الدعوة (`invite: true`) |
+| PUT | `profile` | تعديل بياناتي |
+| PUT | `profile/password` | تغيير كلمة المرور (وتسجيل الخروج من باقي الأجهزة) |
+| POST | `profile/avatar` | رفع الصورة الشخصية (JPG/PNG/WebP حتى 3MB) |
+| GET | `team` | أعضاء الفريق + الصلاحيات اللي بقدر أعطيها |
+| POST | `team` | دعوة عضو (بيوصله إيميل صالح 7 أيام) |
+| PATCH | `team/{id}` | تغيير صلاحية عضو |
+| DELETE | `team/{id}` | إزالة عضو وتسجيل خروجه من كل أجهزته |
+| GET | `sessions` | أجهزتي المتصلة |
+| DELETE | `sessions/{id}` | إنهاء جهاز آخر |
+
+### الأدوار
+
+| الدور | إدارة الفريق |
+|---|---|
+| مالك (`owner`) | يدعو ويعدّل ويزيل الكل ما عدا نفسه، وهو الوحيد اللي بيعيّن مدراء |
+| مدير (`admin`) | يدعو ويعدّل ويزيل محرري المحتوى والدعم الفني والمحاسبين فقط |
+| محرر محتوى، دعم فني، محاسب | يشوفوا الفريق فقط |
+
+القواعد في `app/Policies/UserPolicy.php` و `app/Enums/Role.php`. صلاحيات باقي الصفحات بتنضاف مع كل مرحلة.
 
 `App.api` بيبعت توكن CSRF من `<meta name="csrf-token">`، وبيعرض إشعار خطأ بالعربي لكل الحالات ما عدا 422، وبيحوّل على صفحة الدخول عند 401.
 لرفع الملفات أرسل `FormData` مع `post` (PHP لا يقرأ ملفات `PUT`).

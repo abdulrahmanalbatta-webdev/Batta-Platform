@@ -4,10 +4,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 
-Route::view('/login', 'auth.login')->name('login');
+Route::middleware('guest')->group(function () {
+    Route::view('/login', 'auth.login')->name('login');
+    // link from the reset-password and team-invitation emails (?invite=1)
+    Route::view('/reset-password/{token}', 'auth.reset-password')->name('password.reset');
+});
 
-// Dashboard screens (frontend only for now: data comes from public/dashboard/js/data.js)
-Route::prefix('dashboard')->group(function () {
+// Dashboard screens: the pages call the JSON API in routes/api.php; the rest still read sample data from public/assets/dashboard/js/data.js
+Route::middleware('auth')->prefix('dashboard')->group(function () {
     Route::view('/', 'dashboard.index')->name('dashboard');
     Route::view('/analytics', 'analytics.index')->name('analytics');
 

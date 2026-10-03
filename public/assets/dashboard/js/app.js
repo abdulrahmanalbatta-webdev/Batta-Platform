@@ -130,6 +130,9 @@
 
   /* ---------- navigation ---------- */
   const DB = window.DB || {};
+  // the signed-in member (from Laravel) replaces the sample admin of data.js
+  const USER = CFG.user || null;
+  if (USER) DB.admin = { ...DB.admin, name: USER.name, email: USER.email, role: USER.role_label, initial: USER.initial };
   const unreadMsgs = (DB.threads || []).filter((t) => t.unread).length;
   const newLeads = (DB.leads || []).filter((l) => l.stage === 'new').length;
   const pendingReviews = (DB.reviews || []).filter((r) => r.status === 'بانتظار المراجعة').length;
@@ -161,8 +164,10 @@
     ] },
   ];
 
-  const avatarHTML = (cls = '') =>
-    `<span class="avatar ${cls}"><img src="${asset(DB.admin.photo)}" alt="" onerror="this.remove()">${DB.admin.initial}</span>`;
+  const avatarHTML = (cls = '') => {
+    const photo = USER ? USER.avatar_url : asset(DB.admin.photo);
+    return `<span class="avatar ${cls}">${photo ? `<img src="${esc(photo)}" alt="" onerror="this.remove()">` : ''}${esc(DB.admin.initial)}</span>`;
+  };
 
   /* ---------- sidebar toggle: collapse to an icon rail on desktop, slide-in panel on mobile ---------- */
   const SB_KEY = 'batta-sb-collapsed';
@@ -343,7 +348,7 @@
               <a href="${url('settings')}">${icon('settings', 'sm')}الإعدادات</a>
               <a href="${url('messages')}">${icon('chat', 'sm')}الرسائل</a>
               <hr>
-              <a class="danger" href="${url('login')}">${icon('logout', 'sm')}تسجيل الخروج</a>
+              <button type="button" class="danger" data-logout>${icon('logout', 'sm')}تسجيل الخروج</button>
             </div>
           </div>
         </div>
@@ -371,7 +376,15 @@
       if (e.key === 'Enter' && gs.value.trim()) location.href = url('students', { q: gs.value.trim() });
     });
 
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
+      if (e.target.closest('[data-logout]')) {
+        try {
+          await api.post('auth/logout');
+        } catch {
+          return;
+        }
+        location.href = url('login');
+      }
       if (e.target.closest('[data-mark-read]')) {
         $$('.notif.unread').forEach((n) => n.classList.remove('unread'));
         $('.tb-btn .dot')?.remove();
@@ -803,6 +816,17 @@
     else if (res.status !== 422) toast(API_MESSAGES[res.status] || 'حدث خطأ غير متوقع، حاول مرة أخرى', 'error');
     throw err;
   }
+  // after a 422: mark the inputs named in the errors ({ email: '#iEmail' }), focus the first and toast its message.
+  // Returns false for any other failure (App.api already showed a toast for those).
+  function showFieldErrors(err, fields = {}) {
+    if (!(err instanceof ApiError) || err.status !== 422) return false;
+    const keys = Object.keys(err.errors);
+    keys.forEach((k) => fields[k] && $(fields[k])?.classList.add('invalid'));
+    const first = keys.find((k) => fields[k] && $(fields[k]));
+    if (first) $(fields[first]).focus();
+    toast(err.errors[first ?? keys[0]]?.[0] || err.message, 'error');
+    return true;
+  }
   const api = {
     get: (path, query) => request('GET', query ? `${path}?${new URLSearchParams(query)}` : path),
     post: (path, data) => request('POST', path, data),
@@ -812,7 +836,7 @@
   };
 
   /* ---------- boot ---------- */
-  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError };
+  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, user: USER };
 
   document.addEventListener('DOMContentLoaded', () => {
     buildLayout();
