@@ -1,21 +1,25 @@
 <?php
 
-namespace Tests\Feature\Api\Auth;
+namespace Tests\Feature\Auth;
 
-use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class AuthenticatedSessionControllerTest extends TestCase
+class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * Failed logins Fortify allows per email and IP each minute.
+     */
+    private const MAX_ATTEMPTS = 5;
 
     public function test_valid_credentials_sign_in_and_return_dashboard_redirect(): void
     {
         $member = User::factory()->create(['email' => 'sara@batta.dev']);
 
-        $response = $this->postJson(route('api.auth.login'), ['email' => 'sara@batta.dev', 'password' => 'password']);
+        $response = $this->postJson(route('login.store'), ['email' => 'sara@batta.dev', 'password' => 'password']);
 
         $response->assertOk()
             ->assertJsonPath('data.email', 'sara@batta.dev')
@@ -29,7 +33,7 @@ class AuthenticatedSessionControllerTest extends TestCase
         User::factory()->create(['email' => 'sara@batta.dev']);
         $this->get(route('courses.index'))->assertRedirect(route('login'));
 
-        $response = $this->postJson(route('api.auth.login'), ['email' => 'sara@batta.dev', 'password' => 'password']);
+        $response = $this->postJson(route('login.store'), ['email' => 'sara@batta.dev', 'password' => 'password']);
 
         $response->assertJsonPath('redirect', route('courses.index'));
     }
@@ -38,7 +42,7 @@ class AuthenticatedSessionControllerTest extends TestCase
     {
         User::factory()->create(['email' => 'sara@batta.dev']);
 
-        $response = $this->postJson(route('api.auth.login'), ['email' => 'sara@batta.dev', 'password' => 'wrong-password']);
+        $response = $this->postJson(route('login.store'), ['email' => 'sara@batta.dev', 'password' => 'wrong-password']);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['email' => 'البريد الإلكتروني أو كلمة المرور غير صحيحة.']);
@@ -47,7 +51,7 @@ class AuthenticatedSessionControllerTest extends TestCase
 
     public function test_empty_payload_returns_422_for_email_and_password(): void
     {
-        $response = $this->postJson(route('api.auth.login'), []);
+        $response = $this->postJson(route('login.store'), []);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors([
@@ -60,10 +64,10 @@ class AuthenticatedSessionControllerTest extends TestCase
     {
         User::factory()->create(['email' => 'sara@batta.dev']);
 
-        for ($attempt = 0; $attempt < LoginRequest::MAX_ATTEMPTS; $attempt++) {
-            $this->postJson(route('api.auth.login'), ['email' => 'sara@batta.dev', 'password' => 'wrong-password']);
+        for ($attempt = 0; $attempt < self::MAX_ATTEMPTS; $attempt++) {
+            $this->postJson(route('login.store'), ['email' => 'sara@batta.dev', 'password' => 'wrong-password']);
         }
-        $response = $this->postJson(route('api.auth.login'), ['email' => 'sara@batta.dev', 'password' => 'password']);
+        $response = $this->postJson(route('login.store'), ['email' => 'sara@batta.dev', 'password' => 'password']);
 
         $response->assertTooManyRequests()->assertJsonValidationErrors('email');
         $this->assertStringContainsString('محاولات دخول كثيرة', $response->json('errors.email.0'));
@@ -74,7 +78,7 @@ class AuthenticatedSessionControllerTest extends TestCase
     {
         User::factory()->create(['email' => 'sara@batta.dev']);
 
-        $response = $this->postJson(route('api.auth.login'), ['email' => 'sara@batta.dev', 'password' => 'password', 'remember' => true]);
+        $response = $this->postJson(route('login.store'), ['email' => 'sara@batta.dev', 'password' => 'password', 'remember' => true]);
 
         $response->assertOk();
         $this->assertNotEmpty(collect($response->headers->getCookies())->filter(fn ($cookie) => str_starts_with($cookie->getName(), 'remember_web_')));
@@ -84,7 +88,7 @@ class AuthenticatedSessionControllerTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        $response = $this->postJson(route('api.auth.logout'));
+        $response = $this->postJson(route('logout'));
 
         $response->assertNoContent();
         $this->assertGuest('web');

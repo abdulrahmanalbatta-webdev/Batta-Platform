@@ -30,6 +30,8 @@ class SessionController extends Controller
         $currentId = $request->session()->getId();
 
         $sessions = $this->sessionsOf($request)
+            // sessions idle past the lifetime are already expired, even before garbage collection deletes them
+            ->where('last_activity', '>=', now()->subMinutes(config('session.lifetime'))->timestamp)
             ->orderByDesc('last_activity')
             ->get()
             ->map(function (object $session) use ($currentId): array {

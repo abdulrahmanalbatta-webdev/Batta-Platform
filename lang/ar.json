@@ -7,5 +7,6 @@
     "You are receiving this email because we received a password reset request for your account.": "وصلتك هذه الرسالة لأننا تلقينا طلباً لاستعادة كلمة المرور لحسابك في لوحة التحكم.",
     "Reset Password": "تعيين كلمة مرور جديدة",
     "This password reset link will expire in :count minutes.": "ينتهي هذا الرابط بعد :count دقيقة.",
-    "If you did not request a password reset, no further action is required.": "إذا لم تطلب ذلك، تجاهل هذه الرسالة ولن يتغير شيء."
+    "If you did not request a password reset, no further action is required.": "إذا لم تطلب ذلك، تجاهل هذه الرسالة ولن يتغير شيء.",
+    "The provided password does not match your current password.": "كلمة المرور الحالية غير صحيحة."
 }

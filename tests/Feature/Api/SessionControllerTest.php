@@ -20,15 +20,18 @@ class SessionControllerTest extends TestCase
         config(['session.driver' => 'database']);
     }
 
-    private function storeSession(User $member, string $id, string $userAgent = self::IPHONE): void
+    /**
+     * A session last active 30 minutes ago: inside the session lifetime, so session garbage collection leaves it alone.
+     */
+    private function storeSession(User $member, string $id, int $idleMinutes = 30): void
     {
         DB::table('sessions')->insert([
             'id' => $id,
             'user_id' => $member->id,
             'ip_address' => '10.0.0.2',
-            'user_agent' => $userAgent,
+            'user_agent' => self::IPHONE,
             'payload' => '',
-            'last_activity' => now()->subHours(3)->timestamp,
+            'last_activity' => now()->subMinutes($idleMinutes)->timestamp,
         ]);
     }
 
@@ -38,7 +41,7 @@ class SessionControllerTest extends TestCase
      */
     private function signIn(User $member): void
     {
-        $response = $this->postJson(route('api.auth.login'), ['email' => $member->email, 'password' => 'password'])->assertOk();
+        $response = $this->postJson(route('login.store'), ['email' => $member->email, 'password' => 'password'])->assertOk();
 
         $cookie = config('session.cookie');
         $this->withCredentials()->withCookie($cookie, $response->getCookie($cookie)->getValue());
@@ -57,10 +60,20 @@ class SessionControllerTest extends TestCase
             ->assertJsonPath('data.0.device', 'iPhone · Safari')
             ->assertJsonPath('data.0.is_mobile', true)
             ->assertJsonPath('data.0.ip_address', '10.0.0.2')
-            ->assertJsonPath('data.0.last_active', 'منذ 3 ساعات')
+            ->assertJsonPath('data.0.last_active', 'منذ 30 دقيقة')
             ->assertJsonPath('data.0.is_current', false)
             ->assertJsonPath('meta.tracked', true)
             ->assertDontSee('secret-session-id');
+    }
+
+    public function test_hides_sessions_idle_past_the_session_lifetime(): void
+    {
+        $member = User::factory()->create();
+        $this->storeSession($member, 'expired-session', idleMinutes: config('session.lifetime') + 1);
+
+        $response = $this->actingAs($member)->getJson(route('api.sessions.index'));
+
+        $response->assertOk()->assertJsonCount(0, 'data');
     }
 
     public function test_marks_the_current_session(): void

@@ -154,21 +154,29 @@ try {
 
 ### النقاط الموجودة
 
-| الطريقة | المسار | الوظيفة |
-|---|---|---|
-| POST | `auth/login` | تسجيل الدخول (`email`, `password`, `remember`) — 5 محاولات خاطئة بالدقيقة |
-| POST | `auth/logout` | تسجيل الخروج |
-| POST | `auth/forgot-password` | إرسال رابط الاستعادة (نفس الرد سواء البريد موجود أو لا) |
-| POST | `auth/reset-password` | تعيين كلمة مرور من رابط الاستعادة أو الدعوة (`invite: true`) |
-| PUT | `profile` | تعديل بياناتي |
-| PUT | `profile/password` | تغيير كلمة المرور (وتسجيل الخروج من باقي الأجهزة) |
-| POST | `profile/avatar` | رفع الصورة الشخصية (JPG/PNG/WebP حتى 3MB) |
-| GET | `team` | أعضاء الفريق + الصلاحيات اللي بقدر أعطيها |
-| POST | `team` | دعوة عضو (بيوصله إيميل صالح 7 أيام) |
-| PATCH | `team/{id}` | تغيير صلاحية عضو |
-| DELETE | `team/{id}` | إزالة عضو وتسجيل خروجه من كل أجهزته |
-| GET | `sessions` | أجهزتي المتصلة |
-| DELETE | `sessions/{id}` | إنهاء جهاز آخر |
+المصادقة من **Laravel Fortify** (`config/fortify.php`) تحت نفس الأساس `/dashboard/api/v1/auth`.
+الصفحات نفسها (الدخول، كلمة مرور جديدة) هي واجهاتنا في `routes/web.php`، لأن `fortify.views` مطفأ.
+
+| الطريقة | المسار | المصدر | الوظيفة |
+|---|---|---|---|
+| POST | `auth/login` | Fortify | تسجيل الدخول (`email`, `password`, `remember`) — 5 محاولات فاشلة بالدقيقة |
+| POST | `auth/logout` | Fortify | تسجيل الخروج |
+| POST | `auth/forgot-password` | Fortify | إرسال رابط الاستعادة (نفس الرد سواء البريد موجود أو لا) |
+| POST | `auth/reset-password` | Fortify | تعيين كلمة مرور من رابط الاستعادة (صالح ساعة) |
+| PUT | `auth/user/password` | Fortify | تغيير كلمة المرور (`current_password`) وتسجيل الخروج من باقي الأجهزة |
+| POST | `invitations/accept` | `AcceptedInvitationController` | قبول دعوة وتعيين أول كلمة مرور (صالحة 7 أيام، جدول `invitation_tokens`) |
+| PUT | `profile` | `ProfileController` | تعديل بياناتي |
+| POST | `profile/avatar` | `AvatarController` | رفع الصورة الشخصية (JPG/PNG/WebP حتى 3MB) |
+| GET | `team` | `TeamMemberController` | أعضاء الفريق + الصلاحيات اللي بقدر أعطيها |
+| POST | `team` | `TeamMemberController` | دعوة عضو (بيوصله إيميل) |
+| PATCH | `team/{id}` | `TeamMemberController` | تغيير صلاحية عضو |
+| DELETE | `team/{id}` | `TeamMemberController` | إزالة عضو وتسجيل خروجه من كل أجهزته |
+| GET | `sessions` | `SessionController` | أجهزتي المتصلة |
+| DELETE | `sessions/{id}` | `SessionController` | إنهاء جهاز آخر |
+
+كل روابط Fortify عليها كمان حد 20 طلب بالدقيقة لكل IP (`throttle:fortify`).
+تخصيص Fortify في `app/Providers/FortifyServiceProvider.php` و `app/Actions/Fortify` و `app/Http/Responses`.
+التسجيل العام مطفأ (الأعضاء بيدخلوا بدعوة بس)، والتحقق بخطوتين جاهز للتفعيل من `features` في `config/fortify.php` لما نبني شاشاته.
 
 ### الأدوار
 

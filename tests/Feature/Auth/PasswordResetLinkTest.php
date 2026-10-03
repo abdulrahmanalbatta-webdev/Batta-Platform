@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Api\Auth;
+namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -8,7 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
-class PasswordResetLinkControllerTest extends TestCase
+class PasswordResetLinkTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -17,7 +17,7 @@ class PasswordResetLinkControllerTest extends TestCase
         Notification::fake();
         $member = User::factory()->create(['email' => 'sara@batta.dev']);
 
-        $response = $this->postJson(route('api.auth.password.email'), ['email' => 'sara@batta.dev']);
+        $response = $this->postJson(route('password.email'), ['email' => 'sara@batta.dev']);
 
         $response->assertOk()->assertJsonPath('message', __('passwords.sent'));
         Notification::assertSentTo($member, ResetPassword::class, function (ResetPassword $notification) use ($member) {
@@ -29,7 +29,7 @@ class PasswordResetLinkControllerTest extends TestCase
     {
         Notification::fake();
 
-        $response = $this->postJson(route('api.auth.password.email'), ['email' => 'nobody@batta.dev']);
+        $response = $this->postJson(route('password.email'), ['email' => 'nobody@batta.dev']);
 
         $response->assertOk()->assertJsonPath('message', __('passwords.sent'));
         Notification::assertNothingSent();
@@ -37,7 +37,7 @@ class PasswordResetLinkControllerTest extends TestCase
 
     public function test_invalid_email_returns_422(): void
     {
-        $response = $this->postJson(route('api.auth.password.email'), ['email' => 'not-an-email']);
+        $response = $this->postJson(route('password.email'), ['email' => 'not-an-email']);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['email' => 'حقل البريد الإلكتروني يجب أن يكون بريداً إلكترونياً صحيحاً.']);

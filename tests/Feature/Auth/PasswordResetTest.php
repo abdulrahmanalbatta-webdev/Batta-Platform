@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Api\Auth;
+namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
-class NewPasswordControllerTest extends TestCase
+class PasswordResetTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -19,7 +19,7 @@ class NewPasswordControllerTest extends TestCase
         $member = User::factory()->create();
         $token = Password::createToken($member);
 
-        $response = $this->postJson(route('api.auth.password.store'), [
+        $response = $this->postJson(route('password.update'), [
             'token' => $token,
             'email' => $member->email,
             'password' => self::NEW_PASSWORD,
@@ -34,7 +34,7 @@ class NewPasswordControllerTest extends TestCase
     {
         $member = User::factory()->create();
 
-        $response = $this->postJson(route('api.auth.password.store'), [
+        $response = $this->postJson(route('password.update'), [
             'token' => 'invalid-token',
             'email' => $member->email,
             'password' => self::NEW_PASSWORD,
@@ -49,7 +49,7 @@ class NewPasswordControllerTest extends TestCase
     {
         $member = User::factory()->create();
 
-        $response = $this->postJson(route('api.auth.password.store'), [
+        $response = $this->postJson(route('password.update'), [
             'token' => Password::createToken($member),
             'email' => $member->email,
             'password' => 'password',
@@ -60,54 +60,48 @@ class NewPasswordControllerTest extends TestCase
             ->assertJsonValidationErrors(['password' => 'حقل كلمة المرور يجب أن يحتوي على حرف كبير وحرف صغير على الأقل.']);
     }
 
-    public function test_invitation_link_sets_password_and_confirms_pending_member(): void
+    public function test_reset_confirms_a_pending_member(): void
     {
         $member = User::factory()->pending()->create();
-        $token = Password::broker('invitations')->createToken($member);
 
-        $response = $this->postJson(route('api.auth.password.store'), [
-            'token' => $token,
+        $this->postJson(route('password.update'), [
+            'token' => Password::createToken($member),
             'email' => $member->email,
             'password' => self::NEW_PASSWORD,
             'password_confirmation' => self::NEW_PASSWORD,
-            'invite' => true,
-        ]);
+        ])->assertOk();
 
-        $response->assertOk();
         $this->assertFalse($member->fresh()->isPending());
     }
 
-    public function test_invitation_link_still_works_after_reset_links_expire(): void
+    public function test_reset_link_expires_after_an_hour(): void
     {
-        $member = User::factory()->pending()->create();
-        $token = Password::broker('invitations')->createToken($member);
-        $this->travel(3)->days();
-        $payload = [
+        $member = User::factory()->create();
+        $token = Password::createToken($member);
+        $this->travel(61)->minutes();
+
+        $response = $this->postJson(route('password.update'), [
             'token' => $token,
             'email' => $member->email,
             'password' => self::NEW_PASSWORD,
             'password_confirmation' => self::NEW_PASSWORD,
-        ];
-
-        $this->postJson(route('api.auth.password.store'), $payload)->assertUnprocessable();
-        $this->postJson(route('api.auth.password.store'), [...$payload, 'invite' => true])->assertOk();
-    }
-
-    public function test_invitation_link_expires_after_seven_days(): void
-    {
-        $member = User::factory()->pending()->create();
-        $token = Password::broker('invitations')->createToken($member);
-        $this->travel(8)->days();
-
-        $response = $this->postJson(route('api.auth.password.store'), [
-            'token' => $token,
-            'email' => $member->email,
-            'password' => self::NEW_PASSWORD,
-            'password_confirmation' => self::NEW_PASSWORD,
-            'invite' => true,
         ]);
 
         $response->assertUnprocessable()->assertJsonValidationErrors(['email' => __('passwords.token')]);
-        $this->assertTrue($member->fresh()->isPending());
+    }
+
+    public function test_invitation_token_cannot_be_used_as_reset_link(): void
+    {
+        $member = User::factory()->pending()->create();
+        $token = Password::broker('invitations')->createToken($member);
+
+        $response = $this->postJson(route('password.update'), [
+            'token' => $token,
+            'email' => $member->email,
+            'password' => self::NEW_PASSWORD,
+            'password_confirmation' => self::NEW_PASSWORD,
+        ]);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors(['email' => __('passwords.token')]);
     }
 }

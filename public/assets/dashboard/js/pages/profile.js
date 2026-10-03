@@ -110,7 +110,7 @@ document.addEventListener('app:ready', () => {
     if (!o.value) return o.classList.add('invalid'), o.focus(), toast('أدخل كلمة المرور الحالية', 'error');
     if (n.value !== c.value) return c.classList.add('invalid'), c.focus(), toast('كلمتا المرور غير متطابقتين', 'error');
     try {
-      await api.put('profile/password', { current_password: o.value, password: n.value, password_confirmation: c.value });
+      await api.put('auth/user/password', { current_password: o.value, password: n.value, password_confirmation: c.value });
     } catch (err) {
       return showFieldErrors(err, { current_password: '#pwOld', password: '#pwNew' });
     }

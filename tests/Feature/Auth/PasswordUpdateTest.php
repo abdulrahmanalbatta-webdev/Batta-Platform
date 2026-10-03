@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Api;
+namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
-class PasswordControllerTest extends TestCase
+class PasswordUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -18,13 +18,13 @@ class PasswordControllerTest extends TestCase
         $member = User::factory()->create(['remember_token' => 'old-token']);
         DB::table('sessions')->insert(['id' => 'other-device', 'user_id' => $member->id, 'payload' => '', 'last_activity' => now()->timestamp]);
 
-        $response = $this->actingAs($member)->putJson(route('api.profile.password.update'), [
+        $response = $this->actingAs($member)->putJson(route('user-password.update'), [
             'current_password' => 'password',
             'password' => 'NewPassword1',
             'password_confirmation' => 'NewPassword1',
         ]);
 
-        $response->assertNoContent();
+        $response->assertOk();
         $member->refresh();
         $this->assertTrue(Hash::check('NewPassword1', $member->password));
         $this->assertNotSame('old-token', $member->remember_token);
@@ -35,19 +35,19 @@ class PasswordControllerTest extends TestCase
     {
         $member = User::factory()->create();
 
-        $response = $this->actingAs($member)->putJson(route('api.profile.password.update'), [
+        $response = $this->actingAs($member)->putJson(route('user-password.update'), [
             'current_password' => 'wrong-password',
             'password' => 'NewPassword1',
             'password_confirmation' => 'NewPassword1',
         ]);
 
-        $response->assertUnprocessable()->assertJsonValidationErrors(['current_password' => 'كلمة المرور غير صحيحة.']);
+        $response->assertUnprocessable()->assertJsonValidationErrors(['current_password' => 'كلمة المرور الحالية غير صحيحة.']);
         $this->assertTrue(Hash::check('password', $member->fresh()->password));
     }
 
     public function test_mismatched_confirmation_returns_422(): void
     {
-        $response = $this->actingAs(User::factory()->create())->putJson(route('api.profile.password.update'), [
+        $response = $this->actingAs(User::factory()->create())->putJson(route('user-password.update'), [
             'current_password' => 'password',
             'password' => 'NewPassword1',
             'password_confirmation' => 'OtherPassword1',

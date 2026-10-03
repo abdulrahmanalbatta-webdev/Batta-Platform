@@ -11,12 +11,12 @@ document.addEventListener('app:ready', () => {
     btn.disabled = true;
     btn.textContent = 'جارٍ الحفظ…';
     try {
-      await api.post('auth/reset-password', {
+      // invitations and reset links are separate tokens with separate endpoints
+      await api.post(form.dataset.invite === '1' ? 'invitations/accept' : 'auth/reset-password', {
         token: form.dataset.token,
         email: $('#email').value,
         password: $('#password').value,
         password_confirmation: $('#password_confirmation').value,
-        invite: form.dataset.invite === '1',
       });
       location.href = App.url('login', { reset: 1 });
     } catch (err) {
