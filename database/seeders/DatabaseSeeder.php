@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed a local team: sign in as admin@batta.dev / password.
+     * Seed a local team (sign in as admin@batta.dev / password) and sample content.
      */
     public function run(): void
     {
@@ -24,5 +24,7 @@ class DatabaseSeeder extends Seeder
 
         User::factory()->role(Role::Editor)->create(['name' => 'سارة النجار', 'email' => 'sara@batta.dev']);
         User::factory()->role(Role::Support)->create(['name' => 'يوسف عودة', 'email' => 'yousef@batta.dev']);
+
+        $this->call(ContentSeeder::class);
     }
 }

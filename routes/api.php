@@ -1,11 +1,20 @@
 <?php
 
 use App\Http\Controllers\Api\AcceptedInvitationController;
+use App\Http\Controllers\Api\ArticleController;
+use App\Http\Controllers\Api\ArticleCoverController;
 use App\Http\Controllers\Api\AvatarController;
+use App\Http\Controllers\Api\CourseController;
+use App\Http\Controllers\Api\CourseCopyController;
+use App\Http\Controllers\Api\CourseCoverController;
+use App\Http\Controllers\Api\CourseStatusController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\TeamMemberController;
+use App\Http\Controllers\Api\ToolCategoryController;
+use App\Http\Controllers\Api\ToolController;
+use App\Http\Controllers\Api\WorkshopController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -33,4 +42,25 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/sessions', [SessionController::class, 'index'])->name('sessions.index');
     Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->name('sessions.destroy');
+
+    // content: every member reads, members who may manage content write (Role::canManageContent)
+    Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
+    Route::get('/tool-categories', [ToolCategoryController::class, 'index'])->name('tool-categories.index');
+    Route::get('/workshops', [WorkshopController::class, 'index'])->name('workshops.index');
+    Route::apiResource('articles', ArticleController::class)->only(['index', 'show']);
+    Route::apiResource('courses', CourseController::class)->only(['index', 'show']);
+
+    Route::middleware('can:manage-content')->group(function () {
+        Route::apiResource('tools', ToolController::class)->only(['store', 'update', 'destroy']);
+        Route::post('/tools/{tool}/move', [ToolController::class, 'move'])->name('tools.move');
+        Route::apiResource('tool-categories', ToolCategoryController::class)->only(['store', 'update', 'destroy']);
+        Route::post('/tool-categories/{tool_category}/move', [ToolCategoryController::class, 'move'])->name('tool-categories.move');
+        Route::apiResource('workshops', WorkshopController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('articles', ArticleController::class)->only(['store', 'update', 'destroy']);
+        Route::post('/articles/{article}/cover', [ArticleCoverController::class, 'store'])->name('articles.cover.store');
+        Route::apiResource('courses', CourseController::class)->only(['store', 'update', 'destroy']);
+        Route::put('/courses/{course}/status', [CourseStatusController::class, 'update'])->name('courses.status.update');
+        Route::post('/courses/{course}/copies', [CourseCopyController::class, 'store'])->name('courses.copies.store');
+        Route::post('/courses/{course}/cover', [CourseCoverController::class, 'store'])->name('courses.cover.store');
+    });
 });

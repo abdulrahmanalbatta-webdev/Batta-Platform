@@ -319,7 +319,7 @@
           <kbd>/</kbd>
         </label>
         <div class="tb-actions">
-          <div class="dropdown hide-xs">
+          <div class="dropdown hide-xs" data-requires="manage_content">
             <button class="btn btn-primary btn-sm" data-dropdown>${icon('plus', 'sm')}<span>إنشاء</span></button>
             <div class="menu">
               <a href="${url('course-create')}">${icon('play', 'sm')}دورة جديدة</a>
@@ -827,6 +827,8 @@
     toast(err.errors[first ?? keys[0]]?.[0] || err.message, 'error');
     return true;
   }
+  // what the signed-in member may do, e.g. App.can('manage_content') — the server enforces it either way
+  const can = (permission) => !!USER?.permissions?.[permission];
   const api = {
     get: (path, query) => request('GET', query ? `${path}?${new URLSearchParams(query)}` : path),
     post: (path, data) => request('POST', path, data),
@@ -836,10 +838,12 @@
   };
 
   /* ---------- boot ---------- */
-  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, user: USER };
+  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, user: USER, can };
 
   document.addEventListener('DOMContentLoaded', () => {
     buildLayout();
+    // <button data-requires="manage_content"> disappears for members without that permission
+    if (USER) $$('[data-requires]').forEach((el) => (el.hidden = !can(el.dataset.requires)));
     hydrateIcons();
     initDropdowns();
     initTabs();

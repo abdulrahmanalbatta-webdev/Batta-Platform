@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Article;
+use App\Models\Course;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -10,21 +12,25 @@ Route::middleware('guest')->group(function () {
     Route::view('/reset-password/{token}', 'auth.reset-password')->name('password.reset');
 });
 
-// Dashboard screens: the pages call the JSON API in routes/api.php; the rest still read sample data from public/assets/dashboard/js/data.js
+// Dashboard screens: the pages call the JSON API in routes/api.php; pages not built yet still read sample data from public/assets/dashboard/js/data.js
 Route::middleware('auth')->prefix('dashboard')->group(function () {
     Route::view('/', 'dashboard.index')->name('dashboard');
     Route::view('/analytics', 'analytics.index')->name('analytics');
 
     // content
     Route::view('/courses', 'courses.index')->name('courses.index');
-    Route::view('/courses/create', 'courses.form')->name('courses.create');
-    Route::view('/courses/{id}/edit', 'courses.form')->name('courses.edit');
+    // create and edit pages are for members who may manage content; edit pages resolve the record first,
+    // so an unknown id is a 404 instead of an empty "new" form
+    Route::view('/courses/create', 'courses.form')->middleware('can:manage-content')->name('courses.create');
+    Route::get('/courses/{course}/edit', fn (Course $course) => view('courses.form', ['id' => $course->id]))
+        ->middleware('can:manage-content')->name('courses.edit');
 
     Route::view('/workshops', 'workshops.index')->name('workshops.index');
 
     Route::view('/articles', 'articles.index')->name('articles.index');
-    Route::view('/articles/create', 'articles.form')->name('articles.create');
-    Route::view('/articles/{id}/edit', 'articles.form')->name('articles.edit');
+    Route::view('/articles/create', 'articles.form')->middleware('can:manage-content')->name('articles.create');
+    Route::get('/articles/{article}/edit', fn (Article $article) => view('articles.form', ['id' => $article->id]))
+        ->middleware('can:manage-content')->name('articles.edit');
 
     Route::view('/tools', 'tools.index')->name('tools.index');
 

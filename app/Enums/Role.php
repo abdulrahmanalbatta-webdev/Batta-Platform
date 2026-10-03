@@ -30,6 +30,14 @@ enum Role: string
     }
 
     /**
+     * Courses, workshops, articles and tools: support and accountants only read them.
+     */
+    public function canManageContent(): bool
+    {
+        return in_array($this, [self::Owner, self::Admin, self::Editor], true);
+    }
+
+    /**
      * Roles this role may give to other members: only the owner appoints admins, and nobody appoints an owner.
      *
      * @return list<self>

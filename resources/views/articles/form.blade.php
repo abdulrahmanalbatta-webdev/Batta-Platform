@@ -45,9 +45,9 @@
         <div class="card">
           <div class="card-head"><h3>النشر</h3></div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
-            <div class="field"><label for="status">الحالة</label><select class="select" id="status"><option>مسودة</option><option>مجدول</option><option>منشور</option></select></div>
+            <div class="field"><label for="status">الحالة</label><select class="select" id="status"><option value="draft">مسودة</option><option value="scheduled">مجدول</option><option value="published">منشور</option></select></div>
             <div class="field" id="scheduleField" hidden><label for="publishAt">موعد النشر</label><input class="input" type="datetime-local" id="publishAt"></div>
-            <div class="field"><label for="category">التصنيف</label><select class="select" id="category"><option>دروس عملية</option><option>خلف الكواليس</option><option>العمل الحر</option><option>أدوات و AI</option></select></div>
+            <div class="field"><label for="category">التصنيف</label><select class="select" id="category"><option value="tutorials">دروس عملية</option><option value="behind-the-scenes">خلف الكواليس</option><option value="freelancing">العمل الحر</option><option value="tools-ai">أدوات و AI</option></select></div>
             <label class="switch"><input type="checkbox" id="featured"><span class="track"></span>مقال مميز في الصفحة الرئيسية</label>
             <label class="switch"><input type="checkbox" id="newsletter" checked><span class="track"></span>إرساله في نشرة البطّة</label>
           </div>

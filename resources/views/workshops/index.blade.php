@@ -11,7 +11,7 @@
         <p>الورش المباشرة والحضورية، والمقاعد المحجوزة.</p>
       </div>
       <div class="page-actions">
-        <button class="btn btn-primary" data-open="workshopModal"><i data-icon="plus" class="sm"></i>ورشة جديدة</button>
+        <button class="btn btn-primary" data-open="workshopModal" data-requires="manage_content"><i data-icon="plus" class="sm"></i>ورشة جديدة</button>
       </div>
     </div>
 
@@ -38,7 +38,7 @@
         <div class="field full"><label for="wTitle">عنوان الورشة *</label><input class="input" id="wTitle" required></div>
         <div class="field"><label for="wDate">التاريخ *</label><input class="input" id="wDate" type="date" required></div>
         <div class="field"><label for="wTime">الوقت</label><input class="input" id="wTime" type="time" value="19:00"></div>
-        <div class="field"><label for="wFormat">النوع</label><select class="select" id="wFormat"><option>أونلاين</option><option>حضوري</option></select></div>
+        <div class="field"><label for="wFormat">النوع</label><select class="select" id="wFormat"><option value="online">أونلاين</option><option value="in-person">حضوري</option></select></div>
         <div class="field"><label for="wPlace">المكان / المنصة</label><input class="input" id="wPlace" value="Zoom"></div>
         <div class="field"><label for="wPrice">السعر ($)</label><input class="input ltr" id="wPrice" type="number" min="0" value="0"></div>
         <div class="field"><label for="wSeats">عدد المقاعد *</label><input class="input ltr" id="wSeats" type="number" min="1" value="40" required></div>

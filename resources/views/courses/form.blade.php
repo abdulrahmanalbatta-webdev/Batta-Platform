@@ -83,7 +83,7 @@
           <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
             <div class="field">
               <label for="status">الحالة</label>
-              <select class="select" id="status"><option>مسودة</option><option>قيد المراجعة</option><option>منشورة</option></select>
+              <select class="select" id="status"><option value="draft">مسودة</option><option value="review">قيد المراجعة</option><option value="published">منشورة</option></select>
             </div>
             <div class="field">
               <label for="publishAt">موعد النشر</label>
@@ -111,11 +111,11 @@
           <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
             <div class="field">
               <label for="level">المستوى</label>
-              <select class="select" id="level"><option>مبتدئ</option><option>متوسط</option><option>متقدم</option></select>
+              <select class="select" id="level"><option value="beginner">مبتدئ</option><option value="intermediate">متوسط</option><option value="advanced">متقدم</option></select>
             </div>
             <div class="field">
               <label for="category">القسم</label>
-              <select class="select" id="category"><option>تطوير الواجهات</option><option>تطوير الخلفية</option><option>Full-stack</option><option>العمل الحر</option></select>
+              <select class="select" id="category"><option value="frontend">تطوير الواجهات</option><option value="backend">تطوير الخلفية</option><option value="full-stack">Full-stack</option><option value="freelancing">العمل الحر</option></select>
             </div>
             <div class="field">
               <label>الوسوم</label>

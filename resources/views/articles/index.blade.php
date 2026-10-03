@@ -11,7 +11,7 @@
         <p>كتابة المقالات وجدولتها ومتابعة قراءاتها.</p>
       </div>
       <div class="page-actions">
-        <a class="btn btn-primary" href="{{ route('articles.create') }}"><i data-icon="edit" class="sm"></i>مقال جديد</a>
+        <a class="btn btn-primary" href="{{ route('articles.create') }}" data-requires="manage_content"><i data-icon="edit" class="sm"></i>مقال جديد</a>
       </div>
     </div>
 

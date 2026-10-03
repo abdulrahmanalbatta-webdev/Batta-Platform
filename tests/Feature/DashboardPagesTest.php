@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Role;
+use App\Models\Article;
+use App\Models\Course;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -21,11 +24,9 @@ class DashboardPagesTest extends TestCase
             'analytics' => ['analytics', []],
             'courses' => ['courses.index', []],
             'course create' => ['courses.create', []],
-            'course edit' => ['courses.edit', ['id' => 'C-101']],
             'workshops' => ['workshops.index', []],
             'articles' => ['articles.index', []],
             'article create' => ['articles.create', []],
-            'article edit' => ['articles.edit', ['id' => 'A-1']],
             'tools' => ['tools.index', []],
             'orders' => ['orders.index', []],
             'coupons' => ['coupons.index', []],
@@ -65,11 +66,45 @@ class DashboardPagesTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    public function test_edit_page_passes_route_id_to_body(): void
+    public function test_course_edit_page_passes_course_id_to_body(): void
     {
-        $response = $this->actingAs(User::factory()->create())->get(route('courses.edit', ['id' => 'C-101']));
+        $course = Course::factory()->create();
 
-        $response->assertSee('data-id="C-101"', escape: false);
+        $response = $this->actingAs(User::factory()->create())->get(route('courses.edit', $course));
+
+        $response->assertOk()->assertSee('data-id="'.$course->id.'"', escape: false);
+    }
+
+    public function test_article_edit_page_passes_article_id_to_body(): void
+    {
+        $article = Article::factory()->create();
+
+        $response = $this->actingAs(User::factory()->create())->get(route('articles.edit', $article));
+
+        $response->assertOk()->assertSee('data-id="'.$article->id.'"', escape: false);
+    }
+
+    public function test_edit_page_for_unknown_course_returns_404(): void
+    {
+        $response = $this->actingAs(User::factory()->create())->get('/dashboard/courses/999/edit');
+
+        $response->assertNotFound();
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function contentFormPages(): array
+    {
+        return ['course create' => ['courses.create'], 'article create' => ['articles.create']];
+    }
+
+    #[DataProvider('contentFormPages')]
+    public function test_read_only_member_gets_403_on_content_forms(string $routeName): void
+    {
+        $response = $this->actingAs(User::factory()->role(Role::Support)->create())->get(route($routeName));
+
+        $response->assertForbidden();
     }
 
     public function test_login_page_renders_for_guest_without_member(): void

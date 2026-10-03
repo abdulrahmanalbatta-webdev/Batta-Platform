@@ -4,6 +4,7 @@ use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
@@ -38,3 +39,6 @@ Artisan::command('app:create-owner {email} {name}', function (string $email, str
 
     return 0;
 })->purpose('Create the first dashboard owner account');
+
+// needs the scheduler running: "php artisan schedule:work" locally, a cron entry for "schedule:run" in production
+Schedule::command('articles:publish-scheduled')->everyMinute()->withoutOverlapping();

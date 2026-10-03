@@ -12,7 +12,7 @@
       </div>
       <div class="page-actions">
         <button class="btn btn-ghost" id="exportCourses"><i data-icon="download" class="sm"></i>تصدير</button>
-        <a class="btn btn-primary" href="{{ route('courses.create') }}"><i data-icon="plus" class="sm"></i>دورة جديدة</a>
+        <a class="btn btn-primary" href="{{ route('courses.create') }}" data-requires="manage_content"><i data-icon="plus" class="sm"></i>دورة جديدة</a>
       </div>
     </div>
 

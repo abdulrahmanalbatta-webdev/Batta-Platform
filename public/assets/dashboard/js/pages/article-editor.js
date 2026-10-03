@@ -1,10 +1,23 @@
-document.addEventListener('app:ready', () => {
-  const { $, esc, toast, openDrawer } = App;
+document.addEventListener('app:ready', async () => {
+  const { $, esc, toast, openDrawer, api, showFieldErrors } = App;
   const body = $('#body');
-  const id = document.body.dataset.id; // set by the edit route: /dashboard/articles/{id}/edit
-  const existing = DB.articles.find((a) => a.id === id);
+  const id = Number(document.body.dataset.id) || null; // set by the edit route: /dashboard/articles/{id}/edit
+  let existing = null;
+  if (id) {
+    try {
+      existing = (await api.get(`articles/${id}`)).data;
+    } catch {
+      return;
+    }
+  }
   // one draft per article, so editing an old article never leaks into "new article"
   const DRAFT_KEY = `batta-article-draft:${existing ? existing.id : 'new'}`;
+  // <input type="datetime-local"> holds local wall time; the API takes and returns ISO instants
+  const toLocalInput = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  };
 
   /* ---------- markdown toolbar ---------- */
   const wrap = (before, after = before, placeholder = 'نص') => {
@@ -57,7 +70,8 @@ document.addEventListener('app:ready', () => {
     $('#pvDesc').textContent = d;
     $('#mtCount').textContent = $('#metaTitle').value.length;
     $('#mdCount').textContent = $('#metaDesc').value.length;
-    const slug = $('#title').value.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+    // the slug is fixed once the article exists, so its links keep working
+    const slug = existing ? existing.slug : $('#title').value.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
     $('#pvSlug').textContent = slug || 'new-article';
   }
 
@@ -85,21 +99,27 @@ document.addEventListener('app:ready', () => {
     }),
   );
 
-  $('#status').addEventListener('change', (e) => ($('#scheduleField').hidden = e.target.value !== 'مجدول'));
+  $('#status').addEventListener('change', (e) => ($('#scheduleField').hidden = e.target.value !== 'scheduled'));
   $('#publishAt').addEventListener('input', (e) => e.target.classList.remove('invalid'));
 
   /* ---------- cover preview ---------- */
   const cover = $('#cover');
+  let coverFile = null; // uploaded right after the article is saved
+  const showCover = (src) => {
+    cover.classList.add('has-image');
+    cover.querySelectorAll('img').forEach((i) => {
+      if (i.src.startsWith('blob:')) URL.revokeObjectURL(i.src);
+      i.remove();
+    });
+    cover.insertAdjacentHTML('afterbegin', `<img src="${esc(src)}" alt="">`);
+  };
   $('input', cover).addEventListener('change', (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    if (!f.type.startsWith('image/')) return toast('اختر ملف صورة', 'error');
-    cover.classList.add('has-image');
-    cover.querySelectorAll('img').forEach((i) => {
-      URL.revokeObjectURL(i.src);
-      i.remove();
-    });
-    cover.insertAdjacentHTML('afterbegin', `<img src="${URL.createObjectURL(f)}" alt="">`);
+    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return toast('اختر صورة بصيغة JPG أو PNG أو WebP', 'error');
+    if (f.size > 5 * 1024 * 1024) return toast('الحد الأقصى للصورة 5MB', 'error');
+    coverFile = f;
+    showCover(URL.createObjectURL(f));
   });
 
   /* ---------- load: existing article (?id), then any unsaved draft on top ---------- */
@@ -109,17 +129,26 @@ document.addEventListener('app:ready', () => {
   } catch {
     /* storage unavailable */
   }
-  if (existing) {
-    document.title = `تعديل: ${existing.title} | لوحة التحكم`;
+  function fillFrom(a) {
+    document.title = `تعديل: ${a.title} | لوحة التحكم`;
     $('#pageTitle').textContent = 'تعديل المقال';
-    $('#crumb').textContent = existing.title;
-    $('#title').value = existing.title;
-    $('#category').value = existing.category;
-    $('#status').value = existing.status;
-    $('#scheduleField').hidden = existing.status !== 'مجدول';
-    $('#excerpt').value = 'ملخص المقال كما يظهر في بطاقة المقال على الموقع.';
-    body.value = `## المقدمة\n\nاكتب مقدمة المقال هنا.\n\n## الخطوة الأولى\n\n- نقطة أولى\n- نقطة ثانية\n\n\`\`\`js\nconsole.log('مرحباً')\n\`\`\`\n\n> نصيحة: اختصر وركّز على مشكلة واحدة.`;
-    $('#saveState').textContent = `آخر تعديل: ${App.date(existing.date)}`;
+    $('#crumb').textContent = a.title;
+    $('#title').value = a.title;
+    $('#category').value = a.category;
+    $('#status').value = a.status;
+    $('#scheduleField').hidden = a.status !== 'scheduled';
+    $('#publishAt').value = toLocalInput(a.publish_at);
+    $('#excerpt').value = a.excerpt || '';
+    body.value = a.body || '';
+    $('#metaTitle').value = a.meta_title || '';
+    $('#metaDesc').value = a.meta_description || '';
+    $('#featured').checked = a.is_featured;
+    $('#newsletter').checked = a.send_newsletter;
+    if (a.cover_url) showCover(a.cover_url);
+    $('#saveState').textContent = `آخر تعديل: ${new Date(a.updated_at).toLocaleString('ar-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' })}`;
+  }
+  if (existing) {
+    fillFrom(existing);
   }
   if (draft) {
     fields.forEach((f) => ($('#' + f).value = draft[f] || ''));
@@ -171,29 +200,56 @@ document.addEventListener('app:ready', () => {
   );
 
   /* ---------- save / publish ---------- */
+  // "publish" puts the article live now; "save" keeps the status chosen in the side panel
+  let saving = false;
   document.querySelectorAll('[data-save]').forEach((btn) =>
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      if (saving) return;
       const publish = btn.dataset.save === 'publish';
       if (!$('#title').value.trim()) {
         $('#title').classList.add('invalid');
         $('#title').focus();
         return toast('اكتب عنوان المقال أولاً', 'error');
       }
-      if (publish && wordCount() < 30) return toast('المقال قصير جداً للنشر (أقل من 30 كلمة)', 'error');
-      if ($('#status').value === 'مجدول') {
-        const at = $('#publishAt').value;
-        if (!at || new Date(at) <= new Date()) {
-          $('#publishAt').classList.add('invalid');
-          $('#publishAt').focus();
-          return toast('اختر موعد نشر في المستقبل للمقال المجدول', 'error');
+      const status = publish ? 'published' : $('#status').value;
+      const at = $('#publishAt').value;
+      const data = {
+        title: $('#title').value.trim(),
+        excerpt: $('#excerpt').value.trim() || null,
+        body: body.value,
+        category: $('#category').value,
+        status,
+        publish_at: status === 'scheduled' && at ? new Date(at).toISOString() : null,
+        is_featured: $('#featured').checked,
+        send_newsletter: $('#newsletter').checked,
+        meta_title: $('#metaTitle').value.trim() || null,
+        meta_description: $('#metaDesc').value.trim() || null,
+      };
+      const fields = { title: '#title', excerpt: '#excerpt', body: '#body', publish_at: '#publishAt', meta_title: '#metaTitle', meta_description: '#metaDesc' };
+      saving = true;
+      $('#saveState').textContent = 'جارٍ الحفظ…';
+      try {
+        existing = (await (existing ? api.put(`articles/${existing.id}`, data) : api.post('articles', data))).data;
+        if (coverFile) {
+          const form = new FormData();
+          form.append('cover', coverFile);
+          existing = (await api.post(`articles/${existing.id}/cover`, form)).data;
+          coverFile = null;
         }
+      } catch (err) {
+        $('#saveState').textContent = 'لم يُحفظ';
+        if (err.status === 422 && err.errors.publish_at) $('#scheduleField').hidden = false;
+        return showFieldErrors(err, fields);
+      } finally {
+        saving = false;
       }
       clearTimeout(saveTimer);
       try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-      // TODO: أرسل المقال إلى الخادم (POST /api/articles)
-      $('#saveState').textContent = publish ? 'تم النشر' : `حُفظت المسودة · ${new Date().toLocaleTimeString('ar-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}`;
-      toast(publish ? 'تم نشر المقال' : 'تم حفظ المسودة');
+      fillFrom(existing);
+      toast(status === 'published' ? 'تم نشر المقال' : status === 'scheduled' ? 'تمت جدولة المقال' : 'تم حفظ المسودة');
       if (publish) setTimeout(() => (location.href = App.url('articles')), 900);
+      // a new article now has an address of its own: keep editing it there
+      else if (!id) history.replaceState(null, '', App.url('article-edit', { id: existing.id }));
     }),
   );
 });
