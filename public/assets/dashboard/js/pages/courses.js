@@ -141,8 +141,8 @@ document.addEventListener('app:ready', async () => {
       if (await confirmDialog({ title: 'حذف الدورة؟', text: `سيتم حذف "${c.title}" نهائياً مع دروسها.`, ok: 'حذف' })) {
         try {
           await api.delete(`courses/${c.id}`);
-        } catch {
-          return;
+        } catch (err) {
+          return showFieldErrors(err);
         }
         rows = rows.filter((r) => r !== c);
         refresh();
@@ -181,7 +181,10 @@ document.addEventListener('app:ready', async () => {
     rows = rows.filter((r) => !deleted.includes(r));
     refresh();
     const count = deleted.filter(Boolean).length;
-    if (count) toast(count === 1 ? 'تم حذف الدورة' : `تم حذف ${count} دورات`);
+    const kept = n - count;
+    // courses with students refuse deletion (they can be hidden instead)
+    if (kept) toast(`${count ? `تم حذف ${count} وبقيت ${kept}` : 'لم تُحذف الدورات المحددة'}: الدورات التي فيها طلاب لا تُحذف، أخفِها بدلاً من ذلك.`, 'info');
+    else if (count) toast(count === 1 ? 'تم حذف الدورة' : `تم حذف ${count} دورات`);
   });
 
   $('#exportCourses').addEventListener('click', () =>

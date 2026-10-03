@@ -5,10 +5,13 @@ namespace Tests\Feature\Api;
 use App\Enums\CourseCategory;
 use App\Enums\CourseLevel;
 use App\Enums\CourseStatus;
+use App\Enums\OrderStatus;
 use App\Enums\Role;
 use App\Models\Course;
 use App\Models\CourseModule;
+use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -217,5 +220,28 @@ class CourseControllerTest extends TestCase
         $course = Course::factory()->create();
 
         $this->actingAs(User::factory()->role(Role::Accountant)->create())->putJson(route('api.courses.status.update', $course), ['status' => 'draft'])->assertForbidden();
+    }
+
+    public function test_list_counts_students_and_paid_revenue(): void
+    {
+        $course = Course::factory()->published()->create();
+        Enrollment::factory()->count(2)->for($course)->create();
+        Order::factory()->create(['item_id' => $course->id, 'total' => 79]);
+        Order::factory()->create(['item_id' => $course->id, 'total' => 50, 'status' => OrderStatus::Refunded]);
+
+        $response = $this->actingAs($this->editor())->getJson(route('api.courses.index'));
+
+        $response->assertJsonPath('data.0.students', 2)->assertJsonPath('data.0.revenue', 79);
+    }
+
+    public function test_course_with_students_cannot_be_deleted(): void
+    {
+        $course = Course::factory()->create();
+        Enrollment::factory()->for($course)->create();
+
+        $response = $this->actingAs($this->editor())->deleteJson(route('api.courses.destroy', $course));
+
+        $response->assertUnprocessable()->assertJsonValidationErrors('course');
+        $this->assertModelExists($course);
     }
 }

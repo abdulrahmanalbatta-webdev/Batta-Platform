@@ -49,9 +49,9 @@ class CourseResource extends JsonResource
             'old_price' => $this->old_price === null ? null : (float) $this->old_price,
             'lessons' => (int) ($this->lessons_count ?? $this->lessons()->count()),
             'hours' => round((int) ($this->lessons_sum_duration_seconds ?? $this->lessons()->sum('duration_seconds')) / 3600, 1),
-            // enrolments, sales and reviews arrive in phases 3–4
-            'students' => 0,
-            'revenue' => 0,
+            'students' => (int) ($this->enrollments_count ?? $this->enrollments()->count()),
+            'revenue' => (float) ($this->sales_sum_total ?? $this->sales()->sum('total')),
+            // reviews arrive in phase 4
             'rating' => 0,
             'cover_url' => $this->cover_url,
             'updated' => $this->updated_at->toDateString(),

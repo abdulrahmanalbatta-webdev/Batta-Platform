@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\CourseCategory;
 use App\Enums\CourseLevel;
 use App\Enums\CourseStatus;
+use App\Enums\OrderItemType;
+use App\Enums\OrderStatus;
 use Database\Factories\CourseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -60,6 +62,26 @@ class Course extends Model
     public function lessons(): HasManyThrough
     {
         return $this->hasManyThrough(Lesson::class, CourseModule::class);
+    }
+
+    /**
+     * @return HasMany<Enrollment, $this>
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    /**
+     * Paid orders for this course (refunded and failed ones excluded).
+     *
+     * @return HasMany<Order, $this>
+     */
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Order::class, 'item_id')
+            ->where('item_type', OrderItemType::Course)
+            ->where('status', OrderStatus::Completed);
     }
 
     /**

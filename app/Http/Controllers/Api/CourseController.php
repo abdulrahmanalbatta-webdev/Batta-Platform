@@ -12,6 +12,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class CourseController extends Controller
 {
@@ -21,7 +22,12 @@ class CourseController extends Controller
     public function index(): AnonymousResourceCollection
     {
         return CourseResource::collection(
-            Course::query()->withCount('lessons')->withSum('lessons', 'duration_seconds')->latest()->latest('id')->get(),
+            Course::query()
+                ->withCount(['lessons', 'enrollments'])
+                ->withSum('lessons', 'duration_seconds')
+                ->withSum('sales', 'total')
+                ->latest()->latest('id')
+                ->get(),
         );
     }
 
@@ -67,8 +73,17 @@ class CourseController extends Controller
         return (new CourseResource($course->refresh()))->withContent();
     }
 
+    /**
+     * Delete a course that nobody is enrolled in (a course with students can be hidden instead).
+     *
+     * @throws ValidationException
+     */
     public function destroy(Course $course): Response
     {
+        if ($course->enrollments()->exists()) {
+            throw ValidationException::withMessages(['course' => "لا يمكن حذف \"{$course->title}\" لأن فيها طلاباً مسجلين. أخفِها بدلاً من ذلك."]);
+        }
+
         if ($course->cover_path) {
             Storage::disk('public')->delete($course->cover_path);
         }

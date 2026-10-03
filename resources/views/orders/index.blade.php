@@ -23,7 +23,7 @@
         <div class="seg" id="statusSeg"></div>
         <span class="grow"></span>
         <select class="select" id="typeFilter" style="width:auto;height:40px" aria-label="النوع"><option value="">كل الأنواع</option><option>دورة</option><option>ورشة</option><option>اشتراك</option></select>
-        <select class="select" id="methodFilter" style="width:auto;height:40px" aria-label="طريقة الدفع"><option value="">كل طرق الدفع</option><option>بطاقة</option><option>PayPal</option><option>Apple Pay</option></select>
+        <select class="select" id="methodFilter" style="width:auto;height:40px" aria-label="طريقة الدفع"><option value="">كل طرق الدفع</option><option>بطاقة</option><option>PayPal</option><option>Apple Pay</option><option>تحويل بنكي</option></select>
       </div>
       <div id="table"></div>
     </div>

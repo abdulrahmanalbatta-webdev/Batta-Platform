@@ -11,7 +11,7 @@
         <p>أنشئ أكواد خصم للحملات والطلاب.</p>
       </div>
       <div class="page-actions">
-        <button class="btn btn-primary" data-open="couponModal"><i data-icon="plus" class="sm"></i>كوبون جديد</button>
+        <button class="btn btn-primary" data-open="couponModal" data-requires="manage_sales"><i data-icon="plus" class="sm"></i>كوبون جديد</button>
       </div>
     </div>
 
@@ -36,7 +36,7 @@
         <div class="field"><label for="cvalue">القيمة *</label><input class="input ltr" id="cvalue" type="number" min="1" value="20" required></div>
         <div class="field"><label for="climit">حد الاستخدام</label><input class="input ltr" id="climit" type="number" min="0" value="100"><span class="hint">0 = بلا حد</span></div>
         <div class="field"><label for="cexp">ينتهي في *</label><input class="input" id="cexp" type="date" required></div>
-        <div class="field full"><label for="cscope">ينطبق على</label><select class="select" id="cscope"><option>كل الدورات</option><option>الورش</option><option>Next.js من الصفر إلى الإنتاج</option><option>أساسيات الويب الحديث</option><option>برنامج المطوّر المستقل</option></select></div>
+        <div class="field full"><label for="cscope">ينطبق على</label><select class="select" id="cscope"><option value="all-courses">كل الدورات</option><option value="workshops">الورش</option></select></div>
       </div>
       <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>إلغاء</button><button class="btn btn-primary" type="submit">إنشاء الكوبون</button></div>
     </form>

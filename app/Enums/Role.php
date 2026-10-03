@@ -38,6 +38,22 @@ enum Role: string
     }
 
     /**
+     * Suspending, reactivating and emailing students.
+     */
+    public function canManageStudents(): bool
+    {
+        return in_array($this, [self::Owner, self::Admin, self::Support], true);
+    }
+
+    /**
+     * Confirming payments, refunds and coupons.
+     */
+    public function canManageSales(): bool
+    {
+        return in_array($this, [self::Owner, self::Admin, self::Accountant], true);
+    }
+
+    /**
      * Roles this role may give to other members: only the owner appoints admins, and nobody appoints an owner.
      *
      * @return list<self>

@@ -12,7 +12,7 @@
       </div>
       <div class="page-actions">
         <button class="btn btn-ghost" id="export"><i data-icon="download" class="sm"></i>تصدير CSV</button>
-        <button class="btn btn-primary" data-open="mailModal" id="mailAll"><i data-icon="mail" class="sm"></i>رسالة جماعية</button>
+        <button class="btn btn-primary" data-open="mailModal" id="mailAll" data-requires="manage_students"><i data-icon="mail" class="sm"></i>رسالة جماعية</button>
       </div>
     </div>
 

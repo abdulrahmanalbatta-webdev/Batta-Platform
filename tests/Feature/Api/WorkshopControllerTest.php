@@ -2,11 +2,16 @@
 
 namespace Tests\Feature\Api;
 
+use App\Enums\OrderItemType;
 use App\Enums\Role;
 use App\Enums\WorkshopFormat;
+use App\Models\Order;
+use App\Models\Student;
 use App\Models\User;
 use App\Models\Workshop;
+use App\Notifications\WorkshopReminder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class WorkshopControllerTest extends TestCase
@@ -119,5 +124,68 @@ class WorkshopControllerTest extends TestCase
         $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->putJson(route('api.workshops.update', $workshop), $this->payload());
 
         $response->assertForbidden();
+    }
+
+    private function registerFor(Workshop $workshop, ?Student $student = null): Order
+    {
+        return Order::factory()->create([
+            'item_type' => OrderItemType::Workshop,
+            'item_id' => $workshop->id,
+            'student_id' => $student ?? Student::factory(),
+        ]);
+    }
+
+    public function test_paid_orders_take_seats_and_fill_the_workshop(): void
+    {
+        $workshop = Workshop::factory()->create(['seats' => 2]);
+        $this->registerFor($workshop);
+        $this->registerFor($workshop);
+
+        $response = $this->actingAs($this->editor())->getJson(route('api.workshops.index'));
+
+        $response->assertJsonPath('data.0.taken', 2)->assertJsonPath('data.0.state', 'full');
+    }
+
+    public function test_lists_registered_students(): void
+    {
+        $workshop = Workshop::factory()->create();
+        $order = $this->registerFor($workshop, Student::factory()->create(['name' => 'نور']));
+
+        $response = $this->actingAs(User::factory()->role(Role::Support)->create())->getJson(route('api.workshops.registrations.index', $workshop));
+
+        $response->assertOk()->assertJsonPath('data.0.name', 'نور')->assertJsonPath('data.0.order_number', $order->number());
+    }
+
+    public function test_reminder_emails_every_registered_student(): void
+    {
+        Notification::fake();
+        $workshop = Workshop::factory()->create();
+        $order = $this->registerFor($workshop);
+
+        $response = $this->actingAs($this->editor())->postJson(route('api.workshops.reminders.store', $workshop));
+
+        $response->assertOk()->assertJsonPath('sent', 1);
+        Notification::assertSentTo($order->student, WorkshopReminder::class);
+    }
+
+    public function test_seats_cannot_drop_below_bookings(): void
+    {
+        $workshop = Workshop::factory()->create(['seats' => 5]);
+        $this->registerFor($workshop);
+        $this->registerFor($workshop);
+
+        $response = $this->actingAs($this->editor())->putJson(route('api.workshops.update', $workshop), $this->payload(['seats' => 1]));
+
+        $response->assertUnprocessable()->assertJsonValidationErrors('seats');
+    }
+
+    public function test_workshop_with_registrations_cannot_be_deleted(): void
+    {
+        $workshop = Workshop::factory()->create();
+        $this->registerFor($workshop);
+
+        $this->actingAs($this->editor())->deleteJson(route('api.workshops.destroy', $workshop))->assertUnprocessable();
+
+        $this->assertModelExists($workshop);
     }
 }

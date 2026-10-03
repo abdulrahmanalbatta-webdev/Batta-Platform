@@ -1,5 +1,6 @@
 document.addEventListener('app:ready', async () => {
-  const { $, $$, esc, num, money, date, badge, icon, toast, confirmDialog, openModal, closeModal, openDrawer, api, showFieldErrors } = App;
+  const { $, $$, esc, num, money, date, badge, icon, toast, confirmDialog, openModal, closeModal, openDrawer, person, api, showFieldErrors } = App;
+  const COLORS = ['#0066ff', '#0b0d12', '#334155', '#5c9dff', '#0e9f6e', '#7c3aed', '#c27803'];
   const canEdit = App.can('manage_content');
   let list = [];
   let filter = 'upcoming';
@@ -146,8 +147,8 @@ document.addEventListener('app:ready', async () => {
       if (await confirmDialog({ title: 'حذف الورشة؟', text: w.taken ? `سيتم إلغاء "${w.title}" وإشعار ${w.taken} مسجلاً.` : `سيتم حذف "${w.title}" نهائياً.`, ok: 'حذف' })) {
         try {
           await api.delete(`workshops/${w.id}`);
-        } catch {
-          return;
+        } catch (err) {
+          return showFieldErrors(err);
         }
         list = list.filter((x) => x !== w);
         stats();
@@ -155,15 +156,29 @@ document.addEventListener('app:ready', async () => {
         toast('تم حذف الورشة');
       }
     } else if (act === 'remind') {
-      // registrations (and the reminder emails) arrive with orders in phase 3
-      toast(w.taken ? `تم إرسال تذكير إلى ${w.taken} مسجلاً` : 'لا يوجد مسجلون في هذه الورشة بعد', 'info');
+      if (!w.taken) return toast('لا يوجد مسجلون في هذه الورشة بعد', 'info');
+      try {
+        const res = await api.post(`workshops/${w.id}/reminders`);
+        toast(`تم إرسال تذكير إلى ${res.sent} مسجلاً`);
+      } catch (err) {
+        showFieldErrors(err);
+      }
     } else if (act === 'copy') {
       App.copy(`https://batta.dev/workshops/${w.code.toLowerCase()}`, 'تم نسخ رابط التسجيل');
     } else if (act === 'attendees') {
-      // the list of registrations arrives with orders in phase 3
+      let people;
+      try {
+        people = (await api.get(`workshops/${w.id}/registrations`)).data;
+      } catch {
+        return;
+      }
       openDrawer(`
-        <div class="drawer-head"><div><h3 style="font-size:17px">المسجلون</h3><small class="muted">${esc(w.title)}</small></div><button class="btn-icon" data-close-drawer aria-label="إغلاق"><i data-icon="close"></i></button></div>
-        <div class="drawer-body"><div class="empty"><div class="e-ico">${icon('users')}</div><b>لا يوجد مسجلون بعد</b>سيظهر هنا كل من يحجز مقعداً في الورشة.</div></div>`);
+        <div class="drawer-head"><div><h3 style="font-size:17px">المسجلون (${people.length})</h3><small class="muted">${esc(w.title)}</small></div><button class="btn-icon" data-close-drawer aria-label="إغلاق"><i data-icon="close"></i></button></div>
+        <div class="drawer-body" style="gap:0;padding:0">${
+          people.length
+            ? people.map((p) => `<div class="list-item">${person({ name: p.name, initial: p.initial, color: COLORS[p.student_id % COLORS.length], sub: p.email })}<span class="grow"></span><span class="badge success">${esc(p.order_number)}</span></div>`).join('')
+            : `<div class="empty"><div class="e-ico">${icon('users')}</div><b>لا يوجد مسجلون بعد</b>سيظهر هنا كل من يحجز مقعداً في الورشة.</div>`
+        }</div>`);
     }
   });
 
