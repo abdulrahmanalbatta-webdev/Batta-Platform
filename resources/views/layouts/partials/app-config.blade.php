@@ -1,7 +1,8 @@
-{{-- Route URLs and the asset base for the dashboard scripts (js/app.js reads window.APP) --}}
+{{-- Route URLs, the API base and the asset base for the dashboard scripts (js/app.js reads window.APP) --}}
 @php
     $appConfig = [
         'assets' => asset('assets/dashboard'),
+        'api' => url('dashboard/api/v1'),
         'routes' => [
             'dashboard' => route('dashboard'),
             'analytics' => route('analytics'),
@@ -25,6 +26,7 @@
         ],
     ];
 @endphp
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <script>
     window.APP = @json($appConfig);
 </script>

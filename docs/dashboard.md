@@ -112,6 +112,33 @@ App.asset('img/logo.png')                // /assets/dashboard/img/logo.png
 - `setNavCount(page, n)`: تحديث العدّاد بجانب رابط الصفحة في القائمة الجانبية.
 - الأيقونات: `<i data-icon="name"></i>` تتحول تلقائياً إلى SVG.
 
+## الـ API (routes/api.php)
+
+كل نقاط الـ API تحت `/dashboard/api/v1` وأسماؤها تبدأ بـ `api.` (مثلاً `api.status`).
+تُحمَّل بوسيط `web` من `bootstrap/app.php`، يعني بتستخدم نفس جلسة اللوحة.
+الأخطاء ترجع JSON دائماً، حتى لو الطلب ما فيه `Accept: application/json`.
+
+شكل الردود هو شكل Laravel الافتراضي:
+
+- عنصر واحد: `{ "data": { ... } }` (Eloquent API Resources).
+- قائمة مع ترقيم: `{ "data": [...], "links": {...}, "meta": {...} }`.
+- خطأ تحقق (422): `{ "message": "...", "errors": { "field": ["..."] } }`.
+
+من JavaScript استخدم `App.api` بدل `fetch` مباشرة:
+
+```js
+const { data } = await App.api.get('status');            // GET /dashboard/api/v1/status
+await App.api.get('courses', { page: 2 });                // ?page=2
+try {
+  await App.api.post('courses', { title });
+} catch (e) {
+  if (e.status === 422) e.errors.title?.[0];              // أخطاء الحقول، الصفحة تعرضها بنفسها
+}
+```
+
+`App.api` بيبعت توكن CSRF من `<meta name="csrf-token">`، وبيعرض إشعار خطأ بالعربي لكل الحالات ما عدا 422، وبيحوّل على صفحة الدخول عند 401.
+لرفع الملفات أرسل `FormData` مع `post` (PHP لا يقرأ ملفات `PUT`).
+
 ## إضافة صفحة جديدة
 
 1. أنشئ `resources/views/<entity>/index.blade.php` يرث `layouts.dashboard` (انسخ أقرب واجهة).

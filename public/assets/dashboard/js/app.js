@@ -759,8 +759,60 @@
     else fallback();
   }
 
+  /* ---------- API: JSON calls to /dashboard/api/v1 with the session cookie + CSRF token ---------- */
+  // const { data } = await App.api.get('courses', { page: 2 });
+  // await App.api.post('courses', { title }) → on 422 it rejects with err.errors = { title: ['…'] } for the page to show;
+  // other failures show a toast and reject too. Files: send FormData with POST (PHP does not parse multipart PUT).
+  class ApiError extends Error {
+    constructor(status, body) {
+      super(body?.message || `HTTP ${status}`);
+      this.name = 'ApiError';
+      this.status = status;
+      this.errors = body?.errors || {};
+    }
+  }
+  const API_MESSAGES = {
+    403: 'ليست لديك صلاحية لهذا الإجراء',
+    404: 'العنصر المطلوب غير موجود',
+    419: 'انتهت صلاحية الجلسة، حدّث الصفحة وحاول مرة أخرى',
+    429: 'طلبات كثيرة خلال وقت قصير، انتظر قليلاً ثم حاول',
+  };
+  async function request(method, path, data) {
+    const headers = {
+      Accept: 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]')?.content || '',
+    };
+    let body;
+    if (data instanceof FormData) body = data;
+    else if (data !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(data);
+    }
+    let res;
+    try {
+      res = await fetch(`${CFG.api}/${String(path).replace(/^\//, '')}`, { method, headers, body, credentials: 'same-origin' });
+    } catch {
+      toast('تعذّر الاتصال بالخادم، تحقق من اتصالك بالإنترنت', 'error');
+      throw new ApiError(0);
+    }
+    const json = res.status === 204 ? null : await res.json().catch(() => null);
+    if (res.ok) return json;
+    const err = new ApiError(res.status, json);
+    if (res.status === 401) location.href = url('login');
+    else if (res.status !== 422) toast(API_MESSAGES[res.status] || 'حدث خطأ غير متوقع، حاول مرة أخرى', 'error');
+    throw err;
+  }
+  const api = {
+    get: (path, query) => request('GET', query ? `${path}?${new URLSearchParams(query)}` : path),
+    post: (path, data) => request('POST', path, data),
+    put: (path, data) => request('PUT', path, data),
+    patch: (path, data) => request('PATCH', path, data),
+    delete: (path) => request('DELETE', path),
+  };
+
   /* ---------- boot ---------- */
-  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset };
+  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError };
 
   document.addEventListener('DOMContentLoaded', () => {
     buildLayout();
