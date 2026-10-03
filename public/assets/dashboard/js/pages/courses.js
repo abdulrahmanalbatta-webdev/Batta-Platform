@@ -1,0 +1,162 @@
+document.addEventListener('app:ready', () => {
+  const { $, esc, num, money, badge, icon, toast, confirmDialog, DataTable, hydrateIcons } = App;
+  let rows = [...DB.courses];
+
+  function stats() {
+    const pub = rows.filter((c) => c.status === 'منشورة');
+    const students = rows.reduce((a, c) => a + c.students, 0);
+    const revenue = rows.reduce((a, c) => a + c.revenue, 0);
+    const rated = pub.filter((c) => c.rating);
+    const avg = rated.reduce((a, c) => a + c.rating, 0) / (rated.length || 1);
+    $('#courseStats').innerHTML = [
+      ['play', 'c-blue', 'الدورات المنشورة', `${pub.length} / ${rows.length}`],
+      ['users', 'c-violet', 'إجمالي المسجلين', num(students)],
+      ['dollar', 'c-green', 'إجمالي الإيرادات', money(revenue)],
+      ['star', 'c-amber', 'متوسط التقييم', avg.toFixed(1)],
+    ]
+      .map(([ic, tone, label, value]) => `<div class="card kpi"><div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-ico ${tone}">${icon(ic)}</span></div><div class="kpi-value">${value}</div></div>`)
+      .join('');
+  }
+
+  const columns = [
+    { key: 'title', label: 'الدورة', sortable: true, render: (c) => `<div class="person"><span class="thumb">${esc(c.glyph)}</span><div><b>${esc(c.title)}</b><small>${c.id} · ${c.lessons} درساً · ${c.hours} ساعة</small></div></div>` },
+    { key: 'level', label: 'المستوى', sortable: true, render: (c) => `<span class="badge">${c.level}</span>` },
+    { key: 'price', label: 'السعر', sortable: true, className: 'num', render: (c) => (c.price ? money(c.price) : '<span class="badge success">مجانية</span>') },
+    { key: 'students', label: 'الطلاب', sortable: true, className: 'num', render: (c) => num(c.students) },
+    { key: 'rating', label: 'التقييم', sortable: true, render: (c) => (c.rating ? `<span class="stars">${icon('star', 'sm fill')}</span> <b class="num">${c.rating}</b>` : '<span class="muted">—</span>') },
+    { key: 'revenue', label: 'الإيرادات', sortable: true, className: 'num', render: (c) => money(c.revenue) },
+    { key: 'status', label: 'الحالة', sortable: true, render: (c) => badge(c.status) },
+    {
+      key: '',
+      label: '',
+      className: 'actions',
+      render: (c) => `
+        <a class="btn-icon" href="${App.url('course-edit', { id: c.id })}" title="تعديل" aria-label="تعديل">${icon('edit', 'sm')}</a>
+        <div class="dropdown" style="display:inline-block">
+          <button class="btn-icon" data-dropdown aria-label="المزيد">${icon('more', 'sm')}</button>
+          <div class="menu">
+            <a href="${App.url('course-edit', { id: c.id })}">${icon('edit', 'sm')}تعديل</a>
+            <button data-act="duplicate" data-id="${c.id}">${icon('copy', 'sm')}نسخ الدورة</button>
+            <button data-act="toggle" data-id="${c.id}">${icon(c.status === 'منشورة' ? 'eye-off' : 'eye', 'sm')}${c.status === 'منشورة' ? 'إخفاء' : 'نشر'}</button>
+            <hr>
+            <button class="danger" data-act="delete" data-id="${c.id}">${icon('trash', 'sm')}حذف</button>
+          </div>
+        </div>`,
+    },
+  ];
+
+  const table = new DataTable({
+    mount: $('#tableView'),
+    columns,
+    rows,
+    pageSize: 8,
+    searchKeys: ['title', 'id'],
+    selectable: true,
+    onSelect: (ids) => {
+      $('#bulkbar').hidden = !ids.length;
+      $('#bulkCount').textContent = `تم تحديد ${ids.length}`;
+    },
+  });
+
+  // status segment with counts
+  const statuses = ['الكل', 'منشورة', 'مسودة', 'قيد المراجعة'];
+  const renderSeg = () =>
+    ($('#statusSeg').innerHTML = statuses
+      .map((s, i) => `<button data-s="${s}" class="${(table.status || 'الكل') === s ? 'on' : ''}">${s}<span class="n">${s === 'الكل' ? rows.length : rows.filter((r) => r.status === s).length}</span></button>`)
+      .join(''));
+  renderSeg();
+  $('#statusSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    table.status = b.dataset.s;
+    table.setFilter('status', b.dataset.s === 'الكل' ? null : (r) => r.status === b.dataset.s);
+    renderSeg();
+    renderGrid();
+  });
+  $('#q').addEventListener('input', App.debounce((e) => { table.setQuery(e.target.value); renderGrid(); }, 150));
+  $('#levelFilter').addEventListener('change', (e) => {
+    table.setFilter('level', e.target.value ? (r) => r.level === e.target.value : null);
+    renderGrid();
+  });
+
+  // grid view uses the same filters as the table
+  function renderGrid() {
+    $('#gridView').innerHTML =
+      table.view
+        .map(
+          (c) => `
+        <div class="card c-card">
+          <div class="c-cover">${esc(c.glyph)}${badge(c.status)}</div>
+          <div class="c-body">
+            <h4>${esc(c.title)}</h4>
+            <div class="c-meta"><span>${icon('play', 'sm')}${c.lessons} درساً</span><span>${icon('users', 'sm')}${num(c.students)}</span><span>${icon('star', 'sm')}${c.rating || '—'}</span></div>
+          </div>
+          <div class="c-foot"><b class="num">${c.price ? money(c.price) : 'مجانية'}</b><a class="btn btn-ghost btn-sm" href="${App.url('course-edit', { id: c.id })}">${icon('edit', 'sm')}تعديل</a></div>
+        </div>`,
+        )
+        .join('') || '<div class="empty" style="grid-column:1/-1">لا توجد دورات مطابقة</div>';
+  }
+  renderGrid();
+  $('#viewSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    $('#viewSeg').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+    const grid = b.dataset.view === 'grid';
+    $('#tableView').hidden = grid;
+    $('#gridView').hidden = !grid;
+    if (grid) renderGrid();
+  });
+
+  function refresh() {
+    table.setRows(rows);
+    stats();
+    renderSeg();
+    renderGrid();
+  }
+
+  // row actions
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const c = rows.find((r) => r.id === btn.dataset.id);
+    if (!c) return;
+    if (btn.dataset.act === 'delete') {
+      if (await confirmDialog({ title: 'حذف الدورة؟', text: `سيتم حذف "${c.title}" نهائياً مع دروسها.`, ok: 'حذف' })) {
+        rows = rows.filter((r) => r !== c);
+        refresh();
+        toast('تم حذف الدورة');
+      }
+    } else if (btn.dataset.act === 'duplicate') {
+      const next = Math.max(...rows.map((r) => Number(r.id.slice(2)) || 0)) + 1;
+      rows.unshift({ ...c, id: `C-${next}`, title: `${c.title} (نسخة)`, status: 'مسودة', students: 0, revenue: 0, rating: 0 });
+      refresh();
+      toast('تم نسخ الدورة كمسودة');
+    } else if (btn.dataset.act === 'toggle') {
+      c.status = c.status === 'منشورة' ? 'مسودة' : 'منشورة';
+      refresh();
+      toast(c.status === 'منشورة' ? 'تم نشر الدورة' : 'تم إخفاء الدورة');
+    }
+  });
+
+  // bulk actions
+  const selectedRows = () => rows.filter((r) => table.selected.has(r.id));
+  $('#bulkPublish').addEventListener('click', () => { selectedRows().forEach((r) => (r.status = 'منشورة')); refresh(); toast('تم نشر الدورات المحددة'); });
+  $('#bulkDraft').addEventListener('click', () => { selectedRows().forEach((r) => (r.status = 'مسودة')); refresh(); toast('تم تحويل الدورات إلى مسودة'); });
+  $('#bulkDelete').addEventListener('click', async () => {
+    const n = table.selected.size;
+    if (await confirmDialog({ title: n === 1 ? 'حذف الدورة المحددة؟' : `حذف ${n} دورات؟`, text: 'لا يمكن التراجع عن هذه العملية.', ok: 'حذف' })) {
+      rows = rows.filter((r) => !table.selected.has(r.id));
+      refresh();
+      toast(n === 1 ? 'تم حذف الدورة' : `تم حذف ${n} دورات`);
+    }
+  });
+
+  $('#exportCourses').addEventListener('click', () =>
+    App.downloadCSV('courses.csv', [
+      { key: 'id', label: 'الرقم' }, { key: 'title', label: 'الدورة' }, { key: 'level', label: 'المستوى' },
+      { key: 'price', label: 'السعر' }, { key: 'students', label: 'الطلاب' }, { key: 'revenue', label: 'الإيرادات' }, { key: 'status', label: 'الحالة' },
+    ], table.view),
+  );
+
+  stats();
+});
