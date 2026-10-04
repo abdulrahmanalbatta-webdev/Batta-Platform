@@ -93,6 +93,20 @@ class ActivityControllerTest extends TestCase
             ->assertJsonPath('data.1.description', 'أضاف الدورة «Git»');
     }
 
+    public function test_mine_keeps_only_the_signed_in_members_entries(): void
+    {
+        $other = User::factory()->create();
+        $me = User::factory()->create();
+        $this->actingAs($other);
+        Course::factory()->create(['title' => 'Git']);
+        $this->actingAs($me);
+        Course::factory()->create(['title' => 'Next.js']);
+
+        $response = $this->getJson(route('api.activity.index', ['mine' => 1]));
+
+        $response->assertJsonCount(1, 'data')->assertJsonPath('data.0.description', 'أضاف الدورة «Next.js»');
+    }
+
     public function test_pages_with_a_cursor_and_a_limit(): void
     {
         $this->actingAs(User::factory()->create());

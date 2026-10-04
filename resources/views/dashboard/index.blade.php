@@ -15,27 +15,27 @@
       </div>
     </div>
 
-    <!-- KPIs -->
-    <div class="grid g4">
+    <!-- KPIs: this month so far against the same days of last month -->
+    <div class="grid g4" id="kpis">
       <div class="card kpi dark">
-        <div class="kpi-top"><span class="kpi-label">إيرادات سبتمبر</span><span class="kpi-ico c-glass"><i data-icon="dollar"></i></span></div>
-        <div class="kpi-value">12,000$</div>
-        <div class="kpi-bottom"><span class="kpi-note"><span class="trend up">+14%</span> عن أغسطس</span><span data-spark="revenue" data-color="#5c9dff"></span></div>
+        <div class="kpi-top"><span class="kpi-label" id="kpiRevenueLabel">إيرادات الشهر</span><span class="kpi-ico c-glass"><i data-icon="dollar"></i></span></div>
+        <div class="kpi-value" id="kpiRevenue">—</div>
+        <div class="kpi-bottom"><span class="kpi-note" id="kpiRevenueNote"></span><span data-spark="revenue" data-color="#5c9dff"></span></div>
       </div>
       <div class="card kpi">
         <div class="kpi-top"><span class="kpi-label">طلاب جدد</span><span class="kpi-ico c-blue"><i data-icon="users"></i></span></div>
-        <div class="kpi-value">128</div>
-        <div class="kpi-bottom"><span class="kpi-note"><span class="trend up">+18%</span> هذا الشهر</span><span data-spark="students" data-color="#0066ff"></span></div>
+        <div class="kpi-value" id="kpiStudents">—</div>
+        <div class="kpi-bottom"><span class="kpi-note" id="kpiStudentsNote"></span><span data-spark="students" data-color="#0066ff"></span></div>
       </div>
       <div class="card kpi">
         <div class="kpi-top"><span class="kpi-label">الطلبات المكتملة</span><span class="kpi-ico c-green"><i data-icon="cart"></i></span></div>
-        <div class="kpi-value">342</div>
-        <div class="kpi-bottom"><span class="kpi-note"><span class="trend up">+9%</span> هذا الشهر</span><span data-spark="orders" data-color="#0e9f6e"></span></div>
+        <div class="kpi-value" id="kpiOrders">—</div>
+        <div class="kpi-bottom"><span class="kpi-note" id="kpiOrdersNote"></span><span data-spark="orders" data-color="#0e9f6e"></span></div>
       </div>
       <div class="card kpi">
         <div class="kpi-top"><span class="kpi-label">معدل إكمال الدورات</span><span class="kpi-ico c-amber"><i data-icon="award"></i></span></div>
-        <div class="kpi-value">64%</div>
-        <div class="kpi-bottom"><span class="kpi-note"><span class="trend down">-2%</span> هذا الشهر</span><span data-spark="completion" data-color="#c27803"></span></div>
+        <div class="kpi-value" id="kpiCompletion">—</div>
+        <div class="kpi-bottom"><span class="kpi-note" id="kpiLessonsNote"></span><span data-spark="lessons" data-color="#c27803"></span></div>
       </div>
     </div>
 
@@ -65,10 +65,10 @@
       </div>
 
       <div class="card">
-        <div class="card-head"><div><h3>مصادر الزيارات</h3><p>آخر 30 يوماً</p></div><a class="link" href="{{ route('analytics') }}">التفاصيل</a></div>
+        <div class="card-head"><div><h3>مصادر الإيرادات</h3><p>آخر 30 يوماً</p></div><a class="link" href="{{ route('analytics') }}">التفاصيل</a></div>
         <div class="card-body">
-          <div id="sourcesChart"></div>
-          <div class="list" id="sourcesList" style="margin-top:16px"></div>
+          <div id="mixChart"></div>
+          <div class="list" id="mixList" style="margin-top:16px"></div>
         </div>
       </div>
     </div>

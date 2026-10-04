@@ -182,13 +182,8 @@ document.addEventListener('app:ready', () => {
     toast(`تم إرسال الدعوة إلى ${member.email}`);
   });
 
-  $('#exportData').addEventListener('click', () => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' }));
-    a.download = 'batta-backup.json';
-    a.click();
-    toast('تم تجهيز نسخة البيانات');
-  });
+  // a full export becomes a background job with the general settings (phase 7)
+  $('#exportData').addEventListener('click', () => toast('تصدير نسخة كاملة من البيانات قادم مع إعدادات المنصة', 'info'));
   $('#wipe').addEventListener('click', async () => {
     if (await confirmDialog({ title: 'حذف كل البيانات؟', text: 'هذا إجراء نهائي ولا يمكن التراجع عنه. (في هذه النسخة التجريبية لن يُحذف شيء)', ok: 'نعم، احذف' })) toast('هذه نسخة تجريبية — لم يُحذف شيء', 'info');
   });

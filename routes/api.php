@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AcceptedInvitationController;
 use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ArticleCoverController;
 use App\Http\Controllers\Api\AvatarController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\CourseCopyController;
 use App\Http\Controllers\Api\CourseCoverController;
 use App\Http\Controllers\Api\CourseStatusController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NotificationPreferenceController;
@@ -64,6 +66,8 @@ Route::middleware('auth')->group(function () {
         ->except('show')
         ->parameters(['team' => 'member']);
 
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/analytics', AnalyticsController::class)->name('analytics');
     Route::get('/activity', [ActivityController::class, 'index'])->name('activity.index');
     Route::get('/search', SearchController::class)->name('search');
 

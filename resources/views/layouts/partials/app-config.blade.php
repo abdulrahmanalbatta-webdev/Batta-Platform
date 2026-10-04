@@ -3,6 +3,7 @@
 @use('App\Support\NavCounts')
 @php
     $appConfig = [
+        'app_name' => config('app.name'),
         'assets' => asset('assets/dashboard'),
         'api' => url('dashboard/api/v1'),
         'user' => auth()->check() ? (new UserResource(auth()->user()))->resolve(request()) : null,

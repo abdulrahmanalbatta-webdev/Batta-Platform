@@ -21,7 +21,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Sample students, coupons and orders for local development (mt_rand is seeded, so every run gives the same data). Orders go through the same actions as
+ * Sample students, coupons and a year of orders for local development (mt_rand is seeded, so every run gives the same data). Orders go through the same actions as
  * real ones, so enrolments, workshop seats and Pro months follow from them. Runs after ContentSeeder.
  */
 class SalesSeeder extends Seeder
@@ -46,7 +46,7 @@ class SalesSeeder extends Seeder
                 'country' => self::COUNTRIES[mt_rand(0, count(self::COUNTRIES) - 1)],
                 'last_active_at' => now()->subDays(mt_rand(0, 100) > 75 ? mt_rand(31, 90) : mt_rand(0, 20)),
                 'suspended_at' => mt_rand(0, 100) > 92 ? now()->subDays(mt_rand(1, 20)) : null,
-                'created_at' => now()->subDays(mt_rand(10, 270)),
+                'created_at' => now()->subDays(mt_rand(10, 360)),
             ]);
 
             return $student;
@@ -93,8 +93,8 @@ class SalesSeeder extends Seeder
                 $refund->handle($order);
             }
 
-            // spread the orders over the last two months
-            $at = now()->subDays((int) floor($i / 1.1))->subMinutes(mt_rand(0, 600));
+            // spread the orders over the last year, more of them lately (a growing platform), never before the student joined
+            $at = now()->subDays((int) round(330 * ($i / 63) ** 1.6))->subMinutes(mt_rand(0, 600))->max($student->created_at->copy()->addDay());
             $order->refresh()->forceFill([
                 'created_at' => $at,
                 'paid_at' => $order->paid_at ? $at->copy()->addMinutes(2) : null,

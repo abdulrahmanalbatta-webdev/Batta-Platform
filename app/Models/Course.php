@@ -74,6 +74,16 @@ class Course extends Model
     }
 
     /**
+     * The short mark on the course thumbnail: the first Latin word of the title ("Next.js", "APIs"), else its first letter.
+     */
+    public function glyph(): string
+    {
+        return preg_match('/[A-Za-z][A-Za-z0-9.+#]*/', $this->title, $match)
+            ? mb_substr($match[0], 0, 7)
+            : mb_substr(trim($this->title), 0, 1);
+    }
+
+    /**
      * @return HasMany<Review, $this>
      */
     public function reviews(): HasMany

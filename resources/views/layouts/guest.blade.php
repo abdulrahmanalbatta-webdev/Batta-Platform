@@ -12,7 +12,6 @@
 <body data-page="@yield('page')">
 @yield('content')
 
-    <script src="{{ asset('assets/dashboard/js/data.js') }}"></script>
     <script src="{{ asset('assets/dashboard/js/app.js') }}"></script>
 @stack('scripts')
 </body>

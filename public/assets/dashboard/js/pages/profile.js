@@ -1,24 +1,29 @@
 document.addEventListener('app:ready', () => {
   const { $, $$, esc, num, money, toast, api, showFieldErrors } = App;
 
-  const revenue = DB.courses.reduce((s, c) => s + c.revenue, 0);
-  $('#pStats').innerHTML = [
-    [num(DB.students.length), 'طالب'],
-    [DB.courses.filter((c) => c.status === 'منشورة').length, 'دورة منشورة'],
-    [DB.articles.filter((a) => a.status === 'منشور').length, 'مقالة'],
-    [money(revenue), 'إيرادات الدورات'],
-  ]
-    .map(([v, l]) => `<div class="mini-stat"><b>${v}</b><small>${l}</small></div>`)
-    .join('');
-
-  const mine = [
-    { tone: '#0066ff', title: 'نشرت مقالة جديدة', text: 'بناء نظام مصادقة كامل في Next.js', time: 'قبل يومين' },
-    { tone: '#0e9f6e', title: 'رددت على تقييم', text: 'محمد الخطيب · Next.js من الصفر', time: 'قبل 3 أيام' },
-    { tone: '#7c3aed', title: 'أنشأت كوبون LAUNCH30', text: 'خصم 30% على كل الدورات', time: 'قبل أسبوع' },
-    { tone: '#c27803', title: 'حدّثت منهج دورة', text: 'أضفت 4 دروس إلى APIs باستخدام Node', time: 'قبل أسبوع' },
-    { tone: '#0b0d12', title: 'تسجيل دخول من جهاز جديد', text: 'iPhone · Safari — غزة', time: 'قبل أسبوعين' },
-  ];
-  $('#myActivity').innerHTML = mine.map((a) => `<li><span class="t-dot" style="background:${a.tone}"></span><b>${esc(a.title)}</b><p>${esc(a.text)}</p><time>${a.time}</time></li>`).join('');
+  // platform totals (cached with the dashboard numbers) and what I did lately
+  api
+    .get('dashboard')
+    .then(({ data }) => {
+      const t = data.totals;
+      $('#pStats').innerHTML = [
+        [num(t.students), 'طالب'],
+        [num(t.published_courses), 'دورة منشورة'],
+        [num(t.published_articles), 'مقالة منشورة'],
+        [money(t.course_revenue), 'إيرادات المنصة'],
+      ]
+        .map(([v, l]) => `<div class="mini-stat"><b>${v}</b><small>${l}</small></div>`)
+        .join('');
+    })
+    .catch(() => {});
+  api
+    .get('activity', { mine: 1, limit: 5 })
+    .then(({ data }) => {
+      $('#myActivity').innerHTML =
+        data.map((a) => `<li><span class="t-dot" style="background:${App.activityTone(a.action)}"></span><b>${esc(a.description)}</b><time>${esc(App.ago(a.at))}</time></li>`).join('') ||
+        '<li class="muted" style="list-style:none">لا يوجد نشاط بعد</li>';
+    })
+    .catch(() => {});
 
   /* ---------- the signed-in member (App.user comes from Laravel) ---------- */
   let me = App.user;

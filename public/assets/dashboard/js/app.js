@@ -129,10 +129,9 @@
   const asset = (p) => `${CFG.assets}/${p}`;
 
   /* ---------- navigation ---------- */
-  const DB = window.DB || {};
-  // the signed-in member (from Laravel) replaces the sample admin of data.js
+  // the signed-in member, from Laravel (null on the sign-in pages)
   const USER = CFG.user || null;
-  if (USER) DB.admin = { ...DB.admin, name: USER.name, email: USER.email, role: USER.role_label, initial: USER.initial };
+  const ME = { name: USER?.name || '', role: USER?.role_label || '', initial: USER?.initial || '', photo: USER?.avatar_url || null };
   // sidebar badges from the server; pages update them with setNavCount after a change
   const COUNTS = CFG.counts || {};
   const unreadMsgs = COUNTS.messages || 0;
@@ -167,8 +166,7 @@
   ];
 
   const avatarHTML = (cls = '') => {
-    const photo = USER ? USER.avatar_url : asset(DB.admin.photo);
-    return `<span class="avatar ${cls}">${photo ? `<img src="${esc(photo)}" alt="" onerror="this.remove()">` : ''}${esc(DB.admin.initial)}</span>`;
+    return `<span class="avatar ${cls}">${ME.photo ? `<img src="${esc(ME.photo)}" alt="" onerror="this.remove()">` : ''}${esc(ME.initial)}</span>`;
   };
 
   /* ---------- sidebar toggle: collapse to an icon rail on desktop, slide-in panel on mobile ---------- */
@@ -282,7 +280,7 @@
       <aside class="sidebar" id="sidebar" aria-label="القائمة الجانبية">
         <a class="sb-brand" href="${url('dashboard')}">
           <img src="${asset('img/logo-white.png')}" alt="">
-          <span class="sb-text"><b>${esc(DB.admin.name)}</b><small>لوحة التحكم</small></span>
+          <span class="sb-text"><b>${esc(CFG.app_name)}</b><small>لوحة التحكم</small></span>
         </a>
         <nav class="sb-nav">${navHTML}</nav>
         <div class="sb-foot">
@@ -291,9 +289,9 @@
             <p>استخدمت 6.2 من 10 جيجابايت لفيديوهات الدورات.</p>
             <div class="bar"><i style="width:62%"></i></div>
           </div>
-          <a class="sb-user" href="${url('profile')}" data-tip="${esc(DB.admin.name)}">
+          <a class="sb-user" href="${url('profile')}" data-tip="${esc(ME.name)}">
             ${avatarHTML('sm')}
-            <span class="sb-text"><b>${esc(DB.admin.name)}</b><small>${esc(DB.admin.role)}</small></span>
+            <span class="sb-text"><b>${esc(ME.name)}</b><small>${esc(ME.role)}</small></span>
             ${icon('chevron-left', 'sm')}
           </a>
         </div>
@@ -331,7 +329,7 @@
           <div class="dropdown">
             <button class="tb-user" data-dropdown aria-label="حسابي">
               ${avatarHTML('sm')}
-              <span class="who"><b>${esc(DB.admin.name)}</b><small>${esc(DB.admin.role)}</small></span>
+              <span class="who"><b>${esc(ME.name)}</b><small>${esc(ME.role)}</small></span>
               ${icon('chevron-down', 'sm')}
             </button>
             <div class="menu">

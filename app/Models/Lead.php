@@ -41,7 +41,20 @@ class Lead extends Model
             'service' => LeadService::class,
             'stage' => LeadStage::class,
             'budget' => 'integer',
+            'decided_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Moving to won or lost records when it was decided; moving back to an open stage clears it.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Lead $lead): void {
+            if ($lead->isDirty('stage')) {
+                $lead->decided_at = $lead->stage->isOpen() ? null : now();
+            }
+        });
     }
 
     /**

@@ -69,6 +69,8 @@ class CommunitySeeder extends Seeder
             'service' => $lead[3],
             'budget' => $lead[4],
             'stage' => $lead[5],
+            // won and lost requests were decided a few days after they came in
+            'decided_at' => $lead[5]->isOpen() ? null : now()->subDays($lead[6] - 4),
             'created_at' => now()->subDays($lead[6]),
             'updated_at' => now()->subDays($lead[6]),
             'note' => $lead[7],
