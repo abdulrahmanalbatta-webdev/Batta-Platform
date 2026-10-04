@@ -4,18 +4,26 @@ namespace Database\Seeders;
 
 use App\Enums\LeadService;
 use App\Enums\LeadStage;
+use App\Enums\OrderStatus;
 use App\Enums\ReviewStatus;
 use App\Models\Conversation;
+use App\Models\ConversationMessage;
 use App\Models\Enrollment;
 use App\Models\Lead;
+use App\Models\Order;
 use App\Models\Review;
 use App\Models\User;
+use App\Notifications\Alerts\ContactMessageReceived;
+use App\Notifications\Alerts\LeadReceived;
+use App\Notifications\Alerts\OrderPaid;
+use App\Notifications\Alerts\ReviewSubmitted;
+use App\Support\TeamAlerts;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
 /**
  * Sample project requests, course reviews and conversations for local development. Runs after SalesSeeder:
- * reviews come from real enrolments and two conversations belong to students.
+ * reviews come from real enrolments, two conversations belong to students, and the bell gets a few notifications.
  */
 class CommunitySeeder extends Seeder
 {
@@ -68,6 +76,28 @@ class CommunitySeeder extends Seeder
 
         $this->reviews();
         $this->conversations($leads->all());
+        $this->alerts();
+    }
+
+    /**
+     * A few bell notifications for the latest events (seeders run without model events, so the observers stay quiet).
+     */
+    private function alerts(): void
+    {
+        $alerts = [
+            [new OrderPaid(Order::query()->where('status', OrderStatus::Completed)->latest('paid_at')->firstOrFail()), now()->subMinutes(5), false],
+            [new ContactMessageReceived(ConversationMessage::query()->where('from_contact', true)->latest()->firstOrFail()), now()->subMinutes(58), false],
+            [new LeadReceived(Lead::query()->latest()->firstOrFail()), now()->subDays(2), false],
+            [new ReviewSubmitted(Review::query()->where('status', ReviewStatus::Pending)->latest()->firstOrFail()), now()->subDays(3), true],
+        ];
+
+        foreach ($alerts as [$alert, $at, $read]) {
+            foreach (TeamAlerts::recipients($alert) as $member) {
+                // the bell entry only: no emails from seeding
+                $member->notifyNow($alert, ['database']);
+                $member->notifications()->latest()->first()->forceFill(['created_at' => $at, 'updated_at' => $at, 'read_at' => $read ? $at : null])->save();
+            }
+        }
     }
 
     private function reviews(): void

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\ConversationMessageObserver;
 use Database\Factories\ConversationMessageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[ObservedBy(ConversationMessageObserver::class)]
 #[Fillable(['from_contact', 'user_id', 'body', 'attachment_path', 'attachment_name', 'created_at'])]
 class ConversationMessage extends Model
 {

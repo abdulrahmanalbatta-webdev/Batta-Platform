@@ -7,6 +7,7 @@ use App\Enums\CourseLevel;
 use App\Enums\CourseStatus;
 use App\Enums\OrderItemType;
 use App\Enums\OrderStatus;
+use App\Models\Concerns\LogsActivity;
 use Database\Factories\CourseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -23,7 +24,7 @@ use Illuminate\Support\Facades\Storage;
 class Course extends Model
 {
     /** @use HasFactory<CourseFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -98,5 +99,20 @@ class Course extends Model
     protected function coverUrl(): Attribute
     {
         return Attribute::get(fn (): ?string => $this->cover_path ? Storage::disk('public')->url($this->cover_path) : null);
+    }
+
+    public function activityLabel(): string
+    {
+        return 'الدورة';
+    }
+
+    protected function activityStateAttribute(): ?string
+    {
+        return 'status';
+    }
+
+    protected function activityStateLabel(): ?string
+    {
+        return $this->status->label();
     }
 }

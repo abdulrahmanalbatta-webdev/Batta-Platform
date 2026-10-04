@@ -40,6 +40,29 @@ document.addEventListener('app:ready', () => {
           .join('');
   }
 
+  /* ---------- the member's email switches for bell alerts ---------- */
+  const ALERTS = {
+    orders: ['طلب شراء مكتمل', 'بريد عند كل عملية شراء مكتملة.'],
+    leads: ['طلب مشروع جديد', 'بريد عند وصول طلب من صفحة الخدمات.'],
+    reviews: ['تقييم بانتظار المراجعة', 'بريد عند وصول تقييم جديد.'],
+    messages: ['رسائل الطلاب والعملاء', 'بريد عند وصول رسالة جديدة.'],
+  };
+  const prefs = App.user?.email_preferences || {};
+  $('#notifPrefs').innerHTML = Object.entries(prefs)
+    .map(([key, on]) => `<div class="setting-row"><div><b>${ALERTS[key][0]}</b><p>${ALERTS[key][1]}</p></div><label class="switch"><input type="checkbox" data-pref="${key}" ${on ? 'checked' : ''} aria-label="${ALERTS[key][0]}"><span class="track"></span></label></div>`)
+    .join('');
+  $('#notifPrefs').addEventListener('change', async (e) => {
+    const input = e.target.closest('[data-pref]');
+    if (!input) return;
+    try {
+      await api.put('notification-preferences', { [input.dataset.pref]: input.checked });
+    } catch {
+      input.checked = !input.checked;
+      return;
+    }
+    toast(input.checked ? 'سيصلك بريد بهذا التنبيه' : 'لن يصلك بريد بهذا التنبيه، وسيبقى في الجرس');
+  });
+
   async function loadTeam() {
     const res = await api.get('team');
     team = res.data;
@@ -58,8 +81,8 @@ document.addEventListener('app:ready', () => {
   const form = $('#settingsForm');
   const save = $('#saveAll');
   let dirty = false;
-  // team roles apply immediately, so they don't count as unsaved settings
-  const counts = (e) => !e.target.closest('#team, #sessions');
+  // team roles and email switches apply immediately, so they don't count as unsaved settings
+  const counts = (e) => !e.target.closest('#team, #sessions, #notifPrefs');
   form.addEventListener('input', (e) => {
     if (!counts(e)) return;
     dirty = true;
@@ -170,6 +193,26 @@ document.addEventListener('app:ready', () => {
     if (await confirmDialog({ title: 'حذف كل البيانات؟', text: 'هذا إجراء نهائي ولا يمكن التراجع عنه. (في هذه النسخة التجريبية لن يُحذف شيء)', ok: 'نعم، احذف' })) toast('هذه نسخة تجريبية — لم يُحذف شيء', 'info');
   });
 
+  /* ---------- activity log, 20 entries at a time ---------- */
+  let nextCursor = null;
+  async function loadActivity() {
+    let res;
+    try {
+      res = await api.get('activity', nextCursor ? { cursor: nextCursor } : undefined);
+    } catch {
+      return;
+    }
+    nextCursor = res.meta.next_cursor;
+    $('#activityLog').insertAdjacentHTML(
+      'beforeend',
+      res.data.map((a) => `<li><span class="t-dot" style="background:${App.activityTone(a.action)}"></span><b>${esc(a.user)}</b><p>${esc(a.description)}</p><time title="${esc(new Date(a.at).toLocaleString('ar'))}">${esc(App.ago(a.at))}</time></li>`).join(''),
+    );
+    if (!$('#activityLog').children.length) $('#activityLog').innerHTML = '<li class="muted" style="list-style:none">لا يوجد نشاط بعد</li>';
+    $('#moreActivity').hidden = !nextCursor;
+  }
+  $('#moreActivity').addEventListener('click', loadActivity);
+
+  loadActivity();
   loadTeam().catch(() => {});
   loadSessions().catch(() => {});
 });

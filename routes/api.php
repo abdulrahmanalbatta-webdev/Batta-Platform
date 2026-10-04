@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AcceptedInvitationController;
+use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ArticleCoverController;
 use App\Http\Controllers\Api\AvatarController;
@@ -14,6 +15,9 @@ use App\Http\Controllers\Api\CourseCopyController;
 use App\Http\Controllers\Api\CourseCoverController;
 use App\Http\Controllers\Api\CourseStatusController;
 use App\Http\Controllers\Api\LeadController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\NotificationPreferenceController;
+use App\Http\Controllers\Api\NotificationReadController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OrderFailureController;
 use App\Http\Controllers\Api\OrderInvoiceController;
@@ -23,6 +27,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\ReviewReplyController;
 use App\Http\Controllers\Api\ReviewStatusController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\StudentController;
@@ -58,6 +63,14 @@ Route::middleware('auth')->group(function () {
     Route::apiResource('team', TeamMemberController::class)
         ->except('show')
         ->parameters(['team' => 'member']);
+
+    Route::get('/activity', [ActivityController::class, 'index'])->name('activity.index');
+    Route::get('/search', SearchController::class)->name('search');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read', [NotificationReadController::class, 'storeAll'])->name('notifications.read-all');
+    Route::post('/notifications/{notification}/read', [NotificationReadController::class, 'store'])->name('notifications.read');
+    Route::put('/notification-preferences', [NotificationPreferenceController::class, 'update'])->name('notification-preferences.update');
 
     Route::get('/sessions', [SessionController::class, 'index'])->name('sessions.index');
     Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->name('sessions.destroy');

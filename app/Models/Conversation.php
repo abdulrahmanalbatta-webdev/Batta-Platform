@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivity;
 use Database\Factories\ConversationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -17,7 +18,7 @@ use Illuminate\Support\Str;
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -99,5 +100,10 @@ class Conversation extends Model
     protected function initial(): Attribute
     {
         return Attribute::get(fn (): string => Str::substr(trim($this->name), 0, 1));
+    }
+
+    public function activityLabel(): string
+    {
+        return 'المحادثة مع';
     }
 }

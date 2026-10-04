@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CouponScope;
 use App\Enums\DiscountType;
+use App\Models\Concerns\LogsActivity;
 use Database\Factories\CouponFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Coupon extends Model
 {
     /** @use HasFactory<CouponFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * Mirrors the column defaults, so a just-created coupon reads as active and unused before it's reloaded.
@@ -85,5 +86,25 @@ class Coupon extends Model
             : (float) $this->value;
 
         return min($discount, $price);
+    }
+
+    public function activityLabel(): string
+    {
+        return 'الكوبون';
+    }
+
+    public function activityName(): string
+    {
+        return $this->code;
+    }
+
+    protected function activityStateAttribute(): ?string
+    {
+        return 'is_active';
+    }
+
+    protected function activityStateLabel(): ?string
+    {
+        return $this->is_active ? 'نشط' : 'موقوف';
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\OrderItemType;
 use App\Enums\OrderStatus;
 use App\Enums\WorkshopFormat;
+use App\Models\Concerns\LogsActivity;
 use Database\Factories\WorkshopFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Workshop extends Model
 {
     /** @use HasFactory<WorkshopFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -66,5 +67,10 @@ class Workshop extends Model
             $this->seatsTaken() >= $this->seats => 'full',
             default => 'open',
         };
+    }
+
+    public function activityLabel(): string
+    {
+        return 'الورشة';
     }
 }

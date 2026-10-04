@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ArticleCategory;
 use App\Enums\ArticleStatus;
+use App\Models\Concerns\LogsActivity;
 use Database\Factories\ArticleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Storage;
 class Article extends Model
 {
     /** @use HasFactory<ArticleFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -83,5 +84,28 @@ class Article extends Model
     protected function coverUrl(): Attribute
     {
         return Attribute::get(fn (): ?string => $this->cover_path ? Storage::disk('public')->url($this->cover_path) : null);
+    }
+
+    public function activityLabel(): string
+    {
+        return 'المقال';
+    }
+
+    protected function activityStateAttribute(): ?string
+    {
+        return 'status';
+    }
+
+    protected function activityStateLabel(): ?string
+    {
+        return $this->status->label();
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function activityIgnoredAttributes(): array
+    {
+        return ['published_at'];
     }
 }

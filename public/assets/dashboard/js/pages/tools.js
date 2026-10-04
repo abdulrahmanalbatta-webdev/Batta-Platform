@@ -456,6 +456,12 @@ document.addEventListener('app:ready', async () => {
     render();
   });
   $('#q').addEventListener('input', App.debounce(render, 120));
+  // the topbar search lands here as ?q=
+  const searched = new URLSearchParams(location.search).get('q');
+  if (searched) {
+    $('#q').value = searched;
+    render();
+  }
   $('#statusFilter').addEventListener('change', render);
   $('#addTool').addEventListener('click', () => openForm());
   $('#manageCats').addEventListener('click', openCatManager);

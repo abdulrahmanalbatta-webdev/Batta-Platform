@@ -300,17 +300,6 @@
       </aside>
       <div class="sb-backdrop" id="sbBackdrop"></div>`;
 
-    const unread = DB.notifications.filter((n) => n.unread).length;
-    const notifItems = DB.notifications
-      .map(
-        (n) => `
-        <a class="notif ${n.unread ? 'unread' : ''}" href="${n.href ? url(n.href) : '#'}">
-          <span class="n-ico ${n.tone}">${icon(n.icon, 'sm')}</span>
-          <span><b>${esc(n.title)}</b><small>${esc(n.meta)} · ${esc(n.time)}</small></span>
-        </a>`,
-      )
-      .join('');
-
     const topbar = `
       <header class="topbar">
         <button class="tb-btn tb-menu" id="sbToggle" type="button" aria-controls="sidebar" data-tip-pos="bottom">${icon('sidebar')}</button>
@@ -333,10 +322,10 @@
           </div>
           <a class="tb-btn hide-sm" href="#" data-tip="عرض الموقع" data-tip-pos="bottom" aria-label="عرض الموقع" onclick="event.preventDefault();window.App.toast('افتح الموقع من مشروع batta-platform')">${icon('external')}</a>
           <div class="dropdown">
-            <button class="tb-btn" data-dropdown aria-label="الإشعارات" data-tip="الإشعارات" data-tip-pos="bottom">${icon('bell')}${unread ? '<span class="dot"></span>' : ''}</button>
+            <button class="tb-btn" id="bellBtn" data-dropdown aria-label="الإشعارات" data-tip="الإشعارات" data-tip-pos="bottom">${icon('bell')}</button>
             <div class="menu notif-menu">
-              <div class="menu-head"><b>الإشعارات</b><button class="link" style="width:auto;padding:0" data-mark-read>تعليم الكل كمقروء</button></div>
-              ${notifItems}
+              <div class="menu-head"><b>الإشعارات</b><button class="link" style="width:auto;padding:0" data-mark-read hidden>تعليم الكل كمقروء</button></div>
+              <div id="notifList"></div>
             </div>
           </div>
           <div class="dropdown">
@@ -366,7 +355,7 @@
 
     initSidebarToggle();
 
-    // "/" focuses the global search; Enter searches students
+    // "/" focuses the global search
     const gs = $('#globalSearch');
     document.addEventListener('keydown', (e) => {
       if (e.key === '/' && !/input|textarea|select/i.test(document.activeElement.tagName)) {
@@ -374,9 +363,7 @@
         gs.focus();
       }
     });
-    gs.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && gs.value.trim()) location.href = url('students', { q: gs.value.trim() });
-    });
+    initGlobalSearch(gs);
 
     document.addEventListener('click', async (e) => {
       if (e.target.closest('[data-logout]')) {
@@ -388,11 +375,144 @@
         location.href = url('login');
       }
       if (e.target.closest('[data-mark-read]')) {
-        $$('.notif.unread').forEach((n) => n.classList.remove('unread'));
-        $('.tb-btn .dot')?.remove();
+        try {
+          await api.post('notifications/read');
+        } catch {
+          return;
+        }
+        notifications.forEach((n) => (n.unread = false));
+        renderNotifications();
         toast('تم تعليم كل الإشعارات كمقروءة');
       }
+      const item = e.target.closest('[data-notif]');
+      if (item) {
+        e.preventDefault();
+        const n = notifications.find((x) => x.id === item.dataset.notif);
+        if (n?.unread) await api.post(`notifications/${n.id}/read`).catch(() => {});
+        location.href = item.href;
+      }
     });
+
+    loadNotifications();
+    // check for new ones every minute while the tab is visible
+    setInterval(() => document.visibilityState === 'visible' && loadNotifications(), 60000);
+  }
+
+  /* ---------- topbar search: results from /search as you type; arrows + Enter to open one ---------- */
+  function initGlobalSearch(input) {
+    const pop = document.createElement('div');
+    pop.className = 'search-pop';
+    pop.id = 'searchPop';
+    pop.setAttribute('role', 'listbox');
+    pop.hidden = true;
+    input.closest('.tb-search').appendChild(pop);
+    input.setAttribute('aria-controls', 'searchPop');
+    let seq = 0;
+    let active = -1;
+    const links = () => $$('a', pop);
+    const close = () => {
+      pop.hidden = true;
+      active = -1;
+    };
+    const highlight = (i) => {
+      const all = links();
+      active = all.length ? (i + all.length) % all.length : -1;
+      all.forEach((a, n) => a.classList.toggle('on', n === active));
+      all[active]?.scrollIntoView({ block: 'nearest' });
+    };
+    const search = debounce(async () => {
+      const q = input.value.trim();
+      const mine = ++seq;
+      if (q.length < 2) return close();
+      let res;
+      try {
+        res = await api.get('search', { q });
+      } catch {
+        return;
+      }
+      if (mine !== seq) return; // a newer search is on its way
+      pop.innerHTML =
+        res.data
+          .map(
+            (g) =>
+              `<div class="sp-group">${esc(g.label)}</div>${g.items
+                .map((it) => `<a href="${url(it.page, it.params)}" role="option"><b>${esc(it.title)}</b>${it.subtitle ? `<small>${esc(it.subtitle)}</small>` : ''}</a>`)
+                .join('')}`,
+          )
+          .join('') || `<div class="sp-empty">لا توجد نتائج لـ "${esc(q)}"</div>`;
+      pop.hidden = false;
+      highlight(0);
+    }, 200);
+    input.addEventListener('input', search);
+    input.addEventListener('focus', () => input.value.trim().length >= 2 && pop.innerHTML && (pop.hidden = false));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') return close();
+      if (pop.hidden) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlight(active + (e.key === 'ArrowDown' ? 1 : -1));
+      } else if (e.key === 'Enter') {
+        const target = links()[Math.max(active, 0)];
+        if (target) {
+          e.preventDefault();
+          location.href = target.href;
+        }
+      }
+    });
+    document.addEventListener('click', (e) => !e.target.closest('.tb-search') && close());
+  }
+
+  // the dot colour of an activity-log entry by its action
+  const activityTone = (action) => ({ created: '#0e9f6e', updated: '#0066ff', status: '#c27803', deleted: '#e02424' })[action] || '#94a3b8';
+
+  /* ---------- bell: the member's notifications from /notifications ---------- */
+  const ALERT_STYLE = {
+    orders: ['cart', 'c-green'],
+    leads: ['briefcase', 'c-blue'],
+    reviews: ['star', 'c-amber'],
+    messages: ['chat', 'c-violet'],
+  };
+  let notifications = [];
+  // "قبل 5 دقائق", "أمس", or the date for older ones
+  function ago(iso) {
+    const minutes = Math.floor((Date.now() - new Date(iso)) / 60000);
+    if (minutes < 1) return 'الآن';
+    if (minutes < 60) return minutes === 1 ? 'قبل دقيقة' : minutes === 2 ? 'قبل دقيقتين' : `قبل ${minutes} ${minutes <= 10 ? 'دقائق' : 'دقيقة'}`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours === 1 ? 'قبل ساعة' : hours === 2 ? 'قبل ساعتين' : `قبل ${hours} ${hours <= 10 ? 'ساعات' : 'ساعة'}`;
+    if (hours < 48) return 'أمس';
+    const d = new Date(iso);
+    return date(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  }
+  function renderNotifications() {
+    const list = $('#notifList');
+    if (!list) return;
+    const unread = notifications.filter((n) => n.unread).length;
+    list.innerHTML =
+      notifications
+        .map((n) => {
+          const [ic, tone] = ALERT_STYLE[n.type] || ['bell', 'c-blue'];
+          return `
+        <a class="notif ${n.unread ? 'unread' : ''}" href="${url(n.page, n.params || {})}" data-notif="${esc(n.id)}">
+          <span class="n-ico ${tone}">${icon(ic, 'sm')}</span>
+          <span><b>${esc(n.title)}</b><small>${esc(n.meta)} · ${esc(ago(n.at))}</small></span>
+        </a>`;
+        })
+        .join('') || '<div class="muted" style="padding:22px 16px;text-align:center;font-size:13px">لا توجد إشعارات</div>';
+    $('[data-mark-read]').hidden = !unread;
+    const bell = $('#bellBtn');
+    bell.querySelector('.dot')?.remove();
+    if (unread) bell.insertAdjacentHTML('beforeend', '<span class="dot"></span>');
+    bell.setAttribute('aria-label', unread ? `الإشعارات (${unread} غير مقروءة)` : 'الإشعارات');
+  }
+  async function loadNotifications() {
+    if (!USER) return;
+    try {
+      notifications = (await api.get('notifications')).data;
+    } catch {
+      return;
+    }
+    renderNotifications();
   }
 
   /* ---------- toast ---------- */
@@ -840,7 +960,7 @@
   };
 
   /* ---------- boot ---------- */
-  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, user: USER, can };
+  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, user: USER, can, ago, activityTone };
 
   document.addEventListener('DOMContentLoaded', () => {
     buildLayout();

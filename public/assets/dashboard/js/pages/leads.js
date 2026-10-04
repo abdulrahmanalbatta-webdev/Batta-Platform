@@ -211,4 +211,7 @@ document.addEventListener('app:ready', async () => {
   });
 
   render();
+  // ?lead=ID (the topbar search and the bell) opens that request
+  const requested = find(new URLSearchParams(location.search).get('lead'));
+  if (requested) details(requested);
 });

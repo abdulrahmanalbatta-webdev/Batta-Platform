@@ -54,10 +54,15 @@ document.addEventListener('app:ready', () => {
     .map((o) => `<tr><td class="mono">${o.id}</td><td>${person({ name: o.customer, initial: o.initial, color: o.color })}</td><td>${esc(o.item)}</td><td class="num">${money(o.amount)}</td><td>${badge(o.status)}</td></tr>`)
     .join('');
 
-  // activity
-  $('#activity').innerHTML = DB.activity
-    .map((a) => `<li><span class="t-dot" style="background:${a.tone}"></span><b>${esc(a.title)}</b><p>${esc(a.text)}</p><time>${esc(a.time)}</time></li>`)
-    .join('');
+  // what the team did lately, from the activity log
+  App.api
+    .get('activity', { limit: 6 })
+    .then(({ data }) => {
+      $('#activity').innerHTML =
+        data.map((a) => `<li><span class="t-dot" style="background:${App.activityTone(a.action)}"></span><b>${esc(a.user)}</b><p>${esc(a.description)}</p><time>${esc(App.ago(a.at))}</time></li>`).join('') ||
+        '<li class="muted" style="list-style:none">لا يوجد نشاط بعد</li>';
+    })
+    .catch(() => {});
 
   // top courses by revenue
   const top = [...DB.courses].sort((a, b) => b.revenue - a.revenue).slice(0, 4);

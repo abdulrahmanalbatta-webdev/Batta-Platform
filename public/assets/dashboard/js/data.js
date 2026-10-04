@@ -141,14 +141,6 @@ const toolCategories = [    { id: 'editor', name: 'المحرر', color: '#0066f
     { code: 'SUMMER25', type: 'percent', value: 25, uses: 200, limit: 200, expires: '2026-08-31', status: 'منتهي', scope: 'كل الدورات' },
   ];
 
-  const notifications = [
-    { href: 'orders', icon: 'cart', tone: 'c-green', title: 'طلب جديد: Next.js من الصفر', meta: 'محمد الخطيب · 79$', time: 'قبل 5 دقائق', unread: true },
-    { href: 'leads', icon: 'briefcase', tone: 'c-blue', title: 'طلب مشروع جديد من محمصة البن الذهبي', meta: 'ميزانية 2,500$', time: 'قبل ساعة', unread: true },
-    { href: 'reviews', icon: 'star', tone: 'c-amber', title: 'تقييم جديد بانتظار المراجعة', meta: 'APIs باستخدام Node', time: 'قبل 3 ساعات', unread: true },
-    { href: 'students', icon: 'users', tone: 'c-violet', title: '12 طالباً جديداً هذا الأسبوع', meta: 'زيادة 18% عن الأسبوع الماضي', time: 'أمس', unread: false },
-    { href: 'workshops', icon: 'calendar', tone: 'c-cyan', title: 'ورشة "ابنِ ملف أعمالك" بعد 11 يوماً', meta: '82 من 100 مقعد محجوز', time: 'أمس', unread: false },
-  ];
-
   const months = ['أكتوبر', 'نوفمبر', 'ديسمبر', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر'];
   const revenue = {
     labels: months,
@@ -183,13 +175,5 @@ const toolCategories = [    { id: 'editor', name: 'المحرر', color: '#0066f
     { path: '/articles/nextjs-auth', title: 'نظام مصادقة في Next.js', views: 3410, avg: '7:22' },
   ];
 
-  const activity = [
-    { tone: '#0e9f6e', title: 'اكتمل طلب #4821', text: 'محمد الخطيب اشترى Next.js من الصفر', time: 'قبل 5 دقائق' },
-    { tone: '#0066ff', title: 'طلب مشروع جديد', text: 'محمصة البن الذهبي · متجر إلكتروني', time: 'قبل ساعة' },
-    { tone: '#c27803', title: 'تقييم بانتظار المراجعة', text: '4 نجوم على دورة APIs', time: 'قبل 3 ساعات' },
-    { tone: '#7c3aed', title: 'نُشر مقال جديد', text: 'بناء نظام مصادقة كامل في Next.js', time: '30 سبتمبر' },
-    { tone: '#0891b2', title: 'حجز 6 مقاعد في ورشة', text: 'Server Actions في Next.js عملياً', time: '29 سبتمبر' },
-  ];
-
-  window.DB = { admin, courses, workshops, articles, tools, toolCategories, students, orders, leads, leadStages, coupons, notifications, revenue, traffic, sources, funnel, topPages, activity, countries };
+  window.DB = { admin, courses, workshops, articles, tools, toolCategories, students, orders, leads, leadStages, coupons, revenue, traffic, sources, funnel, topPages, countries };
 })();

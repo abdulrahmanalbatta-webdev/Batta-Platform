@@ -36,6 +36,8 @@ class UserResource extends JsonResource
             'pending' => $this->isPending(),
             'last_login_at' => $this->last_login_at?->toIso8601String(),
             'is_you' => $viewer?->is($this->resource) ?? false,
+            // the member's own email switches (settings → notifications); not shown to others
+            'email_preferences' => $this->when($viewer?->is($this->resource) ?? false, fn (): array => $this->emailPreferences()),
             'permissions' => [
                 'manage_team' => $this->role->canManageTeam(),
                 'manage_content' => $this->role->canManageContent(),

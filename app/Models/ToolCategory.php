@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsActivity;
 use Database\Factories\ToolCategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ToolCategory extends Model
 {
     /** @use HasFactory<ToolCategoryFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * @return HasMany<Tool, $this>
@@ -20,5 +21,10 @@ class ToolCategory extends Model
     public function tools(): HasMany
     {
         return $this->hasMany(Tool::class);
+    }
+
+    public function activityLabel(): string
+    {
+        return 'تصنيف الأدوات';
     }
 }

@@ -57,6 +57,12 @@ document.addEventListener('app:ready', async () => {
     renderSeg();
   });
   $('#q').addEventListener('input', App.debounce((e) => table.setQuery(e.target.value), 150));
+  // the topbar search and the bell land here as ?q=#1024
+  const searched = new URLSearchParams(location.search).get('q');
+  if (searched) {
+    $('#q').value = searched;
+    table.setQuery(searched);
+  }
   $('#typeFilter').addEventListener('change', (e) => table.setFilter('type', e.target.value ? (r) => r.item_type_label === e.target.value : null));
   $('#methodFilter').addEventListener('change', (e) => table.setFilter('method', e.target.value ? (r) => r.payment_method_label === e.target.value : null));
 

@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\Role;
+use App\Models\Activity;
 use App\Models\User;
 use Illuminate\Foundation\Inspiring;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Validator;
@@ -42,3 +44,8 @@ Artisan::command('app:create-owner {email} {name}', function (string $email, str
 
 // needs the scheduler running: "php artisan schedule:work" locally, a cron entry for "schedule:run" in production
 Schedule::command('articles:publish-scheduled')->everyMinute()->withoutOverlapping();
+// activity older than a year (App\Models\Activity::KEEP_DAYS) and read notifications older than 90 days
+Schedule::command('model:prune', ['--model' => [Activity::class]])->daily();
+Schedule::call(fn () => DatabaseNotification::query()->whereNotNull('read_at')->where('created_at', '<', now()->subDays(90))->delete())
+    ->daily()
+    ->name('notifications:prune-read');

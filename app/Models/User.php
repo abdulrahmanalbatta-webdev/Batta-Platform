@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\AlertType;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\Role;
+use App\Models\Concerns\LogsActivity;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -20,7 +22,7 @@ use Illuminate\Support\Str;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, LogsActivity, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -34,7 +36,29 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'password' => 'hashed',
             'role' => Role::class,
+            'notification_preferences' => 'array',
         ];
+    }
+
+    /**
+     * Whether this alert also reaches the member by email (the settings → notifications switches).
+     */
+    public function wantsEmailFor(AlertType $type): bool
+    {
+        return (bool) ($this->notification_preferences[$type->value] ?? $type->emailsByDefault());
+    }
+
+    /**
+     * The email switch of every alert type this member's role receives.
+     *
+     * @return array<string, bool>
+     */
+    public function emailPreferences(): array
+    {
+        return collect(AlertType::cases())
+            ->filter(fn (AlertType $type): bool => $type->isFor($this->role))
+            ->mapWithKeys(fn (AlertType $type): array => [$type->value => $this->wantsEmailFor($type)])
+            ->all();
     }
 
     /**
@@ -76,5 +100,28 @@ class User extends Authenticatable
     protected function avatarUrl(): Attribute
     {
         return Attribute::get(fn (): ?string => $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null);
+    }
+
+    public function activityLabel(): string
+    {
+        return 'العضو';
+    }
+
+    protected function activityStateAttribute(): ?string
+    {
+        return 'role';
+    }
+
+    protected function activityStateLabel(): ?string
+    {
+        return $this->role->label();
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function activityIgnoredAttributes(): array
+    {
+        return ['password', 'remember_token', 'last_login_at', 'avatar_path', 'title', 'phone', 'bio', 'github', 'linkedin', 'notification_preferences', 'email_verified_at'];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Models\Concerns\LogsActivity;
 use Database\Factories\StudentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -17,7 +18,7 @@ use Illuminate\Support\Str;
 class Student extends Model
 {
     /** @use HasFactory<StudentFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, LogsActivity, Notifiable;
 
     /**
      * A student who hasn't been active for this many days counts as inactive.
@@ -114,5 +115,28 @@ class Student extends Model
     protected function initial(): Attribute
     {
         return Attribute::get(fn (): string => Str::substr(trim($this->name), 0, 1));
+    }
+
+    public function activityLabel(): string
+    {
+        return 'الطالب';
+    }
+
+    protected function activityStateAttribute(): ?string
+    {
+        return 'suspended_at';
+    }
+
+    protected function activityStateLabel(): ?string
+    {
+        return $this->isSuspended() ? 'موقوف' : 'نشط';
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function activityIgnoredAttributes(): array
+    {
+        return ['pro_until'];
     }
 }

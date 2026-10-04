@@ -22,6 +22,7 @@
         <button data-tab="notifications" role="tab">الإشعارات</button>
         <button data-tab="team" role="tab">الفريق</button>
         <button data-tab="security" role="tab">الأمان</button>
+        <button data-tab="activity" role="tab">سجل النشاط</button>
       </div>
 
       <form id="settingsForm" novalidate>
@@ -74,10 +75,8 @@
 
         <!-- notifications -->
         <div class="tab-panel card-body" data-panel-group="settings" data-panel="notifications">
-          <div class="setting-row"><div><b>طلب شراء جديد</b><p>بريد فوري عند كل عملية شراء.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-          <div class="setting-row"><div><b>طلب مشروع جديد</b><p>إشعار عند وصول طلب من صفحة الخدمات.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-          <div class="setting-row"><div><b>تقييم بانتظار المراجعة</b><p>تنبيه عند وصول تقييم جديد.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-          <div class="setting-row"><div><b>رسائل الطلاب</b><p>إشعار عند وصول رسالة جديدة.</p></div><label class="switch"><input type="checkbox"><span class="track"></span></label></div>
+          <p class="muted" style="margin-bottom:6px">إشعاراتك تظهر في الجرس دائماً؛ اختر ما يصلك منها بالبريد أيضاً. يُحفظ كل تغيير فوراً.</p>
+          <div id="notifPrefs"></div>
           <div class="setting-row"><div><b>التقرير الأسبوعي</b><p>ملخص الإيرادات والزيارات كل يوم أحد.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
           <div class="setting-row"><div><b>النشرة البريدية للطلاب</b><p>إرسال المقالات الجديدة للمشتركين تلقائياً.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
         </div>
@@ -105,6 +104,12 @@
             <button type="button" class="btn btn-ghost" id="exportData"><i data-icon="download" class="sm"></i>تصدير</button>
             <button type="button" class="btn btn-danger-soft" id="wipe"><i data-icon="trash" class="sm"></i>حذف كل البيانات</button>
           </div>
+        </div>
+
+        <!-- activity log -->
+        <div class="tab-panel" data-panel-group="settings" data-panel="activity">
+          <ul class="timeline" id="activityLog" style="padding:18px 0 4px"></ul>
+          <div style="padding:0 18px 18px;text-align:center"><button type="button" class="btn btn-sm btn-ghost" id="moreActivity" hidden>عرض المزيد</button></div>
         </div>
       </form>
     </div>

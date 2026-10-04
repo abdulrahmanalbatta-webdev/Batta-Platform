@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Student;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class StudentStatusController extends Controller
@@ -23,11 +24,13 @@ class StudentStatusController extends Controller
 
         $suspend = $validated['status'] === 'suspended';
 
-        $updated = Student::query()
+        // one save per student, so each change lands in the activity log
+        $students = DB::transaction(fn () => Student::query()
             ->whereKey($validated['ids'])
             ->when($suspend, fn ($query) => $query->whereNull('suspended_at'), fn ($query) => $query->whereNotNull('suspended_at'))
-            ->update(['suspended_at' => $suspend ? now() : null]);
+            ->get()
+            ->each(fn (Student $student) => $student->forceFill(['suspended_at' => $suspend ? now() : null])->save()));
 
-        return response()->json(['updated' => $updated]);
+        return response()->json(['updated' => $students->count()]);
     }
 }
