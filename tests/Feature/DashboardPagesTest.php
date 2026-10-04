@@ -2,9 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Enums\LeadStage;
 use App\Enums\Role;
 use App\Models\Article;
+use App\Models\Conversation;
 use App\Models\Course;
+use App\Models\Lead;
+use App\Models\Review;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -64,6 +68,20 @@ class DashboardPagesTest extends TestCase
         $response = $this->get(route($routeName, $parameters));
 
         $response->assertRedirect(route('login'));
+    }
+
+    public function test_page_renders_sidebar_counts_for_messages_reviews_and_leads(): void
+    {
+        Conversation::factory()->unread()->count(2)->create();
+        Conversation::factory()->create();
+        Review::factory()->create();
+        Review::factory()->published()->create();
+        Lead::factory()->count(3)->create();
+        Lead::factory()->stage(LeadStage::Won)->create();
+
+        $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
+
+        $response->assertOk()->assertSee('"counts":{"messages":2,"reviews":1,"leads":3}', escape: false);
     }
 
     public function test_course_edit_page_passes_course_id_to_body(): void

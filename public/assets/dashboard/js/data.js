@@ -116,38 +116,6 @@
     { key: 'lost', label: 'مرفوض', color: '#e02424' },
   ];
 
-  const threads = [
-    { id: 1, name: 'محمد الخطيب', initial: 'م', color: '#0066ff', role: 'طالب · Next.js', time: '10:42', unread: true, messages: [
-      { me: false, text: 'مرحباً أستاذ، عندي مشكلة في الدرس 38، الـ Middleware ما بيحوّل على صفحة الدخول.', time: '10:30' },
-      { me: false, text: 'جربت أعيد تشغيل السيرفر وما زبطت.', time: '10:31' },
-      { me: true, text: 'أهلاً محمد، تأكد إن ملف middleware.js موجود في جذر المشروع مش داخل app.', time: '10:38' },
-      { me: false, text: 'كان هذا السبب! شكراً جزيلاً 🙏', time: '10:42' },
-    ] },
-    { id: 2, name: 'رامي حمدان', initial: 'ر', color: '#0e9f6e', role: 'عميل · محمصة البن', time: '09:15', unread: true, messages: [
-      { me: false, text: 'صباح الخير، اطلعت على العرض. ممكن نضيف اشتراكات شهرية للقهوة؟', time: '09:15' },
-    ] },
-    { id: 3, name: 'سارة النجار', initial: 'س', color: '#7c3aed', role: 'منسقة · حاضنة رواد', time: 'أمس', unread: false, messages: [
-      { me: false, text: 'هل يمكن تقسيم الورشة على يومين بدل يوم واحد؟', time: '14:02' },
-      { me: true, text: 'أكيد، يومين بـ 4 ساعات لكل يوم مناسبين أكثر للفريق.', time: '14:20' },
-    ] },
-    { id: 4, name: 'يوسف عودة', initial: 'ي', color: '#334155', role: 'طالب · أساسيات الويب', time: 'أمس', unread: false, messages: [
-      { me: false, text: 'متى تبدأ الدفعة القادمة من برنامج المطوّر المستقل؟', time: '11:10' },
-      { me: true, text: 'تبدأ 15 نوفمبر، والتسجيل مفتوح الآن.', time: '11:25' },
-    ] },
-    { id: 5, name: 'د. هبة يونس', initial: 'ه', color: '#c27803', role: 'عميلة · عيادة الابتسامة', time: '28 سبتمبر', unread: false, messages: [
-      { me: false, text: 'نحتاج نظام حجوزات بتذكير عبر واتساب، كم المدة المتوقعة؟', time: '16:40' },
-    ] },
-  ];
-
-  const reviews = [
-    { id: 1, name: 'محمد الخطيب', initial: 'م', color: '#0066ff', course: 'Next.js من الصفر إلى الإنتاج', rating: 5, date: '2026-09-29', text: 'أفضل دورة أخذتها. المشروع النهائي صار أول شيء في ملف أعمالي.', status: 'منشور', reply: 'شكراً محمد، فخور بمشروعك!' },
-    { id: 2, name: 'ليان سالم', initial: 'ل', color: '#7c3aed', course: 'أساسيات الويب الحديث', rating: 5, date: '2026-09-27', text: 'شرح واضح جداً ومناسب لمن يبدأ من الصفر.', status: 'منشور', reply: '' },
-    { id: 3, name: 'خالد منصور', initial: 'خ', color: '#334155', course: 'APIs باستخدام Node و PostgreSQL', rating: 4, date: '2026-09-25', text: 'محتوى قوي، أتمنى إضافة جزء عن الاختبارات بشكل أعمق.', status: 'بانتظار المراجعة', reply: '' },
-    { id: 4, name: 'نور الحسن', initial: 'ن', color: '#0e9f6e', course: 'برنامج المطوّر المستقل', rating: 5, date: '2026-09-22', text: 'حصلت على أول عميل خلال الأسبوع السادس من البرنامج.', status: 'منشور', reply: '' },
-    { id: 5, name: 'عمر قاسم', initial: 'ع', color: '#c27803', course: 'Git و GitHub للفرق', rating: 3, date: '2026-09-18', text: 'جيدة لكن قصيرة، كنت أتمنى أمثلة أكثر على حل التعارضات.', status: 'بانتظار المراجعة', reply: '' },
-    { id: 6, name: 'حساب مزعج', initial: 'ح', color: '#e02424', course: 'أساسيات الويب الحديث', rating: 1, date: '2026-09-15', text: 'اشترِ متابعين بأرخص الأسعار من موقعنا!!!', status: 'مخفي', reply: '' },
-  ];
-
 const toolCategories = [    { id: 'editor', name: 'المحرر', color: '#0066ff' },    { id: 'frontend', name: 'الواجهات', color: '#0891b2' },    { id: 'backend', name: 'الخلفية', color: '#0e9f6e' },    { id: 'deploy', name: 'النشر', color: '#0b0d12' },    { id: 'design', name: 'التصميم', color: '#7c3aed' },    { id: 'productivity', name: 'الإنتاجية', color: '#c27803' },  ];
   const tools = [
     { id: 'T-1', name: 'VS Code', short: 'VS', color: '#0066ff', category: 'editor', why: 'محرري الأساسي مع إعدادات مشتركة في كل مستودع.', since: 2019, url: 'https://code.visualstudio.com', affiliate: false, status: 'منشور', clicks: 1240 },
@@ -223,5 +191,5 @@ const toolCategories = [    { id: 'editor', name: 'المحرر', color: '#0066f
     { tone: '#0891b2', title: 'حجز 6 مقاعد في ورشة', text: 'Server Actions في Next.js عملياً', time: '29 سبتمبر' },
   ];
 
-  window.DB = { admin, courses, workshops, articles, tools, toolCategories, students, orders, leads, leadStages, threads, reviews, coupons, notifications, revenue, traffic, sources, funnel, topPages, activity, countries };
+  window.DB = { admin, courses, workshops, articles, tools, toolCategories, students, orders, leads, leadStages, coupons, notifications, revenue, traffic, sources, funnel, topPages, activity, countries };
 })();

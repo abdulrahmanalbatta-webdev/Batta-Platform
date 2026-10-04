@@ -133,9 +133,11 @@
   // the signed-in member (from Laravel) replaces the sample admin of data.js
   const USER = CFG.user || null;
   if (USER) DB.admin = { ...DB.admin, name: USER.name, email: USER.email, role: USER.role_label, initial: USER.initial };
-  const unreadMsgs = (DB.threads || []).filter((t) => t.unread).length;
-  const newLeads = (DB.leads || []).filter((l) => l.stage === 'new').length;
-  const pendingReviews = (DB.reviews || []).filter((r) => r.status === 'بانتظار المراجعة').length;
+  // sidebar badges from the server; pages update them with setNavCount after a change
+  const COUNTS = CFG.counts || {};
+  const unreadMsgs = COUNTS.messages || 0;
+  const newLeads = COUNTS.leads || 0;
+  const pendingReviews = COUNTS.reviews || 0;
 
   const NAV = [
     { label: 'الرئيسية', items: [

@@ -26,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('manage-content', fn (User $user): bool => $user->role->canManageContent());
         Gate::define('manage-students', fn (User $user): bool => $user->role->canManageStudents());
         Gate::define('manage-sales', fn (User $user): bool => $user->role->canManageSales());
+        Gate::define('answer-messages', fn (User $user): bool => $user->role->canAnswerMessages());
+        Gate::define('moderate-reviews', fn (User $user): bool => $user->role->canModerateReviews());
+        Gate::define('manage-leads', fn (User $user): bool => $user->role->canManageLeads());
 
         // matches the hint on the profile and reset pages: 8+ characters with a number, an upper-case and a lower-case letter
         Password::defaults(function (): Password {

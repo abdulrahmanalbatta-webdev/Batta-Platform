@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\SyncCurriculum;
+use App\Enums\ReviewStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CourseRequest;
 use App\Http\Resources\CourseResource;
@@ -26,6 +27,7 @@ class CourseController extends Controller
                 ->withCount(['lessons', 'enrollments'])
                 ->withSum('lessons', 'duration_seconds')
                 ->withSum('sales', 'total')
+                ->withAvg(['reviews' => fn ($query) => $query->where('status', ReviewStatus::Published)], 'rating')
                 ->latest()->latest('id')
                 ->get(),
         );

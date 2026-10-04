@@ -41,6 +41,9 @@ class UserResource extends JsonResource
                 'manage_content' => $this->role->canManageContent(),
                 'manage_students' => $this->role->canManageStudents(),
                 'manage_sales' => $this->role->canManageSales(),
+                'answer_messages' => $this->role->canAnswerMessages(),
+                'moderate_reviews' => $this->role->canModerateReviews(),
+                'manage_leads' => $this->role->canManageLeads(),
             ],
             'can' => [
                 'update' => $viewer?->can('update', $this->resource) ?? false,

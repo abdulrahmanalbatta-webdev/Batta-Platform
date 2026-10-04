@@ -54,6 +54,30 @@ enum Role: string
     }
 
     /**
+     * Replying to conversations, marking them read and deleting them.
+     */
+    public function canAnswerMessages(): bool
+    {
+        return in_array($this, [self::Owner, self::Admin, self::Support], true);
+    }
+
+    /**
+     * Publishing, hiding, replying to and deleting course reviews.
+     */
+    public function canModerateReviews(): bool
+    {
+        return in_array($this, [self::Owner, self::Admin, self::Editor, self::Support], true);
+    }
+
+    /**
+     * Adding, moving and deleting project requests.
+     */
+    public function canManageLeads(): bool
+    {
+        return in_array($this, [self::Owner, self::Admin], true);
+    }
+
+    /**
      * Roles this role may give to other members: only the owner appoints admins, and nobody appoints an owner.
      *
      * @return list<self>

@@ -4,17 +4,25 @@ use App\Http\Controllers\Api\AcceptedInvitationController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ArticleCoverController;
 use App\Http\Controllers\Api\AvatarController;
+use App\Http\Controllers\Api\ConversationAttachmentController;
+use App\Http\Controllers\Api\ConversationController;
+use App\Http\Controllers\Api\ConversationMessageController;
+use App\Http\Controllers\Api\ConversationReadController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\CourseCopyController;
 use App\Http\Controllers\Api\CourseCoverController;
 use App\Http\Controllers\Api\CourseStatusController;
+use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OrderFailureController;
 use App\Http\Controllers\Api\OrderInvoiceController;
 use App\Http\Controllers\Api\OrderPaymentController;
 use App\Http\Controllers\Api\OrderRefundController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\ReviewReplyController;
+use App\Http\Controllers\Api\ReviewStatusController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\StudentController;
@@ -95,5 +103,37 @@ Route::middleware('auth')->group(function () {
         Route::post('/orders/{order}/failure', [OrderFailureController::class, 'store'])->name('orders.failure.store');
         Route::post('/orders/{order}/invoice', [OrderInvoiceController::class, 'store'])->name('orders.invoice.store');
         Route::apiResource('coupons', CouponController::class)->only(['store', 'update', 'destroy']);
+    });
+
+    // messages: every member reads; owner, admin and support reply, mark read and delete (Role::canAnswerMessages)
+    Route::apiResource('conversations', ConversationController::class)->only(['index', 'show']);
+    Route::get('/conversations/{conversation}/messages/{message}/attachment', [ConversationAttachmentController::class, 'show'])
+        ->scopeBindings()
+        ->name('conversations.messages.attachment');
+
+    Route::middleware('can:answer-messages')->group(function () {
+        Route::apiResource('conversations', ConversationController::class)->only(['store', 'destroy']);
+        Route::post('/conversations/{conversation}/read', [ConversationReadController::class, 'store'])->name('conversations.read.store');
+        Route::delete('/conversations/{conversation}/read', [ConversationReadController::class, 'destroy'])->name('conversations.read.destroy');
+        Route::post('/conversations/{conversation}/messages', [ConversationMessageController::class, 'store'])
+            ->middleware('throttle:30,1')
+            ->name('conversations.messages.store');
+    });
+
+    // reviews: every member reads; owner, admin, editor and support moderate (Role::canModerateReviews)
+    Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+
+    Route::middleware('can:moderate-reviews')->group(function () {
+        Route::put('/reviews/{review}/status', [ReviewStatusController::class, 'update'])->name('reviews.status.update');
+        Route::put('/reviews/{review}/reply', [ReviewReplyController::class, 'update'])->name('reviews.reply.update');
+        Route::delete('/reviews/{review}/reply', [ReviewReplyController::class, 'destroy'])->name('reviews.reply.destroy');
+        Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    });
+
+    // project requests: every member reads; owner and admin manage the board (Role::canManageLeads)
+    Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
+
+    Route::middleware('can:manage-leads')->group(function () {
+        Route::apiResource('leads', LeadController::class)->only(['store', 'update', 'destroy']);
     });
 });

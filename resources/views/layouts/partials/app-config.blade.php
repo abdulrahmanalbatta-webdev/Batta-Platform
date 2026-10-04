@@ -1,10 +1,13 @@
-{{-- Route URLs, the API base, the asset base and the signed-in member for the dashboard scripts (js/app.js reads window.APP) --}}
+{{-- Route URLs, the API base, the asset base, the sidebar counts and the signed-in member for the dashboard scripts (js/app.js reads window.APP) --}}
 @use('App\Http\Resources\UserResource')
+@use('App\Support\NavCounts')
 @php
     $appConfig = [
         'assets' => asset('assets/dashboard'),
         'api' => url('dashboard/api/v1'),
         'user' => auth()->check() ? (new UserResource(auth()->user()))->resolve(request()) : null,
+        // unread conversations, reviews waiting for moderation and new project requests
+        'counts' => auth()->check() ? NavCounts::all() : null,
         'routes' => [
             'dashboard' => route('dashboard'),
             'analytics' => route('analytics'),

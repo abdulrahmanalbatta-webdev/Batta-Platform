@@ -73,6 +73,14 @@ class Course extends Model
     }
 
     /**
+     * @return HasMany<Review, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
      * Paid orders for this course (refunded and failed ones excluded).
      *
      * @return HasMany<Order, $this>

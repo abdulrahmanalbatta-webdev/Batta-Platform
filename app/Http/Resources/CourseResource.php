@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\ReviewStatus;
 use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Lesson;
@@ -51,8 +52,8 @@ class CourseResource extends JsonResource
             'hours' => round((int) ($this->lessons_sum_duration_seconds ?? $this->lessons()->sum('duration_seconds')) / 3600, 1),
             'students' => (int) ($this->enrollments_count ?? $this->enrollments()->count()),
             'revenue' => (float) ($this->sales_sum_total ?? $this->sales()->sum('total')),
-            // reviews arrive in phase 4
-            'rating' => 0,
+            // average of the published reviews, 0 while there are none
+            'rating' => round((float) ($this->reviews_avg_rating ?? $this->reviews()->where('status', ReviewStatus::Published)->avg('rating')), 1),
             'cover_url' => $this->cover_url,
             'updated' => $this->updated_at->toDateString(),
             $this->mergeWhen($this->withContent, fn (): array => [
