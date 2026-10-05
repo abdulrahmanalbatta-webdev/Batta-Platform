@@ -22,6 +22,11 @@ class SiteContent
     public const PHOTO_PATH = 'site/profile';
 
     /**
+     * Where images uploaded for the content (project covers and galleries) are kept, on the public disk.
+     */
+    public const IMAGES_DIR = 'site/images';
+
+    /**
      * Icons the site can draw (src/components/ui/BaseIcon.vue in the site).
      */
     public const ICONS = [
@@ -48,6 +53,11 @@ class SiteContent
         'github' => 'GitHub', 'linkedin' => 'LinkedIn', 'x' => 'X', 'youtube' => 'YouTube', 'instagram' => 'Instagram',
         'facebook' => 'Facebook', 'tiktok' => 'TikTok', 'behance' => 'Behance', 'dribbble' => 'Dribbble',
     ];
+
+    /**
+     * An uploaded content image, as stored: a path under IMAGES_DIR.
+     */
+    private const IMAGE_PATTERN = '#^site/images/[A-Za-z0-9._-]+$#';
 
     /** @var array<string, mixed>|null */
     private ?array $values = null;
@@ -150,6 +160,11 @@ class SiteContent
                     'value' => $text('الرقم', 20),
                     'label' => $text('الوصف', 40),
                 ]],
+                'cover' => ['type' => 'image', 'label' => 'صورة المشروع', 'hint' => 'تظهر على كرت المشروع وأعلى صفحته. عرضية (16:10) وواضحة.'],
+                'gallery' => ['type' => 'images', 'label' => 'معرض الصور', 'max_items' => 8, 'hint' => 'لقطات من المشروع تظهر في صفحته.'],
+                'client' => $text('العميل', 60, false),
+                'year' => $text('السنة', 10, false),
+                'link' => ['type' => 'url', 'label' => 'رابط المشروع المباشر', 'max' => 255, 'required' => false],
             ]],
             'testimonials' => ['group' => 'work', 'label' => 'آراء العملاء والطلاب', 'type' => 'list', 'max_items' => 20, 'title' => 'name', 'item' => [
                 'name' => $text('الاسم', 60),
@@ -328,13 +343,31 @@ class SiteContent
     }
 
     /**
-     * Save one section (already validated): only the fields the schema knows are kept.
+     * What the public site reads: every section with its images as full URLs.
+     *
+     * @return array<string, mixed>
+     */
+    public function forSite(): array
+    {
+        $values = $this->all();
+        foreach (self::definitions() as $key => $definition) {
+            $values[$key] = self::mapImages($definition, $values[$key], fn (?string $path): ?string => $path ? Storage::disk('public')->url($path) : null);
+        }
+
+        return $values;
+    }
+
+    /**
+     * Save one section (already validated): only the fields the schema knows are kept. Images it no longer uses
+     * are deleted.
      */
     public function update(string $key, mixed $value): mixed
     {
+        $before = $this->imagePaths();
         $clean = self::clean(self::definitions()[$key], $value);
         SiteBlock::query()->updateOrCreate(['key' => $key], ['value' => $clean]);
         $this->forget();
+        $this->deleteUnusedImages($before);
 
         return $clean;
     }
@@ -344,8 +377,59 @@ class SiteContent
      */
     public function reset(string $key): void
     {
+        $before = $this->imagePaths();
         SiteBlock::query()->whereKey($key)->delete();
         $this->forget();
+        $this->deleteUnusedImages($before);
+    }
+
+    /**
+     * Every uploaded image the content uses now.
+     *
+     * @return list<string>
+     */
+    private function imagePaths(): array
+    {
+        $paths = [];
+        foreach (self::definitions() as $key => $definition) {
+            self::mapImages($definition, $this->all()[$key], function (?string $path) use (&$paths): ?string {
+                if ($path) {
+                    $paths[] = $path;
+                }
+
+                return $path;
+            });
+        }
+
+        return array_values(array_unique($paths));
+    }
+
+    /**
+     * @param  list<string>  $before
+     */
+    private function deleteUnusedImages(array $before): void
+    {
+        $unused = array_diff($before, $this->imagePaths());
+        if ($unused) {
+            Storage::disk('public')->delete(array_values($unused));
+        }
+    }
+
+    /**
+     * Runs $map over every image path in a value, following its schema.
+     *
+     * @param  array<string, mixed>  $definition
+     * @param  callable(?string): ?string  $map
+     */
+    private static function mapImages(array $definition, mixed $value, callable $map): mixed
+    {
+        return match ($definition['type']) {
+            'image' => $map($value),
+            'images' => array_values(array_filter(array_map($map, $value ?? []))),
+            'object' => is_array($value) ? collect($definition['fields'])->map(fn (array $field, string $name): mixed => self::mapImages($field, $value[$name] ?? null, $map))->all() : $value,
+            'list' => is_array($value) ? array_map(fn ($item): mixed => is_array($item) ? [...$item, ...collect($definition['item'])->map(fn (array $field, string $name): mixed => self::mapImages($field, $item[$name] ?? null, $map))->all()] : $item, $value) : $value,
+            default => $value,
+        };
     }
 
     public function setPhoto(?string $path): void
@@ -396,6 +480,8 @@ class SiteContent
             'text', 'textarea' => [$path => [$required, 'string', 'max:'.($definition['max'] ?? 1000), ...(isset($definition['pattern']) ? ['regex:'.$definition['pattern']] : [])]],
             'url' => [$path => [$required, 'string', 'max:255', 'url:http,https']],
             'bool' => [$path => ['boolean']],
+            'image' => [$path => ['nullable', 'string', 'max:255', 'regex:'.self::IMAGE_PATTERN]],
+            'images' => [$path => ['nullable', 'array', 'max:'.$definition['max_items']], "{$path}.*" => ['required', 'string', 'max:255', 'regex:'.self::IMAGE_PATTERN]],
             'icon' => [$path => ['required', Rule::in(array_keys(self::ICONS))]],
             'select' => [$path => ['required', Rule::in(array_keys($definition['options']))]],
         };
@@ -414,7 +500,7 @@ class SiteContent
         return match ($definition['type']) {
             'object' => [...$own, ...collect($definition['fields'])->flatMap(fn (array $field, string $name): array => self::attributes($field, "{$path}.{$name}"))->all()],
             'list' => [...$own, ...collect($definition['item'])->flatMap(fn (array $field, string $name): array => self::attributes($field, "{$path}.*.{$name}"))->all()],
-            'strings', 'tags' => [...$own, "{$path}.*" => $definition['label']],
+            'strings', 'tags', 'images' => [...$own, "{$path}.*" => $definition['label']],
             default => $own,
         };
     }
@@ -427,6 +513,13 @@ class SiteContent
      */
     private static function withDefaults(array $definition, mixed $value, mixed $default): mixed
     {
+        // items of a list saved before a field existed: that field starts empty
+        if ($definition['type'] === 'list' && is_array($value)) {
+            return array_map(fn ($item): mixed => is_array($item)
+                ? collect($definition['item'])->map(fn (array $field, string $name): mixed => array_key_exists($name, $item) ? self::withDefaults($field, $item[$name], null) : self::blank($field))->all()
+                : $item, $value);
+        }
+
         if ($definition['type'] !== 'object' || ! is_array($value)) {
             return $value;
         }
@@ -434,6 +527,22 @@ class SiteContent
         return collect($definition['fields'])->map(fn (array $field, string $name): mixed => array_key_exists($name, $value)
             ? self::withDefaults($field, $value[$name], $default[$name] ?? null)
             : ($default[$name] ?? null))->all();
+    }
+
+    /**
+     * An empty value of a field's type.
+     *
+     * @param  array<string, mixed>  $definition
+     */
+    private static function blank(array $definition): mixed
+    {
+        return match ($definition['type']) {
+            'object' => collect($definition['fields'])->map(fn (array $field): mixed => self::blank($field))->all(),
+            'list', 'strings', 'tags', 'images' => [],
+            'bool' => false,
+            'image', 'url' => null,
+            default => '',
+        };
     }
 
     /**
@@ -446,7 +555,7 @@ class SiteContent
         return match ($definition['type']) {
             'object' => collect($definition['fields'])->map(fn (array $field, string $name): mixed => self::clean($field, $value[$name] ?? null))->all(),
             'list' => array_values(array_map(fn ($item): array => collect($definition['item'])->map(fn (array $field, string $name): mixed => self::clean($field, $item[$name] ?? null))->all(), $value ?? [])),
-            'strings', 'tags' => array_values(array_map('strval', $value ?? [])),
+            'strings', 'tags', 'images' => array_values(array_map('strval', $value ?? [])),
             'bool' => (bool) $value,
             default => $value === null ? null : (string) $value,
         };

@@ -11,6 +11,7 @@ document.addEventListener('app:ready', async () => {
     return;
   }
   const { definitions, groups, icons } = res.meta;
+  const storageUrl = res.meta.storage_url;
   // what is being edited, per section; only "حفظ" sends it
   const state = Object.fromEntries(Object.keys(definitions).map((k) => [k, structuredClone(res.data[k])]));
   let photo = res.data.photo;
@@ -25,7 +26,8 @@ document.addEventListener('app:ready', async () => {
   // an empty item for a list, from its fields
   const blank = (def) => {
     if (def.type === 'object') return Object.fromEntries(Object.entries(def.fields).map(([k, f]) => [k, blank(f)]));
-    if (['list', 'strings', 'tags'].includes(def.type)) return [];
+    if (['list', 'strings', 'tags', 'images'].includes(def.type)) return [];
+    if (def.type === 'image') return null;
     if (def.type === 'bool') return false;
     if (def.type === 'icon') return Object.keys(icons)[0];
     if (def.type === 'select') return Object.keys(def.options)[0];
@@ -71,6 +73,12 @@ document.addEventListener('app:ready', async () => {
             return `<div class="sc-row">${input}${canEdit ? moveButtons(path, i, value.length) : ''}</div>`;
           })
           .join('')}</div>${canEdit && value.length < def.max_items ? `<button type="button" class="btn btn-ghost btn-sm" data-add="${enc(path)}" style="align-self:flex-start">${icon('plus', 'sm')}إضافة</button>` : ''}${hint}</div>`;
+      case 'image':
+        return `<div class="field full">${label}<div class="sc-images">${value ? thumb(path, value) : canEdit ? uploader(path, false) : '<span class="muted">لا توجد صورة</span>'}</div>${hint}</div>`;
+      case 'images': {
+        const images = value ?? [];
+        return `<div class="field full">${label}<div class="sc-images">${images.map((src, i) => thumb(path, src, i)).join('')}${canEdit && images.length < def.max_items ? uploader(path, true) : ''}</div>${hint}</div>`;
+      }
       case 'list':
         return `<div class="field full">${label}${list(def, path)}</div>`;
       case 'object': {
@@ -82,6 +90,10 @@ document.addEventListener('app:ready', async () => {
         return '';
     }
   }
+
+  // uploaded content images: a thumbnail with a remove button, and an upload tile
+  const thumb = (path, src, i) => `<figure class="sc-thumb"><img src="${esc(`${storageUrl}/${src}`)}" alt="" loading="lazy">${canEdit ? `<button type="button" class="btn-icon danger" data-image-remove="${enc(path)}" ${i === undefined ? '' : `data-index="${i}"`} aria-label="إزالة الصورة" title="إزالة">${icon('trash', 'sm')}</button>` : ''}</figure>`;
+  const uploader = (path, many) => `<label class="sc-upload">${icon('upload')}<span>${many ? 'إضافة صور' : 'رفع صورة'}</span><input type="file" accept="image/jpeg,image/png,image/webp" ${many ? 'multiple' : ''} data-upload="${enc(path)}" data-many="${many ? 1 : ''}" hidden></label>`;
 
   const moveButtons = (path, i, count) => `
     <button type="button" class="btn-icon" data-move="${enc(path)}" data-from="${i}" data-to="${i - 1}" ${i === 0 ? 'disabled' : ''} aria-label="لأعلى" title="لأعلى">${icon('arrow-up', 'sm')}</button>
@@ -169,7 +181,45 @@ document.addEventListener('app:ready', async () => {
     dirty.add(path[0]);
   });
 
+  // content images: uploaded right away, kept in the section until "حفظ"
+  panels.addEventListener('change', async (e) => {
+    const input = e.target.closest('[data-upload]');
+    if (!input?.files.length) return;
+    const path = JSON.parse(input.dataset.upload);
+    const files = [...input.files];
+    const label = input.closest('.sc-upload');
+    label.classList.add('busy');
+    for (const file of input.dataset.many ? files : files.slice(0, 1)) {
+      if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+        toast('اختر صورة بصيغة JPG أو PNG أو WebP', 'error');
+        continue;
+      }
+      const form = new FormData();
+      form.append('image', await App.shrinkImage(file));
+      let uploaded;
+      try {
+        uploaded = (await api.post('site-images', form)).data;
+      } catch (err) {
+        showFieldErrors(err);
+        break;
+      }
+      if (input.dataset.many) getAt(path).push(uploaded.path);
+      else setAt(path, uploaded.path);
+    }
+    dirty.add(path[0]);
+    redraw(path[0]);
+    toast('تم رفع الصورة، اضغط "حفظ" لتظهر في الموقع');
+  });
+
   panels.addEventListener('click', async (e) => {
+    const remove = e.target.closest('[data-image-remove]');
+    if (remove) {
+      const path = JSON.parse(remove.dataset.imageRemove);
+      if (remove.dataset.index === undefined) setAt(path, null);
+      else getAt(path).splice(Number(remove.dataset.index), 1);
+      dirty.add(path[0]);
+      return redraw(path[0]);
+    }
     const b = e.target.closest('button');
     if (!b) return;
     if (b.closest('summary')) e.preventDefault(); // buttons in a summary don't toggle it

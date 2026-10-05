@@ -7,6 +7,7 @@ use App\Models\Activity;
 use App\Support\SiteContent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SiteContentController extends Controller
 {
@@ -21,6 +22,8 @@ class SiteContentController extends Controller
                 'definitions' => SiteContent::definitions(),
                 'groups' => SiteContent::groups(),
                 'icons' => SiteContent::ICONS,
+                // content images are stored as paths; the editor shows them from here
+                'storage_url' => rtrim(Storage::disk('public')->url(''), '/'),
             ],
         ]);
     }
