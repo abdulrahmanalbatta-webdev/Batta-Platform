@@ -56,9 +56,9 @@ document.addEventListener('app:ready', () => {
     e.target.value = '';
     if (!f) return;
     if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return toast('اختر صورة بصيغة JPG أو PNG أو WebP', 'error');
-    if (f.size > 3 * 1024 * 1024) return toast('الحد الأقصى 3MB', 'error');
+    if (f.size > 20 * 1024 * 1024) return toast('الحد الأقصى 20MB', 'error');
     const body = new FormData();
-    body.append('avatar', f);
+    body.append('avatar', await App.shrinkImage(f, 800));
     try {
       me = (await api.post('profile/avatar', body)).data;
     } catch (err) {

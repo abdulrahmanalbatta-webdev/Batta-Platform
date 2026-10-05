@@ -117,7 +117,7 @@ document.addEventListener('app:ready', async () => {
     const f = e.target.files[0];
     if (!f) return;
     if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return toast('اختر صورة بصيغة JPG أو PNG أو WebP', 'error');
-    if (f.size > 5 * 1024 * 1024) return toast('الحد الأقصى للصورة 5MB', 'error');
+    if (f.size > 20 * 1024 * 1024) return toast('الحد الأقصى للصورة 20MB', 'error');
     coverFile = f;
     showCover(URL.createObjectURL(f));
   });
@@ -232,7 +232,7 @@ document.addEventListener('app:ready', async () => {
         existing = (await (existing ? api.put(`articles/${existing.id}`, data) : api.post('articles', data))).data;
         if (coverFile) {
           const form = new FormData();
-          form.append('cover', coverFile);
+          form.append('cover', await App.shrinkImage(coverFile));
           existing = (await api.post(`articles/${existing.id}/cover`, form)).data;
           coverFile = null;
         }

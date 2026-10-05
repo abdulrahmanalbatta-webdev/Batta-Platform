@@ -162,7 +162,7 @@ return [
     'string' => 'حقل :attribute يجب أن يكون نصاً.',
     'timezone' => 'حقل :attribute يجب أن يكون منطقة زمنية صحيحة.',
     'unique' => ':attribute مستخدم مسبقاً.',
-    'uploaded' => 'فشل رفع :attribute.',
+    'uploaded' => 'تعذّر رفع :attribute، غالباً لأن حجمها أكبر من الحد الذي يقبله الخادم.',
     'uppercase' => 'حقل :attribute يجب أن يكون بحروف كبيرة.',
     'url' => 'حقل :attribute يجب أن يكون رابطاً صحيحاً.',
     'ulid' => 'حقل :attribute يجب أن يكون ULID صحيحاً.',
@@ -198,6 +198,8 @@ return [
         'github' => 'حساب GitHub',
         'linkedin' => 'حساب LinkedIn',
         'avatar' => 'الصورة',
+        'cover' => 'صورة الغلاف',
+        'photo' => 'الصورة',
         'token' => 'رمز الاستعادة',
     ],
 
