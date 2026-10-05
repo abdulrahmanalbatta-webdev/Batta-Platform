@@ -937,6 +937,23 @@
       if (key) inFlight.delete(key);
     }
   }
+  // PHP prints its own warnings (an upload it couldn't store, a misconfigured php.ini) before Laravel's JSON when
+  // display_errors is on; the reply is still read, and the warning goes to the console to show what PHP said
+  function parseReply(text) {
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch {
+      const start = text.indexOf('{"');
+      if (start < 0) return null;
+      console.warn('The server printed this before its reply:', text.slice(0, start).replace(/<[^>]+>/g, '').trim());
+      try {
+        return JSON.parse(text.slice(start));
+      } catch {
+        return null;
+      }
+    }
+  }
   async function send(method, path, data) {
     const headers = {
       Accept: 'application/json',
@@ -956,7 +973,7 @@
       toast('تعذّر الاتصال بالخادم، تحقق من اتصالك بالإنترنت', 'error');
       throw new ApiError(0);
     }
-    const json = res.status === 204 ? null : await res.json().catch(() => null);
+    const json = res.status === 204 ? null : parseReply(await res.text().catch(() => ''));
     if (res.ok) return json;
     const err = new ApiError(res.status, json);
     if (res.status === 401) location.href = url('login');
