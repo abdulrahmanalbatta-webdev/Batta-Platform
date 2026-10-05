@@ -96,7 +96,7 @@ class PlatformSettings
 
             // team notifications
             'weekly_report' => ['label' => 'التقرير الأسبوعي', 'default' => true, 'rules' => $bool],
-            'newsletter_new_articles' => ['label' => 'إرسال المقالات الجديدة للطلاب', 'default' => false, 'rules' => $bool],
+            'newsletter_new_articles' => ['label' => 'إرسال المقالات الجديدة للطلاب والمشتركين', 'default' => false, 'rules' => $bool],
 
             // security
             'new_device_alert' => ['label' => 'تنبيه الدخول من جهاز جديد', 'default' => true, 'rules' => $bool],

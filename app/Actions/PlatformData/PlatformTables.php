@@ -17,6 +17,7 @@ final class PlatformTables
         'orders',
         'coupons',
         'students',
+        'subscribers',
         'leads',
         'lessons',
         'course_modules',
