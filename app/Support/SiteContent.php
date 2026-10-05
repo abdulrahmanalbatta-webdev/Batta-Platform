@@ -193,6 +193,10 @@ class SiteContent
                         'title' => $text('العنوان', 60),
                         'text' => $text('الوصف', 160),
                     ]],
+                    'budgets' => ['type' => 'list', 'label' => 'خيارات الميزانية في النموذج', 'max_items' => 8, 'title' => 'label', 'item' => [
+                        'label' => $text('كما تظهر للزائر', 40),
+                        'amount' => ['type' => 'text', 'label' => 'المبلغ بالدولار (يُحفظ مع الطلب)', 'max' => 7, 'required' => true, 'pattern' => '/^[0-9]{1,7}$/', 'hint' => 'أعلى الفئة، أو بدايتها للفئة الأخيرة'],
+                    ]],
                 ]),
                 'work' => $block('صفحة الأعمال', [
                     'text' => $long('المقدمة', 300),
@@ -226,8 +230,14 @@ class SiteContent
                 ]),
                 'enroll' => $block('صفحة التسجيل في دورة', ['text' => $long('المقدمة', 300)]),
             ]],
+            'seo' => ['group' => 'texts', 'label' => 'محركات البحث والمشاركة', 'hint' => 'كيف يظهر موقعك في نتائج جوجل وعند مشاركة رابطه على واتساب وفيسبوك. يُثبَّت في الموقع عند نشره (npm run build).', 'type' => 'object', 'fields' => [
+                'title' => $text('عنوان الموقع (تبويب المتصفح والرئيسية)', 70),
+                'description' => $long('الوصف في نتائج البحث', 300),
+                'share_description' => $text('الوصف عند المشاركة', 200),
+            ]],
             'texts_general' => ['group' => 'texts', 'label' => 'التذييل وصفحات الدخول', 'type' => 'object', 'fields' => [
                 'footer' => $block('التذييل', ['text' => $text('النبذة (بعد المسمّى)', 200)]),
+                'maintenance' => $block('رسالة وضع الصيانة', ['title' => $text('العنوان', 60), 'text' => $text('النص', 200)]),
                 'login' => $block('تسجيل الدخول', ['title' => $text('العنوان', 60), 'text' => $text('المقدمة', 160)]),
                 'register' => $block('إنشاء حساب', ['title' => $text('العنوان', 60), 'text' => $text('المقدمة', 160)]),
                 'auth' => $block('الجانب الملوّن في صفحتي الدخول والتسجيل', [

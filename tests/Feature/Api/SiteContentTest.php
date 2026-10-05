@@ -118,6 +118,20 @@ class SiteContentTest extends TestCase
         $this->assertSame('حقل العنوان مطلوب.', $invalid->json('errors')['value.login.title'][0]);
     }
 
+    public function test_budget_options_keep_a_whole_dollar_amount(): void
+    {
+        $editor = User::factory()->role(Role::Editor)->create();
+        $texts = SiteContent::defaults()['texts_pages'];
+        $texts['contact']['budgets'] = [['label' => 'حوالي ألف', 'amount' => '1,000']];
+
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'texts_pages'), ['value' => $texts])
+            ->assertJsonValidationErrors('value.contact.budgets.0.amount');
+
+        $texts['contact']['budgets'][0]['amount'] = '1000';
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'texts_pages'), ['value' => $texts])->assertOk();
+        $this->getJson(route('site.content'))->assertJsonPath('data.texts_pages.contact.budgets.0', ['label' => 'حوالي ألف', 'amount' => '1000']);
+    }
+
     /**
      * A real PNG of the given size, built without the GD extension (as in AvatarControllerTest).
      */
