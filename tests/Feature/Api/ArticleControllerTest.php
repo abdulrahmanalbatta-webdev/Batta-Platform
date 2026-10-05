@@ -161,6 +161,19 @@ class ArticleControllerTest extends TestCase
         Storage::disk('public')->assertExists($article->fresh()->cover_path);
     }
 
+    public function test_a_cover_php_could_not_store_says_why(): void
+    {
+        $article = Article::factory()->create();
+        $file = fn (int $error): UploadedFile => new UploadedFile(UploadedFile::fake()->createWithContent('cover.png', 'x')->getPathname(), 'cover.png', 'image/png', $error, true);
+
+        $tmp = $this->actingAs($this->editor())->postJson(route('api.articles.cover.store', $article), ['cover' => $file(UPLOAD_ERR_CANT_WRITE)])
+            ->assertJsonValidationErrors('cover');
+        $this->assertSame('تعذّر رفع صورة الغلاف لأن الخادم لم يستطع حفظها مؤقتاً: تأكد أن مجلد upload_tmp_dir في php.ini موجود وقابل للكتابة.', $tmp->json('errors.cover.0'));
+
+        $size = $this->actingAs($this->editor())->postJson(route('api.articles.cover.store', $article), ['cover' => $file(UPLOAD_ERR_INI_SIZE)]);
+        $this->assertStringContainsString('upload_max_filesize', $size->json('errors.cover.0'));
+    }
+
     public function test_deletes_article(): void
     {
         $article = Article::factory()->create();

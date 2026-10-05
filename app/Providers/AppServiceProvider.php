@@ -6,11 +6,15 @@ use App\Models\Student;
 use App\Models\User;
 use App\Support\PlatformSettings;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -64,6 +68,26 @@ class AppServiceProvider extends ServiceProvider
             $rule = Password::min(8)->mixedCase()->numbers();
 
             return $this->app->isProduction() ? $rule->uncompromised() : $rule;
+        });
+
+        $this->explainFailedUploads();
+    }
+
+    /**
+     * "تعذّر رفع الصورة" says why PHP dropped the file: too big for php.ini, or a temp folder it cannot write to.
+     */
+    private function explainFailedUploads(): void
+    {
+        Validator::replacer('uploaded', function (string $message, string $attribute, string $rule, array $parameters, ValidatorContract $validator): string {
+            $file = Arr::get($validator->getData(), $attribute);
+            $name = trans()->has("validation.attributes.{$attribute}") ? __("validation.attributes.{$attribute}") : $attribute;
+
+            return match ($file instanceof UploadedFile ? $file->getError() : null) {
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => __('تعذّر رفع :name لأن حجمها أكبر مما يسمح به الخادم (upload_max_filesize في php.ini).', ['name' => $name]),
+                UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_CANT_WRITE => __('تعذّر رفع :name لأن الخادم لم يستطع حفظها مؤقتاً: تأكد أن مجلد upload_tmp_dir في php.ini موجود وقابل للكتابة.', ['name' => $name]),
+                UPLOAD_ERR_PARTIAL => __('انقطع رفع :name قبل اكتماله، حاول مرة أخرى.', ['name' => $name]),
+                default => $message,
+            };
         });
     }
 
