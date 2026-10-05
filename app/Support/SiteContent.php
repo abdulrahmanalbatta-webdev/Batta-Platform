@@ -235,8 +235,49 @@ class SiteContent
                 'description' => $long('الوصف في نتائج البحث', 300),
                 'share_description' => $text('الوصف عند المشاركة', 200),
             ]],
+            'texts_ui' => ['group' => 'texts', 'label' => 'الأزرار والعناوين', 'hint' => 'أسماء الصفحات (تظهر في العنوان والقائمة والتذييل)، نصوص الأزرار، ورسائل الصفحات الفارغة.', 'type' => 'object', 'fields' => [
+                'pages' => $block('أسماء الصفحات', [
+                    'services' => $text('الخدمات', 30), 'work' => $text('الأعمال', 30), 'about' => $text('من أنا', 30),
+                    'courses' => $text('الدورات', 30), 'workshops' => $text('الورش', 30), 'academy' => $text('مجموعة الدورات والورش', 30),
+                    'articles' => $text('المقالات', 30), 'tools' => $text('الأدوات', 30), 'resources' => $text('مجموعة المقالات والأدوات', 30),
+                ]),
+                'menu' => $block('وصف الصفحات في القائمة', [
+                    'courses' => $text('الدورات', 80), 'workshops' => $text('الورش', 80), 'articles' => $text('المقالات', 80), 'tools' => $text('الأدوات', 80),
+                ]),
+                'buttons' => $block('الأزرار', [
+                    'quote' => $text('طلب عرض سعر (الرئيسية والقائمة)', 40),
+                    'see_work' => $text('مشاهدة الأعمال (الرئيسية)', 40),
+                    'service_more' => $text('على بطاقة الخدمة', 40),
+                    'request_service' => $text('أسفل الخدمات (الرئيسية)', 40),
+                    'consult' => $text('لماذا تعمل معي', 40),
+                    'read_story' => $text('من أنا (الرئيسية)', 40),
+                    'all_projects' => $text('أسفل المشاريع المميزة', 40),
+                    'ask' => $text('أسفل الأسئلة الشائعة', 40),
+                    'start_project' => $text('الدعوة الأخيرة: الزر الأساسي', 40),
+                    'start_learning' => $text('الدعوة الأخيرة: الزر الثاني', 40),
+                    'all_courses' => $text('أسفل الدورات (الرئيسية)', 40),
+                    'all_articles' => $text('أسفل المقالات (الرئيسية)', 40),
+                    'order_service' => $text('صفحة الخدمات: على كل خدمة', 40),
+                    'book_call' => $text('صفحة الخدمات: على كل باقة', 40),
+                    'popular' => $text('شارة الباقة المميّزة', 30),
+                    'work_cta' => $text('صفحة الأعمال', 40),
+                    'about_work' => $text('من أنا: الزر الأساسي', 40),
+                    'about_learn' => $text('من أنا: الزر الثاني', 40),
+                    'all_tools' => $text('من أنا: أسفل المهارات', 60),
+                    'private_workshop' => $text('الورش الخاصة', 40),
+                    'subscribe' => $text('الاشتراك في النشرة', 40),
+                    'about_author' => $text('أسفل كل مقال (عنك)', 40),
+                    'enroll' => $text('صفحة الدورة: التسجيل', 40),
+                    'book_seat' => $text('بطاقة الورشة: الحجز', 40),
+                    'seats_full' => $text('بطاقة الورشة: اكتملت', 40),
+                ]),
+                'empty' => $block('عند عدم وجود محتوى', [
+                    'courses' => $text('الدورات', 120), 'workshops' => $text('الورش', 120), 'tools' => $text('الأدوات', 120), 'enroll' => $text('صفحة التسجيل', 120),
+                ]),
+                'not_found' => $block('صفحة غير موجودة (404)', ['text' => $text('النص', 160), 'button' => $text('الزر', 40)]),
+            ]],
             'texts_general' => ['group' => 'texts', 'label' => 'التذييل وصفحات الدخول', 'type' => 'object', 'fields' => [
-                'footer' => $block('التذييل', ['text' => $text('النبذة (بعد المسمّى)', 200)]),
+                'footer' => $block('التذييل', ['text' => $text('النبذة (بعد المسمّى)', 200), 'made_with' => $text('السطر الصغير أسفل التذييل', 60, false, 'مثل: صُنع بـ Vue. اتركه فارغاً لإخفائه')]),
                 'maintenance' => $block('رسالة وضع الصيانة', ['title' => $text('العنوان', 60), 'text' => $text('النص', 200)]),
                 'login' => $block('تسجيل الدخول', ['title' => $text('العنوان', 60), 'text' => $text('المقدمة', 160)]),
                 'register' => $block('إنشاء حساب', ['title' => $text('العنوان', 60), 'text' => $text('المقدمة', 160)]),
@@ -278,8 +319,8 @@ class SiteContent
         $defaults = self::defaults();
 
         $values = [];
-        foreach (array_keys(self::definitions()) as $key) {
-            $values[$key] = $saved[$key] ?? $defaults[$key];
+        foreach (self::definitions() as $key => $definition) {
+            $values[$key] = isset($saved[$key]) ? self::withDefaults($definition, $saved[$key], $defaults[$key]) : $defaults[$key];
         }
         $values['photo'] = isset($saved['photo']['path']) ? Storage::disk('public')->url($saved['photo']['path']) : null;
 
@@ -376,6 +417,23 @@ class SiteContent
             'strings', 'tags' => [...$own, "{$path}.*" => $definition['label']],
             default => $own,
         };
+    }
+
+    /**
+     * A section saved before a field was added to it gets that field's original text, so the site never meets a
+     * missing key.
+     *
+     * @param  array<string, mixed>  $definition
+     */
+    private static function withDefaults(array $definition, mixed $value, mixed $default): mixed
+    {
+        if ($definition['type'] !== 'object' || ! is_array($value)) {
+            return $value;
+        }
+
+        return collect($definition['fields'])->map(fn (array $field, string $name): mixed => array_key_exists($name, $value)
+            ? self::withDefaults($field, $value[$name], $default[$name] ?? null)
+            : ($default[$name] ?? null))->all();
     }
 
     /**
