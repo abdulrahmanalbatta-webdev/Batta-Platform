@@ -24,6 +24,26 @@ class BackupDatabaseTest extends TestCase
         unlink($database);
     }
 
+    public function test_dumps_mysql_without_a_shell_and_gzips_it(): void
+    {
+        Storage::fake('local');
+        // a stand-in mysqldump that writes its arguments and MYSQL_PWD into --result-file
+        $bin = sys_get_temp_dir().'/fake-mysqldump-'.uniqid();
+        mkdir($bin);
+        file_put_contents($bin.'/mysqldump', "#!/bin/sh\nfor a in \"\$@\"; do case \$a in --result-file=*) f=\${a#--result-file=};; esac; done\necho \"-- dump \$* pwd=\$MYSQL_PWD\" > \"\$f\"\n");
+        chmod($bin.'/mysqldump', 0755);
+        config(['database.connections.dump_test' => ['driver' => 'mysql', 'host' => '127.0.0.1', 'port' => 3306, 'username' => 'root', 'password' => 'p@ss word', 'database' => 'batta'], 'database.default' => 'dump_test']);
+
+        $this->artisan('app:backup-database', ['--binary' => $bin.'/mysqldump'])->assertSuccessful();
+
+        $file = Storage::disk('local')->files('backups')[0];
+        $this->assertStringEndsWith('.sql.gz', $file);
+        $dump = gzdecode(Storage::disk('local')->get($file));
+        $this->assertStringContainsString('--single-transaction', $dump);
+        $this->assertStringContainsString('pwd=p@ss word', $dump);
+        $this->assertStringNotContainsString('p@ss word --', explode('pwd=', $dump)[0]);
+    }
+
     public function test_an_in_memory_database_cannot_be_backed_up(): void
     {
         Storage::fake('local');

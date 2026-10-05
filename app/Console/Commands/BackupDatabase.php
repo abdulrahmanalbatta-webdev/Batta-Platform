@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 
-#[Signature('app:backup-database {--keep=14 : Days to keep older backups}')]
+#[Signature('app:backup-database {--keep=14 : Days to keep older backups} {--binary= : The mysqldump program (default: MYSQLDUMP_BINARY or "mysqldump" on PATH)}')]
 #[Description('Back up the database to storage/app/private/backups (mysqldump for MySQL, a file copy for SQLite)')]
 class BackupDatabase extends Command
 {
@@ -32,7 +32,9 @@ class BackupDatabase extends Command
         };
 
         if ($path === null) {
-            $this->error("No backup for the {$config['driver']} driver (or an in-memory database).");
+            $this->error(in_array($config['driver'], ['mysql', 'mariadb', 'sqlite'], true)
+                ? 'The backup failed (see above), or the SQLite database is in memory.'
+                : "No backup for the {$config['driver']} driver.");
 
             return self::FAILURE;
         }
@@ -44,29 +46,49 @@ class BackupDatabase extends Command
     }
 
     /**
-     * mysqldump in one consistent snapshot, gzipped; the password goes through the environment, not the command line.
+     * mysqldump in one consistent snapshot, then gzipped. No shell: the arguments go to mysqldump as they are,
+     * and the password through the environment rather than the command line.
      *
      * @param  array<string, mixed>  $config
      */
     private function dumpMysql(array $config, string $target): ?string
     {
-        $command = sprintf(
-            'mysqldump --single-transaction --quick --routines --no-tablespaces --host=%s --port=%s --user=%s %s | gzip > %s',
-            escapeshellarg((string) $config['host']), escapeshellarg((string) $config['port']), escapeshellarg((string) $config['username']),
-            escapeshellarg((string) $config['database']), escapeshellarg($target),
-        );
+        $plain = substr($target, 0, -3);
 
-        $process = Process::fromShellCommandline('set -o pipefail; '.$command, null, ['MYSQL_PWD' => (string) $config['password']], null, 3600);
+        $process = new Process([
+            $this->option('binary') ?: config('database.mysqldump'), '--single-transaction', '--quick', '--routines', '--no-tablespaces',
+            '--host='.$config['host'], '--port='.$config['port'], '--user='.$config['username'],
+            '--result-file='.$plain, (string) $config['database'],
+        ], null, ['MYSQL_PWD' => (string) $config['password']], null, 3600);
         $process->run();
 
         if (! $process->isSuccessful()) {
-            @unlink($target);
+            @unlink($plain);
             $this->error(trim($process->getErrorOutput()) ?: 'mysqldump failed.');
 
             return null;
         }
 
+        $this->gzip($plain, $target);
+
         return $target;
+    }
+
+    /**
+     * Compress a file 1 MB at a time and remove the original.
+     */
+    private function gzip(string $source, string $target): void
+    {
+        $in = fopen($source, 'rb');
+        $out = gzopen($target, 'wb6');
+
+        while (! feof($in)) {
+            gzwrite($out, (string) fread($in, 1024 * 1024));
+        }
+
+        fclose($in);
+        gzclose($out);
+        unlink($source);
     }
 
     /**
