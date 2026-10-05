@@ -47,6 +47,7 @@ class BackupDatabaseTest extends TestCase
     public function test_an_in_memory_database_cannot_be_backed_up(): void
     {
         Storage::fake('local');
+        config(['database.connections.memory_test' => ['driver' => 'sqlite', 'database' => ':memory:'], 'database.default' => 'memory_test']);
 
         $this->artisan('app:backup-database')->assertFailed();
     }
