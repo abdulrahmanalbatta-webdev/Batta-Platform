@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Site;
 
+use App\Enums\LeadStage;
 use App\Models\Article;
 use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Enrollment;
+use App\Models\Lead;
 use App\Models\Lesson;
 use App\Models\Review;
 use App\Models\Student;
@@ -155,5 +157,22 @@ class SiteContentTest extends TestCase
 
         $this->postJson(route('site.tools.click', $tool))->assertNoContent();
         $this->assertSame(1, $tool->fresh()->clicks);
+    }
+
+    public function test_stats_are_the_real_counts(): void
+    {
+        Student::factory()->count(3)->create();
+        Course::factory()->published()->count(2)->create();
+        Course::factory()->create();
+        Lead::factory()->create(['stage' => LeadStage::Won]);
+        Lead::factory()->create(['stage' => LeadStage::New]);
+        Article::factory()->published()->create();
+        Review::factory()->published()->create(['rating' => 5]);
+        Review::factory()->published()->create(['rating' => 4]);
+        Review::factory()->hidden()->create(['rating' => 1]);
+
+        $this->getJson(route('site.stats'))
+            ->assertOk()
+            ->assertExactJson(['data' => ['students' => 3 + 3 /* the reviews' students */, 'courses' => 2, 'projects' => 1, 'articles' => 1, 'reviews' => 2, 'rating' => 4.5]]);
     }
 }

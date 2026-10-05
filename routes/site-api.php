@@ -12,6 +12,7 @@ use App\Http\Controllers\Site\MyReviewController;
 use App\Http\Controllers\Site\ProjectRequestController;
 use App\Http\Controllers\Site\RegisteredStudentController;
 use App\Http\Controllers\Site\SettingsController;
+use App\Http\Controllers\Site\StatsController;
 use App\Http\Controllers\Site\StudentNewPasswordController;
 use App\Http\Controllers\Site\StudentPasswordResetLinkController;
 use App\Http\Controllers\Site\StudentTokenController;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/settings', SettingsController::class)->name('settings');
+Route::get('/stats', StatsController::class)->name('stats');
 
 Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
 Route::get('/courses/{slug}', [CourseController::class, 'show'])->name('courses.show');
