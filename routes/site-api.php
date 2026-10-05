@@ -9,6 +9,7 @@ use App\Http\Controllers\Site\CourseReviewController;
 use App\Http\Controllers\Site\LessonCompletionController;
 use App\Http\Controllers\Site\MyCourseController;
 use App\Http\Controllers\Site\MyReviewController;
+use App\Http\Controllers\Site\NewsletterController;
 use App\Http\Controllers\Site\ProjectRequestController;
 use App\Http\Controllers\Site\RegisteredStudentController;
 use App\Http\Controllers\Site\SettingsController;
@@ -43,6 +44,7 @@ Route::post('/tools/{tool}/click', [ToolController::class, 'click'])->whereNumbe
 Route::middleware('throttle:site-forms')->group(function () {
     Route::post('/contact', [ContactMessageController::class, 'store'])->name('contact');
     Route::post('/project-requests', [ProjectRequestController::class, 'store'])->name('project-requests');
+    Route::post('/newsletter', [NewsletterController::class, 'store'])->name('newsletter');
     Route::post('/auth/register', [RegisteredStudentController::class, 'store'])->name('auth.register');
     Route::post('/auth/forgot-password', [StudentPasswordResetLinkController::class, 'store'])->name('auth.forgot-password');
     Route::post('/auth/reset-password', [StudentNewPasswordController::class, 'store'])->name('auth.reset-password');

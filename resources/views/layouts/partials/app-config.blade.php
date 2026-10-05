@@ -27,6 +27,7 @@
             'coupons' => route('coupons.index'),
             'leads' => route('leads.index'),
             'students' => route('students.index'),
+            'subscribers' => route('subscribers.index'),
             'messages' => route('messages.index'),
             'reviews' => route('reviews.index'),
             'settings' => route('settings.index'),

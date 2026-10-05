@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\ArticleStatus;
 use App\Models\Article;
 use App\Models\Student;
+use App\Models\Subscriber;
 use App\Notifications\NewArticle;
 use App\Support\PlatformSettings;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
@@ -29,8 +30,10 @@ class ArticleObserver implements ShouldHandleEventsAfterCommit
     }
 
     /**
-     * Email a newly published article to every student who isn't suspended, when both the platform switch
-     * (settings → الإشعارات) and the article's own "send to subscribers" box are on. One queued email per student.
+     * Email a newly published article to every student who isn't suspended and to the newsletter subscribers,
+     * when both the platform switch (settings → الإشعارات) and the article's own "send to subscribers" box are on.
+     * One queued email per address; whoever unsubscribed (student or not) is skipped, and a subscriber who is also
+     * a student gets it once.
      */
     private function announce(Article $article): void
     {
@@ -42,6 +45,16 @@ class ArticleObserver implements ShouldHandleEventsAfterCommit
             return;
         }
 
-        Student::query()->whereNull('suspended_at')->chunkById(500, fn (Collection $students) => Notification::send($students, new NewArticle($article)));
+        $unsubscribed = Subscriber::query()->whereNotNull('unsubscribed_at')->select('email');
+
+        Student::query()
+            ->whereNull('suspended_at')
+            ->whereNotIn('email', $unsubscribed)
+            ->chunkById(500, fn (Collection $students) => Notification::send($students, new NewArticle($article)));
+
+        Subscriber::query()
+            ->active()
+            ->whereNotIn('email', Student::query()->whereNull('suspended_at')->select('email'))
+            ->chunkById(500, fn (Collection $subscribers) => Notification::send($subscribers, new NewArticle($article)));
     }
 }

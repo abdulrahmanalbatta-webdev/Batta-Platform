@@ -157,6 +157,7 @@
     ] },
     { label: 'المجتمع', items: [
       { page: 'students', href: url('students'), icon: 'users', label: 'الطلاب' },
+      { page: 'subscribers', href: url('subscribers'), icon: 'mail', label: 'النشرة البريدية' },
       { page: 'messages', href: url('messages'), icon: 'chat', label: 'الرسائل', count: unreadMsgs, hot: true },
       { page: 'reviews', href: url('reviews'), icon: 'star', label: 'التقييمات', count: pendingReviews },
     ] },

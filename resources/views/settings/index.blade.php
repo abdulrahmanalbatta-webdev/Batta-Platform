@@ -108,7 +108,7 @@
           <div id="notifPrefs"></div>
           <div class="label" style="margin:22px 0 4px">للمنصة كلها</div>
           <div class="setting-row"><div><b>التقرير الأسبوعي</b><p>ملخص مبيعات الأسبوع للمالك والمدراء صباح كل أحد.</p></div><label class="switch"><input type="checkbox" data-setting="weekly_report"><span class="track"></span></label></div>
-          <div class="setting-row"><div><b>النشرة البريدية للطلاب</b><p>إرسال كل مقال جديد بالبريد للطلاب عند نشره (إذا كان خيار "إرساله في النشرة" مفعّلاً في المقال).</p></div><label class="switch"><input type="checkbox" data-setting="newsletter_new_articles"><span class="track"></span></label></div>
+          <div class="setting-row"><div><b>النشرة البريدية</b><p>إرسال كل مقال جديد بالبريد للطلاب ولمشتركي النشرة عند نشره (إذا كان خيار "إرساله في النشرة" مفعّلاً في المقال).</p></div><label class="switch"><input type="checkbox" data-setting="newsletter_new_articles"><span class="track"></span></label></div>
         </div>
 
         <!-- team -->
