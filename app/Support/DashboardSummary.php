@@ -9,7 +9,6 @@ use App\Enums\OrderItemType;
 use App\Enums\OrderStatus;
 use App\Models\Article;
 use App\Models\Course;
-use App\Models\Enrollment;
 use App\Models\Lead;
 use App\Models\LessonCompletion;
 use App\Models\Order;
@@ -18,6 +17,7 @@ use App\Models\Workshop;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * The numbers on the dashboard home page. Revenue is what customers paid for completed orders (refunded ones
@@ -30,8 +30,6 @@ class DashboardSummary
     public const CACHE_KEY = 'dashboard.summary';
 
     public const CACHE_SECONDS = 300;
-
-    public function __construct(private CourseProgress $progress) {}
 
     /**
      * @return array<string, mixed>
@@ -143,14 +141,29 @@ class DashboardSummary
     }
 
     /**
-     * Average progress over every enrolment, in percent.
+     * Average progress over every enrolment, in percent, worked out in one query (no list of students in PHP).
      */
     private function completionRate(): int
     {
-        $perStudent = $this->progress->forStudents(Enrollment::query()->distinct()->pluck('student_id'));
-        $all = array_merge(...array_values(array_map('array_values', $perStudent)));
+        $lessonsPerCourse = DB::table('lessons')
+            ->join('course_modules', 'course_modules.id', '=', 'lessons.course_module_id')
+            ->groupBy('course_modules.course_id')
+            ->select('course_modules.course_id', DB::raw('count(*) as total'));
 
-        return $all === [] ? 0 : (int) round(array_sum($all) / count($all));
+        $donePerEnrolment = DB::table('lesson_completions')
+            ->join('lessons', 'lessons.id', '=', 'lesson_completions.lesson_id')
+            ->join('course_modules', 'course_modules.id', '=', 'lessons.course_module_id')
+            ->groupBy('lesson_completions.student_id', 'course_modules.course_id')
+            ->select('lesson_completions.student_id', 'course_modules.course_id', DB::raw('count(*) as done'));
+
+        $average = DB::table('enrollments')
+            ->leftJoinSub($lessonsPerCourse, 'course_lessons', 'course_lessons.course_id', '=', 'enrollments.course_id')
+            ->leftJoinSub($donePerEnrolment, 'progress', fn ($join) => $join
+                ->on('progress.student_id', '=', 'enrollments.student_id')
+                ->on('progress.course_id', '=', 'enrollments.course_id'))
+            ->value(DB::raw('avg(case when course_lessons.total > 0 then (case when coalesce(progress.done, 0) > course_lessons.total then course_lessons.total else coalesce(progress.done, 0) end) * 100.0 / course_lessons.total else 0 end)'));
+
+        return (int) round((float) $average);
     }
 
     /**

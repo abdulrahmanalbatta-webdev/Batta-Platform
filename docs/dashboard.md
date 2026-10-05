@@ -6,7 +6,14 @@
 
 ## التشغيل
 
-يحتاج PHP 8.4 أو أحدث.
+يحتاج PHP 8.4 أو أحدث مع `pdo_mysql`، وMySQL 8 (القاعدة الرسمية للمشروع؛ الـ CI بيشغّل الاختبارات على MySQL وSQLite).
+قبل أول تشغيل أنشئ القاعدة وعدّل `DB_*` بـ `.env`:
+
+```sql
+CREATE DATABASE batta CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+للتجربة السريعة بدون MySQL: `DB_CONNECTION=sqlite` واحذف باقي أسطر `DB_`.
 
 ```bash
 composer run setup          # أول مرة: المكتبات، .env، الجداول، رابط storage

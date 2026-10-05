@@ -19,12 +19,22 @@ class CourseProgress
      */
     public function forStudents(Collection|array $studentIds): array
     {
-        $studentIds = collect($studentIds)->values();
+        $progress = [];
 
-        if ($studentIds->isEmpty()) {
-            return [];
+        // in batches, so a long list of students stays under the database's limit on bound values
+        foreach (collect($studentIds)->values()->chunk(1000) as $batch) {
+            $progress += $this->forBatch($batch->values());
         }
 
+        return $progress;
+    }
+
+    /**
+     * @param  Collection<int, int>  $studentIds
+     * @return array<int, array<int, int>>
+     */
+    private function forBatch(Collection $studentIds): array
+    {
         $enrollments = Enrollment::query()->whereIn('student_id', $studentIds)->get(['student_id', 'course_id']);
 
         $lessonsPerCourse = DB::table('lessons')

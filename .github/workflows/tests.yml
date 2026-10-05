@@ -9,13 +9,43 @@ jobs:
   php:
     runs-on: ubuntu-latest
 
+    # production runs on MySQL; SQLite stays for quick local runs
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [mysql, sqlite]
+
+    name: php (${{ matrix.database }})
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: batta_test
+          MYSQL_ROOT_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ppassword"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      DB_CONNECTION: ${{ matrix.database }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: ${{ matrix.database == 'mysql' && 'batta_test' || ':memory:' }}
+      DB_USERNAME: root
+      DB_PASSWORD: password
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo_sqlite, intl
+          extensions: mbstring, pdo_sqlite, pdo_mysql, intl, zip
           coverage: none
 
       - name: Install Composer dependencies
@@ -27,7 +57,12 @@ jobs:
           php artisan key:generate
 
       - name: Check code style
+        if: matrix.database == 'sqlite'
         run: vendor/bin/pint --test
+
+      - name: Migrate and seed (the real schema and sample data on this database)
+        if: matrix.database == 'mysql'
+        run: php artisan migrate:fresh --seed --force
 
       - name: Run tests
         run: php artisan test
