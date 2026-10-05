@@ -7,6 +7,7 @@ use App\Enums\Role;
 use App\Models\Conversation;
 use App\Models\Lead;
 use App\Models\User;
+use App\Support\SiteContent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,7 +18,7 @@ class LeadControllerTest extends TestCase
     public function test_every_member_lists_requests_newest_first_with_labels(): void
     {
         Lead::factory()->create(['created_at' => now()->subDay()]);
-        $latest = Lead::factory()->stage(LeadStage::Proposal)->create(['service' => 'stores']);
+        $latest = Lead::factory()->stage(LeadStage::Proposal)->create(['service' => 'ecommerce']);
 
         $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->getJson(route('api.leads.index'));
 
@@ -34,7 +35,7 @@ class LeadControllerTest extends TestCase
             'name' => 'رامي حمدان',
             'company' => 'محمصة البن',
             'email' => 'rami@example.com',
-            'service' => 'stores',
+            'service' => 'ecommerce',
             'budget' => 2500,
         ]);
 
@@ -77,8 +78,28 @@ class LeadControllerTest extends TestCase
         $lead = Lead::factory()->create();
         $editor = User::factory()->role(Role::Editor)->create();
 
-        $this->actingAs($editor)->postJson(route('api.leads.store'), ['name' => 'x', 'service' => 'stores'])->assertForbidden();
+        $this->actingAs($editor)->postJson(route('api.leads.store'), ['name' => 'x', 'service' => 'ecommerce'])->assertForbidden();
         $this->actingAs($editor)->patchJson(route('api.leads.update', $lead), ['stage' => 'won'])->assertForbidden();
         $this->actingAs($editor)->deleteJson(route('api.leads.destroy', $lead))->assertForbidden();
+    }
+
+    public function test_services_follow_the_site_and_old_leads_keep_theirs(): void
+    {
+        $content = app(SiteContent::class);
+        $admin = User::factory()->admin()->create();
+        $old = Lead::factory()->create(['service' => 'training']);
+        $content->update('services', [...$content->all()['services'], ['id' => 'seo', 'icon' => 'search', 'title' => 'تحسين محركات البحث', 'text' => 'ظهور أعلى', 'from' => null, 'duration' => null, 'features' => []]]);
+
+        $this->actingAs($admin)->postJson(route('api.leads.store'), ['name' => 'عميل', 'service' => 'seo'])
+            ->assertCreated()
+            ->assertJsonPath('data.service_label', 'تحسين محركات البحث');
+        $this->getJson(route('site.settings'))->assertJsonFragment(['value' => 'seo', 'label' => 'تحسين محركات البحث']);
+
+        // "training" removed from the site: new leads can't pick it, the old lead keeps it and can still be edited
+        $content->update('services', array_values(array_filter($content->all()['services'], fn (array $s): bool => $s['id'] !== 'training')));
+        $this->actingAs($admin)->postJson(route('api.leads.store'), ['name' => 'آخر', 'service' => 'training'])->assertJsonValidationErrors('service');
+        $this->actingAs($admin)->patchJson(route('api.leads.update', $old), ['service' => 'training', 'stage' => 'contacted'])
+            ->assertOk()
+            ->assertJsonPath('data.service_label', 'training');
     }
 }

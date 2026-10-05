@@ -56,7 +56,7 @@ class TeamAlertsTest extends TestCase
         $owner = User::factory()->owner()->create();
         $admin = User::factory()->admin()->create();
 
-        $this->actingAs($admin)->postJson(route('api.leads.store'), ['name' => 'رامي', 'service' => 'stores'])->assertCreated();
+        $this->actingAs($admin)->postJson(route('api.leads.store'), ['name' => 'رامي', 'service' => 'ecommerce'])->assertCreated();
 
         Notification::assertSentTo($owner, LeadReceived::class, fn (LeadReceived $alert): bool => $alert->toArray($owner)['params'] === ['lead' => Lead::sole()->id]);
         Notification::assertNotSentTo($admin, LeadReceived::class);

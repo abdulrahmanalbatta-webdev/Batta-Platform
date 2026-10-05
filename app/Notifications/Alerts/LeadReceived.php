@@ -4,6 +4,7 @@ namespace App\Notifications\Alerts;
 
 use App\Enums\AlertType;
 use App\Models\Lead;
+use App\Support\ProjectServices;
 
 class LeadReceived extends TeamAlert
 {
@@ -21,7 +22,7 @@ class LeadReceived extends TeamAlert
 
     protected function meta(): string
     {
-        return $this->lead->service->label().' · ميزانية '.$this->money($this->lead->budget);
+        return app(ProjectServices::class)->label($this->lead->service).' · ميزانية '.$this->money($this->lead->budget);
     }
 
     protected function page(): string

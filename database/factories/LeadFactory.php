@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\LeadService;
 use App\Enums\LeadStage;
 use App\Models\Lead;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,7 +22,7 @@ class LeadFactory extends Factory
             'name' => fake()->name(),
             'company' => fake()->company(),
             'email' => fake()->unique()->safeEmail(),
-            'service' => fake()->randomElement(LeadService::cases()),
+            'service' => fake()->randomElement(['websites', 'web-apps', 'ecommerce', 'dashboards', 'maintenance', 'training']),
             'budget' => fake()->numberBetween(3, 60) * 100,
             'stage' => LeadStage::New,
             'note' => fake()->sentence(),

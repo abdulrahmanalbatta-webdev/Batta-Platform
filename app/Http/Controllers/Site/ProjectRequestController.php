@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Site;
 
-use App\Enums\LeadService;
 use App\Http\Controllers\Controller;
 use App\Models\Lead;
+use App\Support\ProjectServices;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,14 +15,14 @@ class ProjectRequestController extends Controller
      * The "start a project" form: a new lead in the dashboard's pipeline (which alerts the owner and admins).
      * The hidden "website" field is a bot trap, as on the contact form.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, ProjectServices $services): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'company' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
-            'service' => ['required', Rule::enum(LeadService::class)],
+            'service' => ['required', Rule::in(array_keys($services->options()))],
             'budget' => ['nullable', 'integer', 'min:0', 'max:10000000'],
             'details' => ['required', 'string', 'min:10', 'max:5000'],
             'website' => ['nullable', 'string', 'max:255'],

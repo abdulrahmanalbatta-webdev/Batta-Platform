@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Lead;
+use App\Support\ProjectServices;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,8 +26,8 @@ class LeadResource extends JsonResource
             'company' => $this->company,
             'email' => $this->email,
             'phone' => $this->phone,
-            'service' => $this->service->value,
-            'service_label' => $this->service->label(),
+            'service' => $this->service,
+            'service_label' => app(ProjectServices::class)->label($this->service),
             'budget' => $this->budget,
             'stage' => $this->stage->value,
             'stage_label' => $this->stage->label(),

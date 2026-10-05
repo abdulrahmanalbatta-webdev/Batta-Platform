@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\LeadService;
 use App\Enums\LeadStage;
 use App\Enums\OrderStatus;
 use App\Enums\ReviewStatus;
@@ -28,18 +27,18 @@ use Illuminate\Support\Carbon;
 class CommunitySeeder extends Seeder
 {
     /**
-     * @var list<array{string, string, string, LeadService, int, LeadStage, int, string}>
+     * @var list<array{string, string, string, string, int, LeadStage, int, string}>
      */
     private const LEADS = [
-        ['آدم عودة', 'شركة آدم', 'adam@adam.co', LeadService::Websites, 400, LeadStage::Lost, 26, 'اختار حلاً جاهزاً'],
-        ['مريم سالم', 'أكاديمية مريم', 'maryam@academy.co', LeadService::WebApps, 5200, LeadStage::Won, 22, 'منصة دورات داخلية'],
-        ['زيد النجار', 'متجر زيد', 'zaid@store.co', LeadService::Maintenance, 300, LeadStage::Won, 16, 'اشتراك صيانة شهري'],
-        ['سلمى العلي', 'مطعم البيت', 'salma@albeit.co', LeadService::Websites, 600, LeadStage::Proposal, 12, 'قائمة طعام وحجز طاولات'],
-        ['عمر قاسم', 'لوجستك برو', 'omar@logistic.pro', LeadService::Dashboards, 6500, LeadStage::Proposal, 10, 'لوحة تتبع شحنات'],
-        ['نور الشريف', 'استوديو نور', 'noor@studio.co', LeadService::Websites, 800, LeadStage::Contacted, 7, 'موقع معرض أعمال'],
-        ['خالد منصور', 'حاضنة رواد', 'khaled@rowad.org', LeadService::Training, 1200, LeadStage::Contacted, 5, 'ورشة يومين لفريق 18 شخصاً'],
-        ['د. هبة يونس', 'عيادة الابتسامة', 'heba@smile.clinic', LeadService::WebApps, 4000, LeadStage::New, 3, 'نظام حجوزات وتذكير'],
-        ['رامي حمدان', 'محمصة البن الذهبي', 'rami@goldenbean.co', LeadService::Stores, 2500, LeadStage::New, 2, 'متجر مع اشتراكات شهرية'],
+        ['آدم عودة', 'شركة آدم', 'adam@adam.co', 'websites', 400, LeadStage::Lost, 26, 'اختار حلاً جاهزاً'],
+        ['مريم سالم', 'أكاديمية مريم', 'maryam@academy.co', 'web-apps', 5200, LeadStage::Won, 22, 'منصة دورات داخلية'],
+        ['زيد النجار', 'متجر زيد', 'zaid@store.co', 'maintenance', 300, LeadStage::Won, 16, 'اشتراك صيانة شهري'],
+        ['سلمى العلي', 'مطعم البيت', 'salma@albeit.co', 'websites', 600, LeadStage::Proposal, 12, 'قائمة طعام وحجز طاولات'],
+        ['عمر قاسم', 'لوجستك برو', 'omar@logistic.pro', 'dashboards', 6500, LeadStage::Proposal, 10, 'لوحة تتبع شحنات'],
+        ['نور الشريف', 'استوديو نور', 'noor@studio.co', 'websites', 800, LeadStage::Contacted, 7, 'موقع معرض أعمال'],
+        ['خالد منصور', 'حاضنة رواد', 'khaled@rowad.org', 'training', 1200, LeadStage::Contacted, 5, 'ورشة يومين لفريق 18 شخصاً'],
+        ['د. هبة يونس', 'عيادة الابتسامة', 'heba@smile.clinic', 'web-apps', 4000, LeadStage::New, 3, 'نظام حجوزات وتذكير'],
+        ['رامي حمدان', 'محمصة البن الذهبي', 'rami@goldenbean.co', 'ecommerce', 2500, LeadStage::New, 2, 'متجر مع اشتراكات شهرية'],
     ];
 
     /**

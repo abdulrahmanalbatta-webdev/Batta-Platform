@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Site;
 
-use App\Enums\LeadService;
 use App\Http\Controllers\Controller;
 use App\Support\PlatformSettings;
+use App\Support\ProjectServices;
 use Illuminate\Http\JsonResponse;
 
 class SettingsController extends Controller
@@ -14,14 +14,11 @@ class SettingsController extends Controller
      * currency and tax, the payment methods that are ready with their public keys, and the services offered
      * on the project request form. Never any secret.
      */
-    public function __invoke(PlatformSettings $settings): JsonResponse
+    public function __invoke(PlatformSettings $settings, ProjectServices $services): JsonResponse
     {
         return response()->json(['data' => [
             ...$settings->forPublic(),
-            'project_services' => collect(LeadService::cases())->map(fn (LeadService $service): array => [
-                'value' => $service->value,
-                'label' => $service->label(),
-            ])->all(),
+            'project_services' => collect($services->options())->map(fn (string $title, string $id): array => ['value' => $id, 'label' => $title])->values()->all(),
         ]]);
     }
 }

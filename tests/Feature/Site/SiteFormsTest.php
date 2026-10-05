@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Site;
 
-use App\Enums\LeadService;
 use App\Models\Conversation;
 use App\Models\Lead;
 use App\Models\Student;
@@ -57,14 +56,14 @@ class SiteFormsTest extends TestCase
             'name' => 'أحمد',
             'company' => 'شركة النور',
             'email' => 'ahmad@example.com',
-            'service' => LeadService::Stores->value,
+            'service' => 'ecommerce',
             'budget' => 3000,
             'details' => 'نحتاج متجراً إلكترونياً بالعربية',
         ])->assertCreated();
 
         $lead = Lead::query()->sole();
         $this->assertSame('new', $lead->stage->value);
-        $this->assertSame(LeadService::Stores, $lead->service);
+        $this->assertSame('ecommerce', $lead->service);
         $this->assertSame('نحتاج متجراً إلكترونياً بالعربية', $lead->note);
         Notification::assertSentTo($owner, LeadReceived::class);
 
