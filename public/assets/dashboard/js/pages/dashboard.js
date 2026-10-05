@@ -54,7 +54,7 @@ document.addEventListener('app:ready', async () => {
         { name: 'الدورات والورش', color: '#0066ff', data: courses },
         { name: 'خدمات التطوير', color: '#0b0d12', data: services },
       ],
-      format: (v) => `${num(v)}$`,
+      format: (v) => money(v),
     });
     const sum = (a) => a.reduce((x, y) => x + y, 0);
     $('#revTotal').textContent = money(sum(courses) + sum(services));

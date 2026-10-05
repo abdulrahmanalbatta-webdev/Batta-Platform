@@ -32,7 +32,7 @@
           <label for="code">الكود *</label>
           <div style="display:flex;gap:8px"><input class="input mono" id="code" placeholder="WELCOME20" style="text-transform:uppercase;text-align:left" required><button type="button" class="btn btn-ghost" id="genCode"><i data-icon="sparkle" class="sm"></i>توليد</button></div>
         </div>
-        <div class="field"><label for="ctype">نوع الخصم</label><select class="select" id="ctype"><option value="percent">نسبة مئوية %</option><option value="fixed">مبلغ ثابت $</option></select></div>
+        <div class="field"><label for="ctype">نوع الخصم</label><select class="select" id="ctype"><option value="percent">نسبة مئوية %</option><option value="fixed">مبلغ ثابت {{ trim($currencySymbol) }}</option></select></div>
         <div class="field"><label for="cvalue">القيمة *</label><input class="input ltr" id="cvalue" type="number" min="1" value="20" required></div>
         <div class="field"><label for="climit">حد الاستخدام</label><input class="input ltr" id="climit" type="number" min="0" value="100"><span class="hint">0 = بلا حد</span></div>
         <div class="field"><label for="cexp">ينتهي في *</label><input class="input" id="cexp" type="date" required></div>

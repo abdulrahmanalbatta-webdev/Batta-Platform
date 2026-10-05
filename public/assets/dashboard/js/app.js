@@ -12,7 +12,8 @@
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = (n) => Number(n).toLocaleString('en-US');
-  const money = (n) => `${num(n)}$`;
+  // amounts in the platform currency (settings → الدفع), e.g. "1,200$" or "49 ر.س"
+  const money = (n) => `${num(n)}${CFG.currency_symbol ?? '$'}`;
   const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   const date = (iso) => {
     const [y, m, d] = String(iso).split('-').map(Number);
@@ -461,7 +462,7 @@
   }
 
   // the dot colour of an activity-log entry by its action
-  const activityTone = (action) => ({ created: '#0e9f6e', updated: '#0066ff', status: '#c27803', deleted: '#e02424' })[action] || '#94a3b8';
+  const activityTone = (action) => ({ created: '#0e9f6e', updated: '#0066ff', status: '#c27803', deleted: '#e02424', exported: '#0891b2', wiped: '#e02424' })[action] || '#94a3b8';
 
   /* ---------- bell: the member's notifications from /notifications ---------- */
   const ALERT_STYLE = {
@@ -469,6 +470,7 @@
     leads: ['briefcase', 'c-blue'],
     reviews: ['star', 'c-amber'],
     messages: ['chat', 'c-violet'],
+    export: ['download', 'c-blue'],
   };
   let notifications = [];
   // "قبل 5 دقائق", "أمس", or the date for older ones
@@ -491,7 +493,7 @@
         .map((n) => {
           const [ic, tone] = ALERT_STYLE[n.type] || ['bell', 'c-blue'];
           return `
-        <a class="notif ${n.unread ? 'unread' : ''}" href="${url(n.page, n.params || {})}" data-notif="${esc(n.id)}">
+        <a class="notif ${n.unread ? 'unread' : ''}" href="${url(n.page, n.params || {}, n.hash || '')}" data-notif="${esc(n.id)}">
           <span class="n-ico ${tone}">${icon(ic, 'sm')}</span>
           <span><b>${esc(n.title)}</b><small>${esc(n.meta)} · ${esc(ago(n.at))}</small></span>
         </a>`;

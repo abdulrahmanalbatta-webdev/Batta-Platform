@@ -77,42 +77,103 @@ document.addEventListener('app:ready', () => {
     renderSessions(res.meta.tracked);
   }
 
-  // dirty tracking: the save button lights up after a change
+  /* ---------- platform settings (GET/PUT settings): every [data-setting] field, secrets in [data-secret] ---------- */
   const form = $('#settingsForm');
   const save = $('#saveAll');
-  let dirty = false;
-  // team roles and email switches apply immediately, so they don't count as unsaved settings
-  const counts = (e) => !e.target.closest('#team, #sessions, #notifPrefs');
-  form.addEventListener('input', (e) => {
-    if (!counts(e)) return;
-    dirty = true;
-    save.classList.add('pulse');
-  });
-  form.addEventListener('change', (e) => {
-    if (!counts(e)) return;
-    dirty = true;
-    save.classList.add('pulse');
-    if (e.target.id === 'maintenance') toast(e.target.checked ? 'سيُفعّل وضع الصيانة بعد الحفظ' : 'سيُلغى وضع الصيانة بعد الحفظ', 'info');
-  });
-  form.addEventListener('submit', (e) => {
+  const canEdit = App.can('manage_settings');
+  const changed = new Set(); // keys edited since the last save
+  const GW_LABELS = { ready: ['متصل', 'success'], incomplete: ['ينقصه إعداد', 'warning'], off: ['غير مفعّل', ''] };
+
+  const readField = (el) => {
+    if (el.type === 'checkbox') return el.checked;
+    if (el.type === 'number' || ['session_lifetime', 'mail_port'].includes(el.dataset.setting)) return el.value === '' ? null : Number(el.value);
+    return el.value.trim() === '' ? null : el.value.trim();
+  };
+  function fill(res) {
+    const data = res.data;
+    $$('[data-setting]', form).forEach((el) => {
+      const v = data[el.dataset.setting];
+      if (el.type === 'checkbox') el.checked = !!v;
+      else el.value = v ?? '';
+      el.disabled = !canEdit;
+    });
+    $$('[data-secret]', form).forEach((el) => {
+      const secret = data[el.dataset.secret];
+      el.value = '';
+      el.placeholder = secret.set ? `محفوظ ${secret.hint} — اتركه فارغاً للإبقاء عليه` : 'غير محفوظ';
+      el.disabled = !canEdit;
+    });
+    Object.entries(res.meta.gateways).forEach(([gw, ready]) => {
+      const enabled = data[`${gw}_enabled`];
+      const [label, tone] = GW_LABELS[ready ? 'ready' : enabled ? 'incomplete' : 'off'];
+      const badge = $(`[data-gw-status="${gw}"]`);
+      badge.textContent = label;
+      badge.className = `badge dot ${tone}`;
+    });
+    changed.clear();
+    save?.classList.remove('pulse');
+  }
+  async function loadSettings() {
+    try {
+      fill(await api.get('settings'));
+    } catch {
+      // the toast already explains it
+    }
+  }
+
+  // team roles and email switches apply immediately; only [data-setting]/[data-secret] fields wait for "حفظ"
+  const track = (e) => {
+    const el = e.target.closest('[data-setting], [data-secret]');
+    if (!el) return;
+    changed.add(el.dataset.setting || el.dataset.secret);
+    el.classList.remove('invalid');
+    save?.classList.add('pulse');
+    if (e.type === 'change' && el.id === 'maintenance') toast(el.checked ? 'سيُفعّل وضع الصيانة بعد الحفظ' : 'سيُلغى وضع الصيانة بعد الحفظ', 'info');
+  };
+  form.addEventListener('input', track);
+  form.addEventListener('change', track);
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!/^https?:\/\/.+\..+/.test($('#siteUrl').value)) {
-      $('[data-tab="general"]').click();
-      $('#siteUrl').classList.add('invalid');
-      return toast('الرابط غير صحيح', 'error');
+    if (!changed.size) return toast('لا توجد تغييرات للحفظ', 'info');
+    const payload = {};
+    changed.forEach((key) => {
+      const el = $(`[data-setting="${key}"], [data-secret="${key}"]`, form);
+      payload[key] = el.dataset.secret ? el.value.trim() : readField(el);
+    });
+    save.disabled = true;
+    try {
+      fill(await api.put('settings', payload));
+    } catch (err) {
+      if (err.status === 422) {
+        const fields = Object.fromEntries(Object.keys(err.errors).map((k) => [k, `[data-setting="${k}"], [data-secret="${k}"]`]));
+        // show the tab of the first wrong field
+        const first = $(fields[Object.keys(err.errors)[0]] || '', form);
+        const panel = first?.closest('[data-panel]')?.dataset.panel;
+        if (panel) $(`[data-tab="${panel}"]`).click();
+        showFieldErrors(err, fields);
+      }
+      return;
+    } finally {
+      save.disabled = false;
     }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test($('#email').value)) {
-      $('[data-tab="general"]').click();
-      $('#email').classList.add('invalid');
-      return toast('البريد غير صحيح', 'error');
-    }
-    $$('.invalid', form).forEach((i) => i.classList.remove('invalid'));
-    dirty = false;
-    save.classList.remove('pulse');
     toast('تم حفظ الإعدادات');
   });
   window.addEventListener('beforeunload', (e) => {
-    if (dirty) e.preventDefault();
+    if (changed.size) e.preventDefault();
+  });
+
+  $('#testEmail')?.addEventListener('click', async (e) => {
+    if (changed.size) return toast('احفظ التغييرات أولاً، ثم أرسل الرسالة التجريبية', 'info');
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      const res = await api.post('settings/test-email');
+      toast(`أُرسلت رسالة تجريبية إلى ${res.sent_to}`);
+    } catch (err) {
+      showFieldErrors(err, { mail_host: '#mailHost' });
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   // open a tab from the URL hash (/dashboard/settings#security)
@@ -121,8 +182,6 @@ document.addEventListener('app:ready', () => {
   $('[data-tabs="settings"]').addEventListener('tabchange', (e) => history.replaceState(null, '', `#${e.detail}`));
 
   document.addEventListener('click', async (e) => {
-    const gw = e.target.closest('[data-gw]');
-    if (gw) toast(`إعدادات ${gw.dataset.gw} تتطلب ربط الخادم`, 'info');
     const rm = e.target.closest('[data-remove]');
     if (rm) {
       const m = team.find((x) => x.id === Number(rm.dataset.remove));
@@ -182,10 +241,63 @@ document.addEventListener('app:ready', () => {
     toast(`تم إرسال الدعوة إلى ${member.email}`);
   });
 
-  // a full export becomes a background job with the general settings (phase 7)
-  $('#exportData').addEventListener('click', () => toast('تصدير نسخة كاملة من البيانات قادم مع إعدادات المنصة', 'info'));
-  $('#wipe').addEventListener('click', async () => {
-    if (await confirmDialog({ title: 'حذف كل البيانات؟', text: 'هذا إجراء نهائي ولا يمكن التراجع عنه. (في هذه النسخة التجريبية لن يُحذف شيء)', ok: 'نعم، احذف' })) toast('هذه نسخة تجريبية — لم يُحذف شيء', 'info');
+  /* ---------- the owner's data: exports (prepared in the background) and the wipe ---------- */
+  const size = (bytes) => (bytes > 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
+  async function loadExports() {
+    if (!App.can('manage_platform_data')) return;
+    let res;
+    try {
+      res = await api.get('data-exports');
+    } catch {
+      return;
+    }
+    $('#exports').innerHTML = res.data
+      .map(
+        (x) => `<div class="list-item"><span class="grow"><b class="mono ltr" style="display:inline-block">${esc(x.name)}</b><small>${size(x.size)} · ${esc(App.ago(x.created_at))}</small></span>
+          <a class="btn btn-sm btn-ghost" href="${esc(x.url)}">${icon('download', 'sm')}تنزيل</a>
+          <button type="button" class="btn-icon danger" data-del-export="${esc(x.name)}" aria-label="حذف">${icon('trash', 'sm')}</button></div>`,
+      )
+      .join('');
+  }
+  $('#exportData').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      toast((await api.post('data-exports')).message);
+    } catch {
+      // the toast already explains it
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  $('#exports').addEventListener('click', async (e) => {
+    const del = e.target.closest('[data-del-export]');
+    if (!del) return;
+    try {
+      await api.delete(`data-exports/${encodeURIComponent(del.dataset.delExport)}`);
+    } catch {
+      return;
+    }
+    loadExports();
+    toast('تم حذف النسخة');
+  });
+  const WIPE_SENTENCE = 'احذف كل البيانات';
+  $('#wipeForm').addEventListener('input', () => {
+    $('#wipeSubmit').disabled = !$('#wipePassword').value || $('#wipeConfirm').value.trim() !== WIPE_SENTENCE;
+  });
+  $('#wipeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('#wipeSubmit').disabled = true;
+    try {
+      const res = await api.post('data-wipe', { password: $('#wipePassword').value, confirmation: $('#wipeConfirm').value.trim() });
+      closeModal('wipeModal');
+      e.target.reset();
+      toast(res.message);
+    } catch (err) {
+      showFieldErrors(err, { password: '#wipePassword', confirmation: '#wipeConfirm' });
+    } finally {
+      $('#wipeSubmit').disabled = !$('#wipePassword').value || $('#wipeConfirm').value.trim() !== WIPE_SENTENCE;
+    }
   });
 
   /* ---------- activity log, 20 entries at a time ---------- */
@@ -207,6 +319,8 @@ document.addEventListener('app:ready', () => {
   }
   $('#moreActivity').addEventListener('click', loadActivity);
 
+  loadSettings();
+  loadExports();
   loadActivity();
   loadTeam().catch(() => {});
   loadSessions().catch(() => {});

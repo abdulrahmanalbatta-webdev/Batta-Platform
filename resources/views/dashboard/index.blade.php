@@ -43,7 +43,7 @@
     <div class="grid g-main">
       <div class="card">
         <div class="card-head">
-          <div><h3>الإيرادات</h3><p>الدورات مقابل الخدمات، بالدولار</p></div>
+          <div><h3>الإيرادات</h3><p>الدورات مقابل الخدمات</p></div>
           <div class="seg" id="revRange">
             <button class="on" data-range="12">12 شهراً</button>
             <button data-range="6">6 أشهر</button>

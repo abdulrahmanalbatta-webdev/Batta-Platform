@@ -4,6 +4,7 @@
 @php
     $appConfig = [
         'app_name' => config('app.name'),
+        'currency_symbol' => $currencySymbol,
         'assets' => asset('assets/dashboard'),
         'api' => url('dashboard/api/v1'),
         'user' => auth()->check() ? (new UserResource(auth()->user()))->resolve(request()) : null,

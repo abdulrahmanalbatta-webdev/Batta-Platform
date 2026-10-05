@@ -78,6 +78,22 @@ enum Role: string
     }
 
     /**
+     * The platform settings: general, payments, email and security.
+     */
+    public function canManageSettings(): bool
+    {
+        return in_array($this, [self::Owner, self::Admin], true);
+    }
+
+    /**
+     * Exporting or wiping all of the platform's data.
+     */
+    public function canManagePlatformData(): bool
+    {
+        return $this === self::Owner;
+    }
+
+    /**
      * Roles this role may give to other members: only the owner appoints admins, and nobody appoints an owner.
      *
      * @return list<self>

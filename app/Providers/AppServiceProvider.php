@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\PlatformSettings;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -14,7 +18,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(PlatformSettings::class);
     }
 
     /**
@@ -29,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('answer-messages', fn (User $user): bool => $user->role->canAnswerMessages());
         Gate::define('moderate-reviews', fn (User $user): bool => $user->role->canModerateReviews());
         Gate::define('manage-leads', fn (User $user): bool => $user->role->canManageLeads());
+        Gate::define('manage-settings', fn (User $user): bool => $user->role->canManageSettings());
+        Gate::define('manage-platform-data', fn (User $user): bool => $user->role->canManagePlatformData());
+
+        $this->applyPlatformSettings();
 
         // matches the hint on the profile and reset pages: 8+ characters with a number, an upper-case and a lower-case letter
         Password::defaults(function (): Password {
@@ -36,5 +44,27 @@ class AppServiceProvider extends ServiceProvider
 
             return $this->app->isProduction() ? $rule->uncompromised() : $rule;
         });
+    }
+
+    /**
+     * Feed the stored platform settings into config, and again before every queued job so a running
+     * worker sends mail with the latest settings. Skipped while the database isn't migrated yet.
+     */
+    private function applyPlatformSettings(): void
+    {
+        $apply = function (): void {
+            try {
+                $settings = $this->app->make(PlatformSettings::class);
+                $settings->forget();
+                $settings->apply();
+            } catch (QueryException) {
+                // no settings table yet (fresh install, first migration)
+            }
+        };
+
+        $apply();
+        Queue::before(fn () => $apply());
+
+        View::composer('*', fn ($view) => $view->with('currencySymbol', rescue(fn (): string => $this->app->make(PlatformSettings::class)->currencySymbol(), '$', false)));
     }
 }

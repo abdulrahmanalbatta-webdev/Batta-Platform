@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 #[Fillable(['name', 'email', 'password', 'title', 'phone', 'bio', 'github', 'linkedin'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'known_devices'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -37,6 +37,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => Role::class,
             'notification_preferences' => 'array',
+            'known_devices' => 'array',
         ];
     }
 
@@ -122,6 +123,6 @@ class User extends Authenticatable
      */
     protected function activityIgnoredAttributes(): array
     {
-        return ['password', 'remember_token', 'last_login_at', 'avatar_path', 'title', 'phone', 'bio', 'github', 'linkedin', 'notification_preferences', 'email_verified_at'];
+        return ['password', 'remember_token', 'last_login_at', 'avatar_path', 'title', 'phone', 'bio', 'github', 'linkedin', 'notification_preferences', 'known_devices', 'email_verified_at'];
     }
 }

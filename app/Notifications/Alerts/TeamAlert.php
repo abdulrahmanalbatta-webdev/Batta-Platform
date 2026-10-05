@@ -4,6 +4,7 @@ namespace App\Notifications\Alerts;
 
 use App\Enums\AlertType;
 use App\Models\User;
+use App\Support\PlatformSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -89,11 +90,11 @@ abstract class TeamAlert extends Notification implements ShouldQueue
     }
 
     /**
-     * An amount like "1,200$", kept left-to-right inside the Arabic text so the sign stays after the number.
+     * An amount in the platform currency, kept left-to-right inside the Arabic text so the sign stays after the number.
      */
     protected function money(float $amount): string
     {
-        return "\u{2066}".number_format($amount, fmod($amount, 1.0) == 0.0 ? 0 : 2).'$'."\u{2069}";
+        return "\u{2066}".app(PlatformSettings::class)->money($amount)."\u{2069}";
     }
 
     private function url(): string

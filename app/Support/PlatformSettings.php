@@ -1,0 +1,267 @@
+<?php
+
+namespace App\Support;
+
+use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Validation\Rule;
+
+/**
+ * The platform settings (settings page → عام، الدفع، البريد، الإشعارات، الأمان): every key with its default and rules.
+ *
+ * Secrets are encrypted in the database and never leave the server: the API only says whether one is set.
+ * apply() feeds the settings that change Laravel's behaviour into config (app name, mail, session, Pro price).
+ */
+class PlatformSettings
+{
+    public const CACHE_KEY = 'platform.settings';
+
+    /**
+     * Currency code => the symbol written after amounts.
+     */
+    public const CURRENCIES = ['USD' => '$', 'SAR' => ' ر.س', 'JOD' => ' د.أ'];
+
+    /**
+     * Minutes of inactivity before a member is signed out.
+     */
+    public const SESSION_LIFETIMES = [30, 120, 1440];
+
+    /**
+     * @var array<string, mixed>|null
+     */
+    private ?array $values = null;
+
+    /**
+     * @return array<string, array{label: string, default: mixed, rules: list<mixed>, secret?: bool, public?: bool}>
+     */
+    public static function definitions(): array
+    {
+        $bool = ['boolean'];
+        $text = fn (int $max, bool $required = false): array => [$required ? 'required' : 'nullable', 'string', 'max:'.$max];
+        $secret = ['nullable', 'string', 'max:255'];
+
+        return [
+            // general (shown on the public site)
+            'site_name' => ['label' => 'اسم المنصة', 'default' => 'Batta', 'rules' => $text(60, true), 'public' => true],
+            'site_url' => ['label' => 'الرابط', 'default' => 'https://batta.dev', 'rules' => ['required', 'url:http,https', 'max:255'], 'public' => true],
+            'tagline' => ['label' => 'الوصف المختصر', 'default' => 'أبني مواقع وأنظمة ويب، وأعلّم كيف تُبنى.', 'rules' => $text(160), 'public' => true],
+            'contact_email' => ['label' => 'بريد التواصل', 'default' => 'hello@batta.dev', 'rules' => ['required', 'email', 'max:255'], 'public' => true],
+            'whatsapp' => ['label' => 'رقم واتساب', 'default' => null, 'rules' => ['nullable', 'regex:/^\+?[0-9 ]{7,20}$/'], 'public' => true],
+            'maintenance_mode' => ['label' => 'وضع الصيانة', 'default' => false, 'rules' => $bool, 'public' => true],
+            'registration_open' => ['label' => 'السماح بالتسجيل', 'default' => true, 'rules' => $bool, 'public' => true],
+            'article_comments' => ['label' => 'التعليقات على المقالات', 'default' => true, 'rules' => $bool, 'public' => true],
+
+            // payments
+            'currency' => ['label' => 'العملة', 'default' => 'USD', 'rules' => ['required', Rule::in(array_keys(self::CURRENCIES))], 'public' => true],
+            'vat_percent' => ['label' => 'ضريبة القيمة المضافة', 'default' => 0, 'rules' => ['required', 'numeric', 'min:0', 'max:30'], 'public' => true],
+            'pro_month_price' => ['label' => 'سعر شهر Pro', 'default' => (float) config('sales.pro_month_price'), 'rules' => ['required', 'numeric', 'min:1', 'max:1000'], 'public' => true],
+            'invoice_note' => ['label' => 'ملاحظة الفاتورة', 'default' => 'شكراً لثقتك بـ Batta. للاستفسار: hello@batta.dev', 'rules' => $text(500)],
+            'refund_guarantee' => ['label' => 'ضمان الاسترداد', 'default' => true, 'rules' => $bool, 'public' => true],
+            'stripe_enabled' => ['label' => 'Stripe', 'default' => false, 'rules' => $bool],
+            'stripe_publishable_key' => ['label' => 'المفتاح العام لـ Stripe', 'default' => null, 'rules' => ['nullable', 'string', 'starts_with:pk_', 'max:255']],
+            'stripe_secret_key' => ['label' => 'المفتاح السري لـ Stripe', 'default' => null, 'rules' => [...$secret, 'starts_with:sk_,rk_'], 'secret' => true],
+            'stripe_webhook_secret' => ['label' => 'سر الـ Webhook لـ Stripe', 'default' => null, 'rules' => [...$secret, 'starts_with:whsec_'], 'secret' => true],
+            'paypal_enabled' => ['label' => 'PayPal', 'default' => false, 'rules' => $bool],
+            'paypal_mode' => ['label' => 'وضع PayPal', 'default' => 'sandbox', 'rules' => ['required', Rule::in(['sandbox', 'live'])]],
+            'paypal_client_id' => ['label' => 'Client ID لـ PayPal', 'default' => null, 'rules' => $text(255)],
+            'paypal_secret' => ['label' => 'Secret لـ PayPal', 'default' => null, 'rules' => $secret, 'secret' => true],
+            'bank_transfer_enabled' => ['label' => 'التحويل البنكي', 'default' => false, 'rules' => $bool],
+            'bank_transfer_instructions' => ['label' => 'تعليمات التحويل البنكي', 'default' => null, 'rules' => $text(1000)],
+
+            // outgoing email: empty host = the MAIL_* values in .env
+            'mail_host' => ['label' => 'خادم SMTP', 'default' => null, 'rules' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9.-]+$/']],
+            'mail_port' => ['label' => 'المنفذ', 'default' => 587, 'rules' => ['required', 'integer', 'between:1,65535']],
+            'mail_username' => ['label' => 'اسم المستخدم', 'default' => null, 'rules' => $text(255)],
+            'mail_password' => ['label' => 'كلمة مرور SMTP', 'default' => null, 'rules' => $secret, 'secret' => true],
+            'mail_encryption' => ['label' => 'التشفير', 'default' => 'tls', 'rules' => ['required', Rule::in(['tls', 'ssl'])]],
+            'mail_from_address' => ['label' => 'بريد المرسل', 'default' => null, 'rules' => ['nullable', 'email', 'max:255']],
+            'mail_from_name' => ['label' => 'اسم المرسل', 'default' => null, 'rules' => $text(60)],
+
+            // team notifications
+            'weekly_report' => ['label' => 'التقرير الأسبوعي', 'default' => true, 'rules' => $bool],
+            'newsletter_new_articles' => ['label' => 'إرسال المقالات الجديدة للطلاب', 'default' => false, 'rules' => $bool],
+
+            // security
+            'new_device_alert' => ['label' => 'تنبيه الدخول من جهاز جديد', 'default' => true, 'rules' => $bool],
+            'session_lifetime' => ['label' => 'انتهاء الجلسة', 'default' => 120, 'rules' => ['required', 'integer', Rule::in(self::SESSION_LIFETIMES)]],
+        ];
+    }
+
+    /**
+     * Every setting: what's stored, else the default.
+     *
+     * @return array<string, mixed>
+     */
+    public function all(): array
+    {
+        if ($this->values !== null) {
+            return $this->values;
+        }
+
+        // the cache holds the stored (still encrypted) values only
+        $stored = Cache::rememberForever(self::CACHE_KEY, fn (): array => Setting::query()->pluck('value', 'key')->all());
+        $values = [];
+
+        foreach (self::definitions() as $key => $definition) {
+            $values[$key] = array_key_exists($key, $stored) ? $this->decode($stored[$key], $definition['secret'] ?? false) : $definition['default'];
+        }
+
+        return $this->values = $values;
+    }
+
+    public function get(string $key): mixed
+    {
+        return $this->all()[$key];
+    }
+
+    /**
+     * Save some settings (already validated). An empty secret keeps the stored one.
+     *
+     * @param  array<string, mixed>  $values
+     */
+    public function update(array $values): void
+    {
+        $definitions = self::definitions();
+
+        foreach ($values as $key => $value) {
+            $secret = $definitions[$key]['secret'] ?? false;
+
+            if ($secret && blank($value)) {
+                continue;
+            }
+
+            $encoded = json_encode($value, JSON_UNESCAPED_UNICODE);
+            Setting::query()->updateOrCreate(['key' => $key], ['value' => $secret ? Crypt::encryptString($encoded) : $encoded]);
+        }
+
+        $this->forget();
+        $this->apply();
+    }
+
+    /**
+     * Remove a stored secret (e.g. disconnecting a payment gateway).
+     */
+    public function clear(string $key): void
+    {
+        Setting::query()->whereKey($key)->delete();
+        $this->forget();
+        $this->apply();
+    }
+
+    public function forget(): void
+    {
+        Cache::forget(self::CACHE_KEY);
+        $this->values = null;
+    }
+
+    /**
+     * For the settings page: secrets become {set, hint} and never their value.
+     *
+     * @return array<string, mixed>
+     */
+    public function forClient(): array
+    {
+        $values = $this->all();
+
+        foreach (self::definitions() as $key => $definition) {
+            if ($definition['secret'] ?? false) {
+                $values[$key] = ['set' => filled($values[$key]), 'hint' => filled($values[$key]) ? '••••'.mb_substr((string) $values[$key], -4) : null];
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * What the public site needs: the public settings and the ways customers can pay.
+     *
+     * @return array<string, mixed>
+     */
+    public function forPublic(): array
+    {
+        $values = $this->all();
+
+        return [
+            ...collect(self::definitions())->filter(fn (array $definition): bool => $definition['public'] ?? false)->map(fn (array $definition, string $key): mixed => $values[$key])->all(),
+            'currency_symbol' => $this->currencySymbol(),
+            'payment_methods' => [
+                'stripe' => $this->gatewayReady('stripe') ? ['publishable_key' => $values['stripe_publishable_key']] : null,
+                'paypal' => $this->gatewayReady('paypal') ? ['client_id' => $values['paypal_client_id'], 'mode' => $values['paypal_mode']] : null,
+                'bank_transfer' => $this->gatewayReady('bank_transfer') ? ['instructions' => $values['bank_transfer_instructions']] : null,
+            ],
+        ];
+    }
+
+    /**
+     * Switched on and with everything it needs to take payments.
+     */
+    public function gatewayReady(string $gateway): bool
+    {
+        $values = $this->all();
+
+        return match ($gateway) {
+            'stripe' => $values['stripe_enabled'] && filled($values['stripe_publishable_key']) && filled($values['stripe_secret_key']),
+            'paypal' => $values['paypal_enabled'] && filled($values['paypal_client_id']) && filled($values['paypal_secret']),
+            'bank_transfer' => $values['bank_transfer_enabled'] && filled($values['bank_transfer_instructions']),
+        };
+    }
+
+    public function currencySymbol(): string
+    {
+        return self::CURRENCIES[$this->get('currency')];
+    }
+
+    /**
+     * An amount with the platform currency, e.g. "1,200$" or "49.50 ر.س".
+     */
+    public function money(float $amount): string
+    {
+        return number_format($amount, fmod($amount, 1.0) == 0.0 ? 0 : 2).$this->currencySymbol();
+    }
+
+    /**
+     * Put the settings that change how Laravel behaves into config.
+     */
+    public function apply(): void
+    {
+        $values = $this->all();
+
+        config([
+            'app.name' => $values['site_name'],
+            'session.lifetime' => (int) $values['session_lifetime'],
+            'sales.pro_month_price' => (float) $values['pro_month_price'],
+            'mail.from.name' => $values['mail_from_name'] ?: $values['site_name'],
+        ]);
+
+        if (filled($values['mail_from_address'])) {
+            config(['mail.from.address' => $values['mail_from_address']]);
+        }
+
+        if (filled($values['mail_host'])) {
+            config([
+                'mail.default' => 'smtp',
+                'mail.mailers.smtp.host' => $values['mail_host'],
+                'mail.mailers.smtp.port' => (int) $values['mail_port'],
+                'mail.mailers.smtp.username' => $values['mail_username'],
+                'mail.mailers.smtp.password' => $values['mail_password'],
+                // "ssl" is SMTPS on its own port (465); "tls" upgrades a plain connection with STARTTLS (587)
+                'mail.mailers.smtp.scheme' => $values['mail_encryption'] === 'ssl' ? 'smtps' : 'smtp',
+            ]);
+        }
+
+        // mailers already built keep the old settings
+        if (app()->resolved('mail.manager')) {
+            app('mail.manager')->forgetMailers();
+        }
+    }
+
+    private function decode(?string $stored, bool $secret): mixed
+    {
+        if ($stored === null) {
+            return null;
+        }
+
+        return json_decode($secret ? Crypt::decryptString($stored) : $stored, true);
+    }
+}

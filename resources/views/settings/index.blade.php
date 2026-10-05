@@ -11,7 +11,7 @@
         <p>إعدادات المنصة، الدفع، الإشعارات والفريق.</p>
       </div>
       <div class="page-actions">
-        <button class="btn btn-primary" id="saveAll" form="settingsForm"><i data-icon="save" class="sm"></i>حفظ التغييرات</button>
+        <button class="btn btn-primary" id="saveAll" form="settingsForm" data-requires="manage_settings"><i data-icon="save" class="sm"></i>حفظ التغييرات</button>
       </div>
     </div>
 
@@ -19,6 +19,7 @@
       <div class="tabs" data-tabs="settings" role="tablist">
         <button class="on" data-tab="general" role="tab">عام</button>
         <button data-tab="payments" role="tab">الدفع</button>
+        <button data-tab="mail" role="tab">البريد</button>
         <button data-tab="notifications" role="tab">الإشعارات</button>
         <button data-tab="team" role="tab">الفريق</button>
         <button data-tab="security" role="tab">الأمان</button>
@@ -26,50 +27,76 @@
       </div>
 
       <form id="settingsForm" novalidate>
-        <!-- general -->
+        <!-- general: shown on the public site (GET site-settings) -->
         <div class="tab-panel on card-body" data-panel-group="settings" data-panel="general">
           <div class="form-grid">
-            <div class="field"><label for="siteName">اسم المنصة</label><input class="input" id="siteName" value="Batta"></div>
-            <div class="field"><label for="siteUrl">الرابط</label><input class="input ltr" id="siteUrl" value="https://batta.dev"></div>
-            <div class="field full"><label for="tagline">الوصف المختصر</label><input class="input" id="tagline" value="أبني مواقع وأنظمة ويب، وأعلّم كيف تُبنى."></div>
-            <div class="field"><label for="email">بريد التواصل</label><input class="input ltr" id="email" type="email" value="hello@batta.dev"></div>
-            <div class="field"><label for="wa">رقم واتساب</label><input class="input ltr" id="wa" value="+970 59 000 0000"></div>
-            <div class="field"><label for="lang">اللغة الافتراضية</label><select class="select" id="lang"><option>العربية</option><option>English</option></select></div>
-            <div class="field"><label for="tz">المنطقة الزمنية</label><select class="select" id="tz"><option>Asia/Jerusalem (GMT+3)</option><option>Asia/Riyadh (GMT+3)</option><option>Asia/Amman (GMT+3)</option><option>Africa/Cairo (GMT+3)</option></select></div>
+            <div class="field"><label for="siteName">اسم المنصة</label><input class="input" id="siteName" data-setting="site_name" maxlength="60"></div>
+            <div class="field"><label for="siteUrl">رابط الموقع</label><input class="input ltr" id="siteUrl" data-setting="site_url" type="url"></div>
+            <div class="field full"><label for="tagline">الوصف المختصر</label><input class="input" id="tagline" data-setting="tagline" maxlength="160"></div>
+            <div class="field"><label for="email">بريد التواصل</label><input class="input ltr" id="email" data-setting="contact_email" type="email"></div>
+            <div class="field"><label for="wa">رقم واتساب</label><input class="input ltr" id="wa" data-setting="whatsapp" placeholder="+970 59 000 0000"></div>
           </div>
           <div style="margin-top:22px">
-            <div class="setting-row"><div><b>وضع الصيانة</b><p>إخفاء الموقع مؤقتاً عن الزوار وإظهار صفحة "نعود قريباً".</p></div><label class="switch"><input type="checkbox" id="maintenance"><span class="track"></span></label></div>
-            <div class="setting-row"><div><b>السماح بالتسجيل</b><p>يمكن للزوار إنشاء حساب جديد في المنصة.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-            <div class="setting-row"><div><b>التعليقات على المقالات</b><p>تفعيل التعليقات مع مراجعتها قبل النشر.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
+            <div class="setting-row"><div><b>وضع الصيانة</b><p>إخفاء الموقع مؤقتاً عن الزوار وإظهار صفحة "نعود قريباً".</p></div><label class="switch"><input type="checkbox" id="maintenance" data-setting="maintenance_mode"><span class="track"></span></label></div>
+            <div class="setting-row"><div><b>السماح بالتسجيل</b><p>يمكن للزوار إنشاء حساب جديد في المنصة.</p></div><label class="switch"><input type="checkbox" data-setting="registration_open"><span class="track"></span></label></div>
+            <div class="setting-row"><div><b>التعليقات على المقالات</b><p>تفعيل التعليقات مع مراجعتها قبل النشر.</p></div><label class="switch"><input type="checkbox" data-setting="article_comments"><span class="track"></span></label></div>
           </div>
+          <p class="muted" style="font-size:12.5px;margin-top:14px">هذه الإعدادات يقرأها الموقع العام من <span class="mono ltr">/dashboard/api/v1/site-settings</span>.</p>
         </div>
 
         <!-- payments -->
         <div class="tab-panel card-body" data-panel-group="settings" data-panel="payments">
-          <div class="grid g3" style="margin-bottom:22px">
+          <div class="grid g3" style="margin-bottom:22px" id="gateways">
             <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--fg)">Stripe</b><span class="badge dot success">متصل</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--fg)">Stripe</b><span class="badge dot" data-gw-status="stripe">—</span></div>
               <small class="muted">بطاقات Visa / Mastercard و Apple Pay.</small>
-              <button type="button" class="btn btn-sm btn-ghost" data-gw="Stripe">إدارة</button>
+              <label class="switch"><input type="checkbox" data-setting="stripe_enabled"><span class="track"></span>مفعّل</label>
+              <div class="field"><label for="stripePk">المفتاح العام</label><input class="input ltr" id="stripePk" data-setting="stripe_publishable_key" placeholder="pk_live_…" autocomplete="off"></div>
+              <div class="field"><label for="stripeSk">المفتاح السري</label><input class="input ltr" id="stripeSk" type="password" data-secret="stripe_secret_key" placeholder="sk_live_…" autocomplete="new-password"></div>
+              <div class="field"><label for="stripeWh">سر الـ Webhook</label><input class="input ltr" id="stripeWh" type="password" data-secret="stripe_webhook_secret" placeholder="whsec_…" autocomplete="new-password"></div>
             </div>
             <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--fg)">PayPal</b><span class="badge dot success">متصل</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--fg)">PayPal</b><span class="badge dot" data-gw-status="paypal">—</span></div>
               <small class="muted">الدفع عبر حساب PayPal.</small>
-              <button type="button" class="btn btn-sm btn-ghost" data-gw="PayPal">إدارة</button>
+              <label class="switch"><input type="checkbox" data-setting="paypal_enabled"><span class="track"></span>مفعّل</label>
+              <div class="field"><label for="ppMode">الوضع</label><select class="select" id="ppMode" data-setting="paypal_mode"><option value="sandbox">تجريبي (Sandbox)</option><option value="live">مباشر (Live)</option></select></div>
+              <div class="field"><label for="ppId">Client ID</label><input class="input ltr" id="ppId" data-setting="paypal_client_id" autocomplete="off"></div>
+              <div class="field"><label for="ppSecret">Secret</label><input class="input ltr" id="ppSecret" type="password" data-secret="paypal_secret" autocomplete="new-password"></div>
             </div>
             <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--fg)">تحويل بنكي</b><span class="badge dot">غير مفعّل</span></div>
-              <small class="muted">تأكيد يدوي للطلبات.</small>
-              <button type="button" class="btn btn-sm btn-soft" data-gw="التحويل البنكي">تفعيل</button>
+              <div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--fg)">تحويل بنكي</b><span class="badge dot" data-gw-status="bank_transfer">—</span></div>
+              <small class="muted">تأكيد يدوي للطلبات من صفحة الطلبات.</small>
+              <label class="switch"><input type="checkbox" data-setting="bank_transfer_enabled"><span class="track"></span>مفعّل</label>
+              <div class="field"><label for="bankInfo">تعليمات التحويل</label><textarea class="textarea" id="bankInfo" rows="5" data-setting="bank_transfer_instructions" placeholder="اسم البنك، اسم الحساب، IBAN…"></textarea></div>
             </div>
           </div>
+          <p class="muted" style="font-size:12.5px;margin:-8px 0 18px">المفاتيح السرية تُحفظ مشفّرة ولا تُعرض بعد الحفظ؛ اترك الحقل فارغاً للإبقاء على المحفوظ. ربط الدفع الفعلي بالبوابات يتم في الموقع العام.</p>
           <div class="form-grid">
-            <div class="field"><label for="currency">العملة</label><select class="select" id="currency"><option>دولار أمريكي (USD)</option><option>ريال سعودي (SAR)</option><option>دينار أردني (JOD)</option></select></div>
-            <div class="field"><label for="vat">ضريبة القيمة المضافة %</label><input class="input ltr" id="vat" type="number" min="0" max="30" value="0"></div>
-            <div class="field full"><label for="invoiceNote">ملاحظة الفاتورة</label><textarea class="textarea" id="invoiceNote" rows="3">شكراً لثقتك بـ Batta. للاستفسار: hello@batta.dev</textarea></div>
+            <div class="field"><label for="currency">العملة</label><select class="select" id="currency" data-setting="currency"><option value="USD">دولار أمريكي (USD)</option><option value="SAR">ريال سعودي (SAR)</option><option value="JOD">دينار أردني (JOD)</option></select></div>
+            <div class="field"><label for="vat">ضريبة القيمة المضافة % (ضمن السعر)</label><input class="input ltr" id="vat" data-setting="vat_percent" type="number" min="0" max="30" step="0.5"></div>
+            <div class="field"><label for="proPrice">سعر شهر Pro</label><input class="input ltr" id="proPrice" data-setting="pro_month_price" type="number" min="1" step="0.5"></div>
+            <div class="field full"><label for="invoiceNote">ملاحظة الفاتورة</label><textarea class="textarea" id="invoiceNote" rows="3" data-setting="invoice_note" maxlength="500"></textarea></div>
           </div>
           <div style="margin-top:18px">
-            <div class="setting-row"><div><b>ضمان استرداد 14 يوماً</b><p>إظهار سياسة الاسترداد في صفحات الدورات.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
+            <div class="setting-row"><div><b>ضمان استرداد 14 يوماً</b><p>إظهار سياسة الاسترداد في صفحات الدورات.</p></div><label class="switch"><input type="checkbox" data-setting="refund_guarantee"><span class="track"></span></label></div>
+          </div>
+        </div>
+
+        <!-- mail -->
+        <div class="tab-panel card-body" data-panel-group="settings" data-panel="mail">
+          <p class="muted" style="margin-bottom:14px">خادم SMTP لكل رسائل المنصة (الدعوات، الفواتير، الردود، التنبيهات). اترك الخادم فارغاً لاستخدام إعدادات <span class="mono ltr">MAIL_*</span> في ملف <span class="mono ltr">.env</span>.</p>
+          <div class="form-grid">
+            <div class="field"><label for="mailHost">خادم SMTP</label><input class="input ltr" id="mailHost" data-setting="mail_host" placeholder="smtp.example.com"></div>
+            <div class="field"><label for="mailPort">المنفذ</label><input class="input ltr" id="mailPort" data-setting="mail_port" type="number" min="1" max="65535"></div>
+            <div class="field"><label for="mailEnc">التشفير</label><select class="select" id="mailEnc" data-setting="mail_encryption"><option value="tls">TLS (المنفذ 587)</option><option value="ssl">SSL (المنفذ 465)</option></select></div>
+            <div class="field"><label for="mailUser">اسم المستخدم</label><input class="input ltr" id="mailUser" data-setting="mail_username" autocomplete="off"></div>
+            <div class="field"><label for="mailPass">كلمة المرور</label><input class="input ltr" id="mailPass" type="password" data-secret="mail_password" autocomplete="new-password"></div>
+            <div class="field"><label for="mailFrom">بريد المرسل</label><input class="input ltr" id="mailFrom" data-setting="mail_from_address" type="email" placeholder="no-reply@batta.dev"></div>
+            <div class="field"><label for="mailFromName">اسم المرسل</label><input class="input" id="mailFromName" data-setting="mail_from_name" placeholder="اسم المنصة"></div>
+          </div>
+          <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap" data-requires="manage_settings">
+            <button type="button" class="btn btn-ghost" id="testEmail"><i data-icon="mail" class="sm"></i>إرسال رسالة تجريبية</button>
+            <small class="muted">تُرسل إلى بريدك بعد حفظ التغييرات.</small>
           </div>
         </div>
 
@@ -77,8 +104,9 @@
         <div class="tab-panel card-body" data-panel-group="settings" data-panel="notifications">
           <p class="muted" style="margin-bottom:6px">إشعاراتك تظهر في الجرس دائماً؛ اختر ما يصلك منها بالبريد أيضاً. يُحفظ كل تغيير فوراً.</p>
           <div id="notifPrefs"></div>
-          <div class="setting-row"><div><b>التقرير الأسبوعي</b><p>ملخص الإيرادات والزيارات كل يوم أحد.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-          <div class="setting-row"><div><b>النشرة البريدية للطلاب</b><p>إرسال المقالات الجديدة للمشتركين تلقائياً.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
+          <div class="label" style="margin:22px 0 4px">للمنصة كلها</div>
+          <div class="setting-row"><div><b>التقرير الأسبوعي</b><p>ملخص مبيعات الأسبوع للمالك والمدراء صباح كل أحد.</p></div><label class="switch"><input type="checkbox" data-setting="weekly_report"><span class="track"></span></label></div>
+          <div class="setting-row"><div><b>النشرة البريدية للطلاب</b><p>إرسال كل مقال جديد بالبريد للطلاب عند نشره (إذا كان خيار "إرساله في النشرة" مفعّلاً في المقال).</p></div><label class="switch"><input type="checkbox" data-setting="newsletter_new_articles"><span class="track"></span></label></div>
         </div>
 
         <!-- team -->
@@ -92,17 +120,20 @@
 
         <!-- security -->
         <div class="tab-panel card-body" data-panel-group="settings" data-panel="security">
-          <div class="setting-row"><div><b>التحقق بخطوتين</b><p>رمز من تطبيق المصادقة عند كل تسجيل دخول.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-          <div class="setting-row"><div><b>تنبيه الدخول من جهاز جديد</b><p>إرسال بريد عند تسجيل دخول غير معتاد.</p></div><label class="switch"><input type="checkbox" checked><span class="track"></span></label></div>
-          <div class="setting-row"><div><b>انتهاء الجلسة تلقائياً</b><p>تسجيل الخروج بعد فترة من عدم النشاط.</p></div><select class="select" style="width:auto;height:40px" aria-label="مدة الجلسة"><option>30 دقيقة</option><option selected>ساعتان</option><option>يوم</option></select></div>
+          <div class="setting-row"><div><b>التحقق بخطوتين <span class="badge" style="height:20px;font-size:11px">قريباً</span></b><p>رمز من تطبيق المصادقة عند كل تسجيل دخول.</p></div><label class="switch"><input type="checkbox" disabled><span class="track"></span></label></div>
+          <div class="setting-row"><div><b>تنبيه الدخول من جهاز جديد</b><p>بريد للعضو عند تسجيل دخوله من متصفح أو شبكة لم يستخدمها من قبل.</p></div><label class="switch"><input type="checkbox" data-setting="new_device_alert"><span class="track"></span></label></div>
+          <div class="setting-row"><div><b>انتهاء الجلسة تلقائياً</b><p>تسجيل الخروج بعد فترة من عدم النشاط.</p></div><select class="select" style="width:auto;height:40px" aria-label="مدة الجلسة" data-setting="session_lifetime"><option value="30">30 دقيقة</option><option value="120">ساعتان</option><option value="1440">يوم</option></select></div>
           <div style="margin-top:22px">
             <div class="label" style="margin-bottom:10px">الأجهزة المتصلة</div>
             <div class="card" id="sessions"></div>
           </div>
-          <div class="card" style="margin-top:22px;padding:18px;border-color:#fecaca;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-            <div style="flex:1;min-width:220px"><b style="color:var(--danger)">تصدير ومسح البيانات</b><p class="muted" style="font-size:13px">تنزيل نسخة من كل بيانات المنصة أو حذفها نهائياً.</p></div>
-            <button type="button" class="btn btn-ghost" id="exportData"><i data-icon="download" class="sm"></i>تصدير</button>
-            <button type="button" class="btn btn-danger-soft" id="wipe"><i data-icon="trash" class="sm"></i>حذف كل البيانات</button>
+          <div class="card" style="margin-top:22px;padding:18px;border-color:#fecaca" data-requires="manage_platform_data">
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <div style="flex:1;min-width:220px"><b style="color:var(--danger)">تصدير ومسح البيانات</b><p class="muted" style="font-size:13px">نسخة ZIP من كل بيانات المنصة (تُجهَّز في الخلفية وتبقى 7 أيام)، أو حذفها نهائياً. للمالك فقط.</p></div>
+              <button type="button" class="btn btn-ghost" id="exportData"><i data-icon="download" class="sm"></i>تجهيز نسخة</button>
+              <button type="button" class="btn btn-danger-soft" id="wipe" data-open="wipeModal"><i data-icon="trash" class="sm"></i>حذف كل البيانات</button>
+            </div>
+            <div class="list" id="exports" style="margin-top:12px"></div>
           </div>
         </div>
 
@@ -116,6 +147,17 @@
 @endsection
 
 @push('modals')
+  <div class="modal" id="wipeModal" aria-hidden="true">
+    <form class="modal-box" id="wipeForm" novalidate>
+      <div class="modal-head"><h3 style="color:var(--danger)">حذف كل بيانات المنصة</h3><button type="button" class="btn-icon" data-close aria-label="إغلاق"><i data-icon="close"></i></button></div>
+      <div class="modal-body form-grid">
+        <p class="full muted">سيتم حذف الدورات والورش والمقالات والأدوات والطلاب والطلبات والكوبونات والتقييمات والرسائل وطلبات المشاريع نهائياً مع ملفاتها. يبقى الفريق والإعدادات وسجل النشاط. ننصح بتجهيز نسخة أولاً.</p>
+        <div class="field full"><label for="wipePassword">كلمة مرورك</label><input class="input ltr" id="wipePassword" type="password" autocomplete="current-password"></div>
+        <div class="field full"><label for="wipeConfirm">اكتب: <b>احذف كل البيانات</b></label><input class="input" id="wipeConfirm" autocomplete="off"></div>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>إلغاء</button><button class="btn btn-danger" type="submit" id="wipeSubmit" disabled>حذف نهائي</button></div>
+    </form>
+  </div>
   <div class="modal" id="inviteModal" aria-hidden="true">
     <form class="modal-box" id="inviteForm" novalidate>
       <div class="modal-head"><h3>دعوة عضو للفريق</h3><button type="button" class="btn-icon" data-close aria-label="إغلاق"><i data-icon="close"></i></button></div>

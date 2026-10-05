@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\CourseCopyController;
 use App\Http\Controllers\Api\CourseCoverController;
 use App\Http\Controllers\Api\CourseStatusController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DataExportController;
+use App\Http\Controllers\Api\DataWipeController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NotificationPreferenceController;
@@ -31,11 +33,15 @@ use App\Http\Controllers\Api\ReviewReplyController;
 use App\Http\Controllers\Api\ReviewStatusController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\SettingSecretController;
+use App\Http\Controllers\Api\SiteSettingsController;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\StudentMessageController;
 use App\Http\Controllers\Api\StudentStatusController;
 use App\Http\Controllers\Api\TeamMemberController;
+use App\Http\Controllers\Api\TestEmailController;
 use App\Http\Controllers\Api\ToolCategoryController;
 use App\Http\Controllers\Api\ToolController;
 use App\Http\Controllers\Api\WorkshopController;
@@ -54,8 +60,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/status', StatusController::class)->name('status');
 
+Route::get('/site-settings', SiteSettingsController::class)->middleware('throttle:60,1,site-settings')->name('site-settings');
+
 Route::post('/invitations/accept', [AcceptedInvitationController::class, 'store'])
-    ->middleware(['guest', 'throttle:6,1'])
+    ->middleware(['guest', 'throttle:6,1,invitations'])
     ->name('invitations.accept');
 
 Route::middleware('auth')->group(function () {
@@ -133,7 +141,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/conversations/{conversation}/read', [ConversationReadController::class, 'store'])->name('conversations.read.store');
         Route::delete('/conversations/{conversation}/read', [ConversationReadController::class, 'destroy'])->name('conversations.read.destroy');
         Route::post('/conversations/{conversation}/messages', [ConversationMessageController::class, 'store'])
-            ->middleware('throttle:30,1')
+            ->middleware('throttle:30,1,conversation-replies')
             ->name('conversations.messages.store');
     });
 
@@ -152,5 +160,23 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('can:manage-leads')->group(function () {
         Route::apiResource('leads', LeadController::class)->only(['store', 'update', 'destroy']);
+    });
+
+    // platform settings: every member reads (secrets stay masked); owner and admin change them (Role::canManageSettings)
+    Route::get('/settings', [SettingController::class, 'show'])->name('settings.show');
+
+    Route::middleware('can:manage-settings')->group(function () {
+        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::delete('/settings/secrets/{key}', [SettingSecretController::class, 'destroy'])->name('settings.secrets.destroy');
+        Route::post('/settings/test-email', [TestEmailController::class, 'store'])->middleware('throttle:5,1,test-email')->name('settings.test-email');
+    });
+
+    // all of the platform's data: owner only (Role::canManagePlatformData)
+    Route::middleware('can:manage-platform-data')->group(function () {
+        Route::get('/data-exports', [DataExportController::class, 'index'])->name('data-exports.index');
+        Route::post('/data-exports', [DataExportController::class, 'store'])->middleware('throttle:3,10,data-exports')->name('data-exports.store');
+        Route::get('/data-exports/{file}', [DataExportController::class, 'show'])->name('data-exports.show');
+        Route::delete('/data-exports/{file}', [DataExportController::class, 'destroy'])->name('data-exports.destroy');
+        Route::post('/data-wipe', [DataWipeController::class, 'store'])->middleware('throttle:3,10,data-wipe')->name('data-wipe');
     });
 });

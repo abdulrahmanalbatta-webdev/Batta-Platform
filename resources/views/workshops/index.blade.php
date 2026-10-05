@@ -40,7 +40,7 @@
         <div class="field"><label for="wTime">الوقت</label><input class="input" id="wTime" type="time" value="19:00"></div>
         <div class="field"><label for="wFormat">النوع</label><select class="select" id="wFormat"><option value="online">أونلاين</option><option value="in-person">حضوري</option></select></div>
         <div class="field"><label for="wPlace">المكان / المنصة</label><input class="input" id="wPlace" value="Zoom"></div>
-        <div class="field"><label for="wPrice">السعر ($)</label><input class="input ltr" id="wPrice" type="number" min="0" value="0"></div>
+        <div class="field"><label for="wPrice">السعر ({{ trim($currencySymbol) }})</label><input class="input ltr" id="wPrice" type="number" min="0" value="0"></div>
         <div class="field"><label for="wSeats">عدد المقاعد *</label><input class="input ltr" id="wSeats" type="number" min="1" value="40" required></div>
         <div class="field full"><label for="wDesc">الوصف</label><textarea class="textarea" id="wDesc" rows="3" placeholder="ماذا سيبني المشاركون في الورشة؟"></textarea></div>
       </div>

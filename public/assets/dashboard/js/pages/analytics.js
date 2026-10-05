@@ -30,7 +30,7 @@ document.addEventListener('app:ready', () => {
       xEvery: Math.max(1, Math.ceil(s.labels.length / 10)),
       height: 300,
       series: [{ name: isRevenue ? 'الإيرادات' : 'طلاب جدد', color: isRevenue ? '#0066ff' : '#7c3aed', data: s[metric], area: true }],
-      ...(isRevenue ? { format: (v) => `${num(v)}$` } : {}),
+      ...(isRevenue ? { format: (v) => money(v) } : {}),
     });
   }
 

@@ -30,7 +30,7 @@
         <div class="field"><label for="lService">الخدمة</label><select class="select" id="lService">@foreach (LeadService::cases() as $service)<option value="{{ $service->value }}">{{ $service->label() }}</option>@endforeach</select></div>
         <div class="field"><label for="lEmail">البريد الإلكتروني</label><input class="input ltr" id="lEmail" type="email"></div>
         <div class="field"><label for="lPhone">الهاتف</label><input class="input ltr" id="lPhone" type="tel"></div>
-        <div class="field"><label for="lBudget">الميزانية ($)</label><input class="input ltr" id="lBudget" type="number" min="0" value="1000"></div>
+        <div class="field"><label for="lBudget">الميزانية ({{ trim($currencySymbol) }})</label><input class="input ltr" id="lBudget" type="number" min="0" value="1000"></div>
         <div class="field full"><label for="lNote">ملاحظات</label><textarea class="textarea" id="lNote" rows="3"></textarea></div>
       </div>
       <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>إلغاء</button><button class="btn btn-primary" type="submit">إضافة</button></div>

@@ -31,7 +31,7 @@ document.addEventListener('app:ready', async () => {
     pageSize: 10,
     columns: [
       { key: 'code', label: 'الكود', render: (c) => `<span class="mono" style="font-weight:800;color:var(--fg);background:var(--tint);padding:4px 10px;border-radius:8px;border:1px dashed var(--line-2)">${esc(c.code)}</span>` },
-      { key: 'value', label: 'الخصم', sortable: true, render: (c) => `<b style="color:var(--fg)">${c.type === 'percent' ? `${c.value}%` : `${c.value}$`}</b>` },
+      { key: 'value', label: 'الخصم', sortable: true, render: (c) => `<b style="color:var(--fg)">${c.type === 'percent' ? `${c.value}%` : App.money(c.value)}</b>` },
       { key: 'scope_label', label: 'ينطبق على', render: (c) => esc(c.scope_label) },
       {
         key: 'uses',

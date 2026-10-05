@@ -11,7 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ActivityResource extends JsonResource
 {
-    private const VERBS = ['created' => 'أضاف', 'updated' => 'عدّل', 'status' => 'غيّر حالة', 'deleted' => 'حذف'];
+    private const VERBS = ['created' => 'أضاف', 'updated' => 'عدّل', 'status' => 'غيّر حالة', 'deleted' => 'حذف', 'exported' => 'صدّر نسخة البيانات', 'wiped' => 'مسح'];
 
     /**
      * Transform the resource into an array.
@@ -29,7 +29,7 @@ class ActivityResource extends JsonResource
             'user' => $this->user?->name ?? 'عضو محذوف',
             'initial' => $this->user?->initial,
             // e.g. "غيّر حالة الطلب «#1024» إلى «مسترد»"
-            'description' => trim(self::VERBS[$this->action].' '.$label.' «'.$this->subject_name.'»'.($state ? ' إلى «'.$state.'»' : '')),
+            'description' => implode(' ', array_filter([self::VERBS[$this->action], $label, '«'.$this->subject_name.'»', $state ? 'إلى «'.$state.'»' : null])),
             'at' => $this->created_at->toIso8601String(),
         ];
     }

@@ -60,12 +60,12 @@
           <div class="card-body form-grid">
             <div class="field">
               <label for="price">السعر</label>
-              <div class="input-group"><input class="input ltr" id="price" type="number" min="0" placeholder="0" style="text-align:left"><span class="addon">$</span></div>
+              <div class="input-group"><input class="input ltr" id="price" type="number" min="0" placeholder="0" style="text-align:left"><span class="addon">{{ trim($currencySymbol) }}</span></div>
               <span class="hint">اترك 0 لدورة مجانية</span>
             </div>
             <div class="field">
               <label for="oldPrice">السعر قبل الخصم</label>
-              <div class="input-group"><input class="input ltr" id="oldPrice" type="number" min="0" placeholder="اختياري" style="text-align:left"><span class="addon">$</span></div>
+              <div class="input-group"><input class="input ltr" id="oldPrice" type="number" min="0" placeholder="اختياري" style="text-align:left"><span class="addon">{{ trim($currencySymbol) }}</span></div>
             </div>
             <div class="field full">
               <label class="switch"><input type="checkbox" id="ppp" checked><span class="track"></span>تسعير إقليمي تلقائي (أسعار أقل للدول ذات الدخل المنخفض)</label>
