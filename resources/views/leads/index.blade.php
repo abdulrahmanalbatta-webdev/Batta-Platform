@@ -1,5 +1,5 @@
 @extends('layouts.dashboard')
-@use('App\Enums\LeadService')
+@use('App\Support\ProjectServices')
 
 @section('title', 'طلبات المشاريع')
 @section('page', 'leads')
@@ -27,7 +27,7 @@
       <div class="modal-body form-grid">
         <div class="field"><label for="lName">اسم العميل *</label><input class="input" id="lName" required></div>
         <div class="field"><label for="lCompany">الجهة</label><input class="input" id="lCompany"></div>
-        <div class="field"><label for="lService">الخدمة</label><select class="select" id="lService">@foreach (LeadService::cases() as $service)<option value="{{ $service->value }}">{{ $service->label() }}</option>@endforeach</select></div>
+        <div class="field"><label for="lService">الخدمة</label><select class="select" id="lService">@foreach (app(ProjectServices::class)->options() as $id => $title)<option value="{{ $id }}">{{ $title }}</option>@endforeach</select></div>
         <div class="field"><label for="lEmail">البريد الإلكتروني</label><input class="input ltr" id="lEmail" type="email"></div>
         <div class="field"><label for="lPhone">الهاتف</label><input class="input ltr" id="lPhone" type="tel"></div>
         <div class="field"><label for="lBudget">الميزانية ({{ trim($currencySymbol) }})</label><input class="input ltr" id="lBudget" type="number" min="0" value="1000"></div>

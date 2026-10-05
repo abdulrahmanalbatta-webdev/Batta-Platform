@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\LeadService;
 use App\Enums\LeadStage;
+use App\Support\ProjectServices;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +26,8 @@ class LeadRequest extends FormRequest
             'company' => ['sometimes', 'nullable', 'string', 'max:120'],
             'email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
-            'service' => [$required, Rule::enum(LeadService::class)],
+            // one of the site's services; a lead keeps its service even after it is removed from the site
+            'service' => [$required, Rule::in([...array_keys(app(ProjectServices::class)->options()), $this->route('lead')?->service])],
             'budget' => ['sometimes', 'integer', 'min:0', 'max:10000000'],
             'stage' => ['sometimes', Rule::enum(LeadStage::class)],
             'note' => ['sometimes', 'nullable', 'string', 'max:2000'],

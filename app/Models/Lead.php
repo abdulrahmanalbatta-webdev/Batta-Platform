@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\LeadService;
 use App\Enums\LeadStage;
 use App\Models\Concerns\LogsActivity;
 use App\Observers\LeadObserver;
@@ -38,7 +37,6 @@ class Lead extends Model
     protected function casts(): array
     {
         return [
-            'service' => LeadService::class,
             'stage' => LeadStage::class,
             'budget' => 'integer',
             'decided_at' => 'datetime',
