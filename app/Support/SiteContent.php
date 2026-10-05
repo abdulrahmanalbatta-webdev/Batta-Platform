@@ -9,7 +9,8 @@ use Illuminate\Validation\Rule;
 
 /**
  * The public site's own content, edited on the dashboard's "محتوى الموقع" page: the announcement bar, the home
- * page, the about page, services and packages, case studies, testimonials and FAQs.
+ * page, the about page, services and packages, case studies, testimonials, FAQs, and the headings and intros of
+ * every page.
  *
  * Each section has a schema (fields and limits) that drives both the validation here and the editor in the
  * dashboard. Sections never edited fall back to resources/data/site-content.json (the site's original texts).
@@ -53,7 +54,7 @@ class SiteContent
 
     /**
      * Sections, in the editor's order. Field types: text, textarea, bool, icon, select (options), strings (a list of
-     * short texts), tags (several options), list (repeated items with their own fields), object (fixed fields).
+     * short texts), tags (several options), list (repeated items with their own fields), object (fixed fields, which may nest).
      *
      * @return array<string, array<string, mixed>>
      */
@@ -62,6 +63,12 @@ class SiteContent
         $text = fn (string $label, int $max = 120, bool $required = true, string $hint = ''): array => ['type' => 'text', 'label' => $label, 'max' => $max, 'required' => $required, 'hint' => $hint];
         $long = fn (string $label, int $max = 1000, bool $required = true): array => ['type' => 'textarea', 'label' => $label, 'max' => $max, 'required' => $required];
         $strings = fn (string $label, int $items, int $max = 120): array => ['type' => 'strings', 'label' => $label, 'max_items' => $items, 'max' => $max];
+        $block = fn (string $label, array $fields): array => ['type' => 'object', 'label' => $label, 'fields' => $fields];
+        $intro = fn (string $label, bool $withText = true): array => $block($label, [
+            'eyebrow' => $text('العنوان الصغير', 40),
+            'title' => $text('العنوان', 120),
+            ...($withText ? ['text' => $long('المقدمة', 300)] : []),
+        ]);
 
         return [
             // الرئيسية
@@ -153,6 +160,86 @@ class SiteContent
                 'q' => $text('السؤال', 160),
                 'a' => $long('الجواب', 800),
             ]],
+
+            // نصوص الصفحات
+            'texts_home' => ['group' => 'texts', 'label' => 'نصوص الرئيسية', 'hint' => 'عناوين أقسام الصفحة الرئيسية ومقدّماتها.', 'type' => 'object', 'fields' => [
+                'hero' => $block('العنوان الرئيسي', [
+                    'before' => $text('قبل الكلمة المتبدّلة', 30),
+                    'after' => $text('بعدها', 60),
+                    'text' => $long('الوصف', 400),
+                ]),
+                'services' => $intro('الخدمات'),
+                'why' => $intro('لماذا تعمل معي'),
+                'about' => $block('من أنا', ['eyebrow' => $text('العنوان الصغير', 40)]),
+                'courses' => $intro('الدورات'),
+                'projects' => $intro('مشاريع مميزة'),
+                'articles' => $intro('المقالات'),
+                'workshop' => $intro('الورشة القادمة', false),
+                'testimonials' => $intro('الآراء', false),
+                'faq' => $intro('الأسئلة الشائعة'),
+                'newsletter' => $block('النشرة البريدية', ['title' => $text('العنوان', 80), 'text' => $long('المقدمة', 300)]),
+                'cta' => $intro('الدعوة الأخيرة (أسفل الصفحة)'),
+            ]],
+            'texts_pages' => ['group' => 'texts', 'label' => 'نصوص الخدمات والأعمال ومن أنا', 'type' => 'object', 'fields' => [
+                'services' => $block('صفحة الخدمات', ['text' => $long('المقدمة', 300)]),
+                'packages' => $intro('الباقات', false),
+                'process' => $intro('طريقة العمل', false),
+                'contact' => $block('تواصل (نموذج عرض السعر)', [
+                    'eyebrow' => $text('العنوان الصغير', 40),
+                    'title' => $text('العنوان', 120),
+                    'text' => $long('المقدمة', 300),
+                    'points' => ['type' => 'list', 'label' => 'النقاط بجانب النموذج', 'max_items' => 4, 'title' => 'title', 'item' => [
+                        'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],
+                        'title' => $text('العنوان', 60),
+                        'text' => $text('الوصف', 160),
+                    ]],
+                ]),
+                'work' => $block('صفحة الأعمال', [
+                    'text' => $long('المقدمة', 300),
+                    'cta_title' => $text('عنوان الدعوة أسفل الصفحة', 80),
+                    'cta_text' => $text('نص الدعوة', 200),
+                ]),
+                'story' => $intro('من أنا: القصة', false),
+                'values' => $intro('من أنا: طريقتي في العمل', false),
+                'skills' => $intro('من أنا: المهارات', false),
+            ]],
+            'texts_learning' => ['group' => 'texts', 'label' => 'نصوص الأكاديمية والموارد', 'type' => 'object', 'fields' => [
+                'courses' => $block('صفحة الدورات', ['text' => $long('المقدمة', 300), 'badge' => $text('الميزة أسفل العنوان', 60)]),
+                'workshops' => $block('صفحة الورش', [
+                    'text' => $long('المقدمة', 300),
+                    'badges' => $strings('المزايا أسفل العنوان', 3, 60),
+                    'private_title' => $text('عنوان الورش الخاصة', 80),
+                    'private_text' => $text('نص الورش الخاصة', 200),
+                ]),
+                'articles' => $block('المقالات', [
+                    'text' => $long('مقدمة صفحة المقالات', 300),
+                    'badge' => $text('الميزة أسفل العنوان', 60),
+                    'author_bio' => $text('نبذتك أسفل كل مقال (بعد المسمّى)', 200),
+                    'newsletter_text' => $text('دعوة النشرة بجانب المقال', 120),
+                    'related_eyebrow' => $text('مقالات ذات صلة: العنوان الصغير', 40),
+                    'related_title' => $text('مقالات ذات صلة: العنوان', 80),
+                ]),
+                'tools' => $block('صفحة أدواتي', [
+                    'text' => $long('المقدمة', 300),
+                    'badge' => $text('الميزة أسفل العنوان', 60),
+                    'note' => $text('ملاحظة روابط الإحالة', 200),
+                ]),
+                'enroll' => $block('صفحة التسجيل في دورة', ['text' => $long('المقدمة', 300)]),
+            ]],
+            'texts_general' => ['group' => 'texts', 'label' => 'التذييل وصفحات الدخول', 'type' => 'object', 'fields' => [
+                'footer' => $block('التذييل', ['text' => $text('النبذة (بعد المسمّى)', 200)]),
+                'login' => $block('تسجيل الدخول', ['title' => $text('العنوان', 60), 'text' => $text('المقدمة', 160)]),
+                'register' => $block('إنشاء حساب', ['title' => $text('العنوان', 60), 'text' => $text('المقدمة', 160)]),
+                'auth' => $block('الجانب الملوّن في صفحتي الدخول والتسجيل', [
+                    'title' => $text('العنوان', 120),
+                    'perks' => ['type' => 'list', 'label' => 'المزايا', 'max_items' => 6, 'title' => 'text', 'item' => [
+                        'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],
+                        'text' => $text('النص', 80),
+                    ]],
+                    'quote' => $long('الاقتباس', 300),
+                    'quote_by' => $text('صاحب الاقتباس', 80),
+                ]),
+            ]],
         ];
     }
 
@@ -163,7 +250,7 @@ class SiteContent
      */
     public static function groups(): array
     {
-        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'work' => 'الأعمال والآراء'];
+        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'work' => 'الأعمال والآراء', 'texts' => 'نصوص الصفحات'];
     }
 
     /**

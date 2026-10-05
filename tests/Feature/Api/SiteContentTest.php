@@ -89,6 +89,35 @@ class SiteContentTest extends TestCase
         $this->actingAs(User::factory()->role(Role::Editor)->create())->putJson(route('api.site-content.update', 'nope'), ['value' => []])->assertNotFound();
     }
 
+    public function test_every_original_text_passes_its_own_schema(): void
+    {
+        $editor = User::factory()->role(Role::Editor)->create();
+
+        foreach (SiteContent::defaults() as $key => $value) {
+            $saved = $this->actingAs($editor)->putJson(route('api.site-content.update', $key), ['value' => $value])->assertOk()->json('data');
+            $this->assertEquals($value, $saved, $key);
+        }
+    }
+
+    public function test_page_texts_are_nested_groups_validated_and_kept_clean(): void
+    {
+        $editor = User::factory()->role(Role::Editor)->create();
+        $texts = SiteContent::defaults()['texts_general'];
+        $texts['auth']['perks'][0]['stray'] = 'x';
+        $texts['login']['title'] = 'مرحباً من جديد';
+
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'texts_general'), ['value' => $texts])
+            ->assertOk()
+            ->assertJsonMissingPath('data.auth.perks.0.stray');
+        $this->getJson(route('site.content'))->assertJsonPath('data.texts_general.login.title', 'مرحباً من جديد');
+
+        $texts['login']['title'] = '';
+        $texts['auth']['perks'][0]['icon'] = 'rocket';
+        $invalid = $this->actingAs($editor)->putJson(route('api.site-content.update', 'texts_general'), ['value' => $texts])
+            ->assertJsonValidationErrors(['value.login.title', 'value.auth.perks.0.icon']);
+        $this->assertSame('حقل العنوان مطلوب.', $invalid->json('errors')['value.login.title'][0]);
+    }
+
     /**
      * A real PNG of the given size, built without the GD extension (as in AvatarControllerTest).
      */

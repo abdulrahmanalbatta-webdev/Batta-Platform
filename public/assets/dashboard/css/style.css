@@ -1372,6 +1372,8 @@ html.app-ready .content > :nth-child(n + 5) { animation-delay: 0.16s; }
 .sc-item > summary .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sc-item[open] > summary { border-bottom: 1px solid var(--line); }
 .sc-item-body { padding: 14px; display: grid; gap: 14px; }
+.sc-group { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; margin: 0; min-width: 0; }
+.sc-group > legend { padding: 0 6px; font-weight: 700; font-size: 13.5px; color: var(--fg); }
 .sc-list { display: flex; flex-direction: column; gap: 10px; }
 .sc-row { display: flex; gap: 8px; align-items: flex-start; }
 .sc-row > .input, .sc-row > .textarea { flex: 1; }

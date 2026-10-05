@@ -73,8 +73,11 @@ document.addEventListener('app:ready', async () => {
           .join('')}</div>${canEdit && value.length < def.max_items ? `<button type="button" class="btn btn-ghost btn-sm" data-add="${enc(path)}" style="align-self:flex-start">${icon('plus', 'sm')}إضافة</button>` : ''}${hint}</div>`;
       case 'list':
         return `<div class="field full">${label}${list(def, path)}</div>`;
-      case 'object':
-        return `<div class="form-grid">${Object.entries(def.fields).map(([k, f]) => field(f, [...path, k], k)).join('')}</div>`;
+      case 'object': {
+        const grid = `<div class="form-grid">${Object.entries(def.fields).map(([k, f]) => field(f, [...path, k], k)).join('')}</div>`;
+        // a group inside a section (the page texts): its own small heading
+        return path.length > 1 ? `<fieldset class="field full sc-group"><legend>${esc(def.label)}</legend>${grid}</fieldset>` : grid;
+      }
       default:
         return '';
     }
