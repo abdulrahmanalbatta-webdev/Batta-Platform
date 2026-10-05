@@ -64,7 +64,35 @@
       </div>
     </div>
 
-    <p class="muted" style="font-size:12.5px;margin-top:4px">بيانات الزيارات (المصادر، الأجهزة، الصفحات) تحتاج أداة إحصاءات للموقع العام مثل Plausible أو Google Analytics، وتُضاف عند ربطها.</p>
+    <!-- traffic of the public site (Google Analytics 4, GET analytics/traffic) -->
+    <div class="page-head" style="margin-top:12px">
+      <div><h2 style="font-size:18px">زيارات الموقع</h2><p id="trafficNote">من Google Analytics، لنفس الفترة.</p></div>
+    </div>
+    <div id="trafficEmpty" class="card" hidden><div class="card-body" style="display:flex;gap:14px;align-items:flex-start"><span class="kpi-ico c-amber" id="trafficEmptyIcon"></span><div><b style="color:var(--fg)" id="trafficEmptyTitle"></b><p class="muted" id="trafficEmptyText" style="margin-top:4px"></p></div></div></div>
+    <div id="traffic" hidden>
+      <div class="grid g4" id="trafficKpis"></div>
+      <div class="card">
+        <div class="card-head"><div><h3>الزوار والجلسات</h3><p id="trafficSeriesNote"></p></div></div>
+        <div class="card-body"><div id="trafficChart"></div></div>
+      </div>
+      <div class="grid g3">
+        <div class="card">
+          <div class="card-head"><div><h3>مصادر الزيارات</h3><p>نسبة الجلسات</p></div></div>
+          <div class="card-body" id="trafficSources"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h3>الأجهزة</h3><p>نسبة الجلسات</p></div></div>
+          <div class="card-body">
+            <div id="devicesChart"></div>
+            <div class="legend" id="devicesLegend" style="justify-content:center;margin-top:14px;flex-wrap:wrap"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h3>الصفحات الأكثر زيارة</h3><p>مشاهدات الصفحة</p></div></div>
+          <div class="card-body" id="trafficPages"></div>
+        </div>
+      </div>
+    </div>
 @endsection
 
 @push('scripts')

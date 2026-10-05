@@ -240,6 +240,7 @@ try {
 | PUT | `notification-preferences` | `NotificationPreferenceController` | أي تنبيهات بتوصلني بالإيميل كمان (`{"orders": true, "messages": false}`) |
 | GET | `dashboard` | `DashboardController` | كل أرقام الرئيسية (شوف تحت) |
 | GET | `analytics?days=` | `AnalyticsController` | تحليلات المبيعات والطلاب لآخر 7 / 30 / 90 يوم أو 12 شهر (`365`) |
+| GET | `analytics/traffic?days=` | `TrafficController` | زيارات الموقع من Google Analytics لنفس الفترات. دايماً 200: `meta.configured` و`meta.error` بيقولوا ليش ما في بيانات |
 | GET | `activity` | `ActivityController` | سجل النشاط، 20 بالصفحة (`meta.next_cursor` ← `?cursor=`)، و`?limit=6` للرئيسية |
 | GET | `search?q=` | `SearchController` | البحث العام: لحد 5 نتائج من كل نوع، كل نتيجة معها `page` و`params` لـ `App.url` |
 
@@ -333,7 +334,7 @@ try {
 - مؤشرات الرئيسية بتقارن الشهر الحالي لليوم بنفس الأيام من الشهر الماضي، ومعها آخر 12 شهر للرسم الصغير. "معدل إكمال الدورات" = متوسط تقدّم كل الاشتراكات.
 - التحليلات بتقارن الفترة بالفترة اللي قبلها، يومياً لحد 90 يوم وشهرياً للسنة، ومعها رحلة الطلاب الجدد (سجّلوا ← بدأوا طلب ← دفعوا ← اشتروا أكثر من مرة)، طرق الدفع، الأكثر مبيعاً، ودول المشترين.
 - الأرقام المجمّعة محفوظة بالـ Cache لـ 5 دقائق (`dashboard.summary` و `analytics.{days}`)؛ أحدث الطلبات والورش وطلبات المشاريع دايماً مباشرة.
-- بيانات الزيارات (المصادر، الأجهزة، الصفحات) بدها أداة إحصاءات للموقع العام مثل Plausible أو Google Analytics.
+- زيارات الموقع (الزوار، الجلسات، المشاهدات، معدل التفاعل، المصادر، الأجهزة، أكثر الصفحات) من Google Analytics 4، محفوظة بالـ Cache ساعة. شوف "ربط Google Analytics" تحت.
 
 #### الإعدادات والبيانات
 
@@ -343,6 +344,7 @@ try {
 | PUT | `settings` | `manage-settings` | حفظ أي مجموعة إعدادات (المفتاح السري الفاضي بيضل زي ما هو) |
 | DELETE | `settings/secrets/{key}` | `manage-platform-data` | حذف مفتاح سري محفوظ |
 | POST | `settings/test-email` | `manage-platform-data` | رسالة تجريبية فورية لبريدك |
+| POST | `settings/analytics-test` | `manage-settings` | بيجرّب رقم الموقع ومفتاح حساب الخدمة المحفوظين، والخطأ (422) بيشرح السبب |
 | GET · POST | `data-exports` | `manage-platform-data` | النسخ الجاهزة · تجهيز نسخة بالخلفية (بيوصلك إشعار) |
 | GET · DELETE | `data-exports/{file}` | `manage-platform-data` | تنزيل · حذف نسخة |
 | POST | `data-wipe` | `manage-platform-data` | حذف كل البيانات (`password` + `confirmation: "احذف كل البيانات"`) |
@@ -373,6 +375,33 @@ try {
 تخصيص Fortify في `app/Providers/FortifyServiceProvider.php` و `app/Actions/Fortify` و `app/Http/Responses`.
 التسجيل العام مطفأ (الأعضاء بيدخلوا بدعوة بس)، والتحقق بخطوتين جاهز للتفعيل من `features` في `config/fortify.php` لما نبني شاشاته.
 
+### ربط Google Analytics
+
+**على الموقع العام** (تتبّع الزيارات): `GET /api/v1/settings` بيرجع `ga_measurement_id` (مثل `G-XXXXXXXXXX`). لو موجود، الموقع (Vue) بيحمّل gtag وبيبعت مشاهدة مع كل تنقّل:
+
+```js
+const { ga_measurement_id: id } = settings;
+if (id) {
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  document.head.append(s);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { dataLayer.push(arguments); };
+  gtag('js', new Date());
+  gtag('config', id, { send_page_view: false });
+  router.afterEach((to) => gtag('event', 'page_view', { page_path: to.fullPath, page_title: document.title }));
+}
+```
+
+**باللوحة** (قراءة التقارير بصفحة التحليلات): الإعدادات ← الإحصاءات:
+1. **رقم الموقع (Property ID)**: من Google Analytics ← الإدارة ← تفاصيل الموقع (رقم، مش `G-…`).
+2. **مفتاح حساب الخدمة (للمالك بس)**: بـ Google Cloud Console فعّل *Google Analytics Data API*، واعمل Service account، ونزّل مفتاح JSON والصقه. بينحفظ مشفّر وما بيرجع للمتصفح، والتلميح بيعرض بريد الحساب بس.
+3. بـ Google Analytics ← إدارة الوصول إلى الموقع، ضيف بريد حساب الخدمة (`…@….iam.gserviceaccount.com`) بدور **Viewer**.
+4. "اختبار الاتصال" بيأكد إنه شغّال، أو بيقول شو الناقص (صلاحية، رقم غلط، مفتاح ملغي).
+
+`app/Support/GoogleAnalytics.php` بيحكي مع Google مباشرة بدون SDK: حساب الخدمة بيوقّع JWT (RS256) بياخد مقابله access token (محفوظ بالـ Cache لحد قبل ما يخلص بشوي)، وبعدين طلب `batchRunReports` واحد بيجيب كل التقرير. الخادم لازم يقدر يوصل لـ `oauth2.googleapis.com` و`analyticsdata.googleapis.com`.
+
 ### الأدوار
 
 | الدور | إدارة الفريق | المحتوى | الطلاب (إيقاف، مراسلة) | المبيعات (دفع، استرداد، كوبونات) | الرسائل (رد) | التقييمات (مراجعة) | طلبات المشاريع | الإعدادات | تصدير ومسح البيانات |
@@ -402,7 +431,7 @@ try {
 
 | الطريقة | المسار | الوظيفة |
 |---|---|---|
-| GET | `settings` | الاسم، التواصل، الصيانة، `registration_open`، العملة، الضريبة، طرق الدفع الجاهزة مع مفاتيحها العامة، و`project_services` لنموذج طلب المشروع. ولا مفتاح سري |
+| GET | `settings` | الاسم، التواصل، الصيانة، `registration_open`، العملة، الضريبة، طرق الدفع الجاهزة مع مفاتيحها العامة، `ga_measurement_id` لـ Google Analytics، و`project_services` لنموذج طلب المشروع. ولا مفتاح سري |
 | GET | `courses` · `courses/{slug}` | الدورات المنشورة (بدون الإيرادات والحالة) · صفحة الدورة مع المنهج (عناوين الدروس ومددها) |
 | GET | `courses/{slug}/reviews` | التقييمات المنشورة، 20 بالصفحة، بالاسم الأول بس |
 | GET | `workshops` | الورش من اليوم وطالع مع `seats_left` |

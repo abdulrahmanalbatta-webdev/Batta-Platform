@@ -20,6 +20,7 @@
         <button class="on" data-tab="general" role="tab">عام</button>
         <button data-tab="payments" role="tab">الدفع</button>
         <button data-tab="mail" role="tab">البريد</button>
+        <button data-tab="analytics" role="tab">الإحصاءات</button>
         <button data-tab="notifications" role="tab">الإشعارات</button>
         <button data-tab="team" role="tab">الفريق</button>
         <button data-tab="security" role="tab">الأمان</button>
@@ -41,7 +42,7 @@
             <div class="setting-row"><div><b>السماح بالتسجيل</b><p>يمكن للزوار إنشاء حساب جديد في المنصة.</p></div><label class="switch"><input type="checkbox" data-setting="registration_open"><span class="track"></span></label></div>
             <div class="setting-row"><div><b>التعليقات على المقالات</b><p>تفعيل التعليقات مع مراجعتها قبل النشر.</p></div><label class="switch"><input type="checkbox" data-setting="article_comments"><span class="track"></span></label></div>
           </div>
-          <p class="muted" style="font-size:12.5px;margin-top:14px">هذه الإعدادات يقرأها الموقع العام من <span class="mono ltr">/dashboard/api/v1/site-settings</span>.</p>
+          <p class="muted" style="font-size:12.5px;margin-top:14px">هذه الإعدادات يقرأها الموقع العام من <span class="mono ltr">/api/v1/settings</span>.</p>
         </div>
 
         <!-- payments -->
@@ -98,6 +99,28 @@
             <button type="button" class="btn btn-ghost" id="testEmail"><i data-icon="mail" class="sm"></i>إرسال رسالة تجريبية</button>
             <small class="muted">تُرسل إلى بريدك بعد حفظ التغييرات.</small>
           </div>
+        </div>
+
+        <!-- analytics: Google Analytics 4 for the public site's traffic -->
+        <div class="tab-panel card-body" data-panel-group="settings" data-panel="analytics">
+          <p class="muted" style="margin-bottom:14px">زيارات الموقع العام من Google Analytics 4: الموقع يرسلها بمعرّف القياس، واللوحة تقرأ تقاريرها في صفحة التحليلات عبر حساب خدمة (Service account) له صلاحية القراءة.</p>
+          <div class="form-grid">
+            <div class="field"><label for="gaMeasurement">معرّف القياس (Measurement ID)</label><input class="input ltr" id="gaMeasurement" data-setting="ga_measurement_id" placeholder="G-XXXXXXXXXX" autocomplete="off"><small class="muted">يقرؤه الموقع العام من <span class="mono ltr">/api/v1/settings</span> ليُحمّل Google Analytics.</small></div>
+            <div class="field"><label for="gaProperty">رقم الموقع (Property ID)</label><input class="input ltr" id="gaProperty" data-setting="ga_property_id" placeholder="123456789" inputmode="numeric" autocomplete="off"><small class="muted">من Google Analytics: الإدارة ← تفاصيل الموقع. رقم فقط.</small></div>
+            <div class="field full"><label for="gaCredentials">مفتاح حساب الخدمة (JSON) — للمالك فقط</label><textarea class="textarea ltr mono" id="gaCredentials" rows="5" data-secret="ga_credentials" autocomplete="off" spellcheck="false"></textarea></div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap" data-requires="manage_settings">
+            <button type="button" class="btn btn-ghost" id="testAnalytics"><i data-icon="refresh" class="sm"></i>اختبار الاتصال</button>
+            <small class="muted">بعد حفظ التغييرات.</small>
+          </div>
+          <details style="margin-top:20px">
+            <summary style="cursor:pointer;font-weight:700;color:var(--fg)">كيف أحصل على المفتاح؟</summary>
+            <ol class="muted" style="margin:10px 0 0;padding-inline-start:20px;line-height:1.9">
+              <li>في <span class="ltr">Google Cloud Console</span> أنشئ مشروعاً (أو اختر مشروعاً) وفعّل <span class="ltr">Google Analytics Data API</span>.</li>
+              <li>من <span class="ltr">IAM &amp; Admin ← Service accounts</span> أنشئ حساب خدمة، ثم من تبويب <span class="ltr">Keys</span> أضف مفتاحاً بصيغة JSON وانسخ محتوى الملف هنا.</li>
+              <li>في Google Analytics: الإدارة ← إدارة الوصول إلى الموقع، أضف بريد حساب الخدمة (ينتهي بـ <span class="ltr">iam.gserviceaccount.com</span>) بدور <b>Viewer</b>.</li>
+            </ol>
+          </details>
         </div>
 
         <!-- notifications -->

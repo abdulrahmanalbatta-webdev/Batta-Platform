@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Setting;
+use App\Rules\GoogleServiceAccountKey;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
@@ -93,6 +94,12 @@ class PlatformSettings
             'mail_encryption' => ['label' => 'التشفير', 'default' => 'tls', 'rules' => ['required', Rule::in(['tls', 'ssl'])], 'owner' => true],
             'mail_from_address' => ['label' => 'بريد المرسل', 'default' => null, 'rules' => ['nullable', 'email', 'max:255'], 'owner' => true],
             'mail_from_name' => ['label' => 'اسم المرسل', 'default' => null, 'rules' => $text(60), 'owner' => true],
+
+            // site traffic (Google Analytics 4): the site loads the measurement ID, the dashboard reads reports
+            // with a service account given read access ("Viewer") to the property
+            'ga_measurement_id' => ['label' => 'معرّف القياس (Measurement ID)', 'default' => null, 'rules' => ['nullable', 'string', 'regex:/^G-[A-Z0-9]{4,20}$/'], 'public' => true],
+            'ga_property_id' => ['label' => 'رقم الموقع (Property ID)', 'default' => null, 'rules' => ['nullable', 'string', 'regex:/^[0-9]{5,20}$/']],
+            'ga_credentials' => ['label' => 'مفتاح حساب الخدمة', 'default' => null, 'rules' => ['nullable', 'string', 'max:10000', new GoogleServiceAccountKey], 'secret' => true, 'owner' => true],
 
             // team notifications
             'weekly_report' => ['label' => 'التقرير الأسبوعي', 'default' => true, 'rules' => $bool],
@@ -207,11 +214,23 @@ class PlatformSettings
 
         foreach (self::definitions() as $key => $definition) {
             if ($definition['secret'] ?? false) {
-                $values[$key] = ['set' => filled($values[$key]), 'hint' => $withHints && filled($values[$key]) ? '••••'.mb_substr((string) $values[$key], -4) : null];
+                $values[$key] = ['set' => filled($values[$key]), 'hint' => $withHints && filled($values[$key]) ? $this->hint($key, (string) $values[$key]) : null];
             }
         }
 
         return $values;
+    }
+
+    /**
+     * What tells the owner which secret is stored: its last 4 characters, or the service account's address.
+     */
+    private function hint(string $key, string $secret): string
+    {
+        if ($key === 'ga_credentials') {
+            return (string) (json_decode($secret, true)['client_email'] ?? '');
+        }
+
+        return '••••'.mb_substr($secret, -4);
     }
 
     /**

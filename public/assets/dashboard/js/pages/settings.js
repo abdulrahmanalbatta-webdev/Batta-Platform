@@ -180,6 +180,19 @@ document.addEventListener('app:ready', () => {
     }
   });
 
+  $('#testAnalytics')?.addEventListener('click', async (e) => {
+    if (changed.size) return toast('احفظ التغييرات أولاً، ثم اختبر الاتصال', 'info');
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      toast((await api.post('settings/analytics-test')).message);
+    } catch (err) {
+      showFieldErrors(err, { ga_property_id: '#gaProperty' });
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   // open a tab from the URL hash (/dashboard/settings#security)
   const tab = location.hash.slice(1);
   if (tab) $(`[data-tab="${CSS.escape(tab)}"]`)?.click();

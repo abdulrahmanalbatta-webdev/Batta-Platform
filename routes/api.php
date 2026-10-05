@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AcceptedInvitationController;
 use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\AnalyticsConnectionController;
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ArticleCoverController;
@@ -43,6 +44,7 @@ use App\Http\Controllers\Api\TeamMemberController;
 use App\Http\Controllers\Api\TestEmailController;
 use App\Http\Controllers\Api\ToolCategoryController;
 use App\Http\Controllers\Api\ToolController;
+use App\Http\Controllers\Api\TrafficController;
 use App\Http\Controllers\Api\WorkshopController;
 use App\Http\Controllers\Api\WorkshopRegistrationController;
 use App\Http\Controllers\Api\WorkshopReminderController;
@@ -73,6 +75,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/analytics', AnalyticsController::class)->name('analytics');
+    Route::get('/analytics/traffic', TrafficController::class)->middleware('throttle:30,1,traffic')->name('analytics.traffic');
     Route::get('/activity', [ActivityController::class, 'index'])->name('activity.index');
     Route::get('/search', SearchController::class)->name('search');
 
@@ -164,6 +167,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('can:manage-settings')->group(function () {
         Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/analytics-test', [AnalyticsConnectionController::class, 'store'])->middleware('throttle:5,1,analytics-test')->name('settings.analytics-test');
     });
 
     // where payments and mail go: owner only, like the settings marked 'owner' in PlatformSettings

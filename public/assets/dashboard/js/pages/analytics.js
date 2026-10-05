@@ -90,6 +90,88 @@ document.addEventListener('app:ready', () => {
         .join('') || '<p class="muted">لا يوجد مشترون في هذه الفترة</p>';
   }
 
+  /* ---------- site traffic (Google Analytics): loaded on its own so a slow or failing Google never holds up the sales ---------- */
+  const DEVICE_COLORS = ['#0066ff', '#7c3aed', '#0e9f6e', '#c27803'];
+  let trafficRequest = 0;
+
+  function trafficEmpty(title, text, tone) {
+    $('#traffic').hidden = true;
+    $('#trafficEmpty').hidden = false;
+    $('#trafficEmptyIcon').className = `kpi-ico ${tone}`;
+    $('#trafficEmptyIcon').innerHTML = icon(tone === 'c-red' ? 'alert' : 'chart');
+    $('#trafficEmptyTitle').textContent = title;
+    $('#trafficEmptyText').innerHTML = text;
+  }
+
+  function renderTraffic(t) {
+    $('#trafficEmpty').hidden = true;
+    $('#traffic').hidden = false;
+    const k = t.kpis;
+    $('#trafficKpis').innerHTML = [
+      ['users', 'c-blue', 'الزوار', num(k.users.value), k.users],
+      ['monitor', 'c-violet', 'الجلسات', num(k.sessions.value), k.sessions],
+      ['eye', 'c-green', 'مشاهدات الصفحات', num(k.views.value), k.views],
+      ['trend', 'c-amber', 'معدل التفاعل', `<bdi>${k.engagement.value}%</bdi>`, k.engagement],
+    ]
+      .map(([ic, tone, label, value, kpi]) => `<div class="card kpi"><div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-ico ${tone}">${icon(ic)}</span></div><div class="kpi-value">${value}</div><div class="kpi-note">${trend(kpi)}</div></div>`)
+      .join('');
+
+    $('#trafficSeriesNote').textContent = `${PERIODS[t.days]} · ${t.days > 90 ? 'شهرياً' : 'يومياً'}`;
+    Charts.line($('#trafficChart'), {
+      labels: t.series.labels,
+      xEvery: Math.max(1, Math.ceil(t.series.labels.length / 10)),
+      height: 280,
+      series: [
+        { name: 'الزوار', color: '#0066ff', data: t.series.users, area: true },
+        { name: 'الجلسات', color: '#7c3aed', data: t.series.sessions },
+      ],
+    });
+
+    $('#trafficSources').innerHTML =
+      t.sources
+        .map(
+          (s) => `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px"><span style="color:var(--fg);font-weight:700">${esc(s.label)}</span><span><b class="num">${s.value}%</b> <span class="muted num">· ${num(s.sessions)}</span></span></div>
+        <div class="progress"><i style="width:${s.value}%"></i></div>
+      </div>`,
+        )
+        .join('') || '<p class="muted">لا توجد زيارات في هذه الفترة</p>';
+
+    const devices = t.devices.map((d, i) => ({ label: d.label, value: d.value, color: DEVICE_COLORS[i % DEVICE_COLORS.length] }));
+    Charts.donut($('#devicesChart'), { items: devices, centerValue: num(k.sessions.value), centerLabel: 'جلسة' });
+    $('#devicesLegend').innerHTML = devices.map((d) => `<span><i style="background:${d.color}"></i>${esc(d.label)} <bdi>${d.value}%</bdi></span>`).join('') || '<span class="muted">لا توجد زيارات في هذه الفترة</span>';
+
+    $('#trafficPages').innerHTML =
+      t.pages
+        .map(
+          (p) => `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
+        <div style="min-width:0"><b style="color:var(--fg);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title || p.path)}</b>
+        <a class="muted mono ltr" style="font-size:12px" href="${esc(App.siteUrl + p.path)}" target="_blank" rel="noopener">${esc(p.path)}</a></div>
+        <b class="num" style="color:var(--fg)">${num(p.views)}</b>
+      </div>`,
+        )
+        .join('') || '<p class="muted">لا توجد زيارات في هذه الفترة</p>';
+  }
+
+  async function loadTraffic(days) {
+    const request = ++trafficRequest;
+    $('#trafficNote').textContent = 'جارٍ التحميل من Google Analytics…';
+    let res;
+    try {
+      res = await api.get('analytics/traffic', { days });
+    } catch {
+      return;
+    }
+    if (request !== trafficRequest) return; // the period changed meanwhile
+    $('#trafficNote').textContent = 'من Google Analytics، لنفس الفترة. تُحدَّث كل ساعة.';
+    if (!res.meta.configured) {
+      const how = App.can('manage_settings') ? `اربطه من <a href="${App.url('settings', {}, 'analytics')}">الإعدادات ← الإحصاءات</a>.` : 'اطلب من مالك المنصة أو المدير ربطه من الإعدادات.';
+      return trafficEmpty('Google Analytics غير مربوط', `لعرض الزوار ومصادرهم وأجهزتهم والصفحات الأكثر زيارة. ${how}`, 'c-amber');
+    }
+    if (res.meta.error) return trafficEmpty('تعذّر جلب الزيارات', esc(res.meta.error), 'c-red');
+    renderTraffic(res.data);
+  }
+
   async function load(days) {
     $('#period').disabled = true;
     try {
@@ -108,7 +190,10 @@ document.addEventListener('app:ready', () => {
     countries();
   }
 
-  $('#period').addEventListener('change', (e) => load(Number(e.target.value)));
+  $('#period').addEventListener('change', (e) => {
+    load(Number(e.target.value));
+    loadTraffic(Number(e.target.value));
+  });
   $('#metric').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b || !report) return;
@@ -130,4 +215,5 @@ document.addEventListener('app:ready', () => {
   });
 
   load(30);
+  loadTraffic(30);
 });
