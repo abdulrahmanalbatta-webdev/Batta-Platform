@@ -138,6 +138,7 @@
   const unreadMsgs = COUNTS.messages || 0;
   const newLeads = COUNTS.leads || 0;
   const pendingReviews = COUNTS.reviews || 0;
+  const pendingComments = COUNTS.comments || 0;
 
   const NAV = [
     { label: 'الرئيسية', items: [
@@ -161,6 +162,7 @@
       { page: 'subscribers', href: url('subscribers'), icon: 'mail', label: 'النشرة البريدية' },
       { page: 'messages', href: url('messages'), icon: 'chat', label: 'الرسائل', count: unreadMsgs, hot: true },
       { page: 'reviews', href: url('reviews'), icon: 'star', label: 'التقييمات', count: pendingReviews },
+      { page: 'comments', href: url('comments'), icon: 'chat', label: 'التعليقات', count: pendingComments },
     ] },
     { label: 'النظام', items: [
       { page: 'settings', href: url('settings'), icon: 'settings', label: 'الإعدادات' },
@@ -471,6 +473,7 @@
     orders: ['cart', 'c-green'],
     leads: ['briefcase', 'c-blue'],
     reviews: ['star', 'c-amber'],
+    comments: ['chat', 'c-amber'],
     messages: ['chat', 'c-violet'],
     export: ['download', 'c-blue'],
   };

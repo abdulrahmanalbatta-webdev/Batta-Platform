@@ -31,6 +31,7 @@
             'site-content' => route('site-content.index'),
             'messages' => route('messages.index'),
             'reviews' => route('reviews.index'),
+            'comments' => route('comments.index'),
             'settings' => route('settings.index'),
             'profile' => route('profile'),
             'login' => route('login'),

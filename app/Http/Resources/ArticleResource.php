@@ -49,7 +49,8 @@ class ArticleResource extends JsonResource
             'publish_at' => $this->publish_at?->toIso8601String(),
             'reading_minutes' => $this->readingMinutes(),
             'views' => $this->views,
-            'comments' => 0,
+            // published comments (the list counts them in one query: withCount)
+            'comments' => (int) ($this->published_comments_count ?? 0),
             'cover_url' => $this->cover_url,
             'updated_at' => $this->updated_at->toIso8601String(),
             $this->mergeWhen($this->withContent, fn (): array => [

@@ -5,12 +5,15 @@ namespace Database\Seeders;
 use App\Enums\LeadStage;
 use App\Enums\OrderStatus;
 use App\Enums\ReviewStatus;
+use App\Models\Article;
+use App\Models\ArticleComment;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
 use App\Models\Enrollment;
 use App\Models\Lead;
 use App\Models\Order;
 use App\Models\Review;
+use App\Models\Student;
 use App\Models\User;
 use App\Notifications\Alerts\ContactMessageReceived;
 use App\Notifications\Alerts\LeadReceived;
@@ -76,6 +79,7 @@ class CommunitySeeder extends Seeder
         ]))->keyBy('company');
 
         $this->reviews();
+        $this->comments();
         $this->conversations($leads->all());
         $this->alerts();
     }
@@ -120,6 +124,40 @@ class CommunitySeeder extends Seeder
                 'reply' => $reply,
                 'replied_by' => $reply ? $owner?->id : null,
                 'replied_at' => $reply ? $date->copy()->addDay() : null,
+                'created_at' => $date,
+                'updated_at' => $date,
+            ]);
+        }
+    }
+
+    /**
+     * A few comments on the latest published articles: published ones (one with a reply) and one waiting.
+     */
+    private function comments(): void
+    {
+        $owner = User::query()->oldest('id')->first();
+        $articles = Article::query()->published()->latest('published_at')->take(2)->get();
+        $students = Student::query()->oldest('id')->take(4)->get();
+        if ($articles->isEmpty() || $students->count() < 4) {
+            return;
+        }
+
+        $comments = [
+            [0, 0, 'شرح واضح جداً، طبّقت الخطوات على مشروعي واشتغلت من أول مرة.', ReviewStatus::Published, 'سعيد أنه أفادك، بالتوفيق في مشروعك!', 6],
+            [0, 1, 'هل في طريقة لعمل نفس الشيء مع Laravel بدل Node؟', ReviewStatus::Published, null, 4],
+            [1, 2, 'مقال رائع، ياريت تكتب عن النشر على سيرفر خاص.', ReviewStatus::Published, null, 2],
+            [1, 3, 'شكراً على المقال، عندي سؤال عن التسعير بالساعة مقابل المشروع.', ReviewStatus::Pending, null, 1],
+        ];
+        foreach ($comments as [$article, $student, $body, $status, $reply, $days]) {
+            $date = now()->subDays($days);
+            ArticleComment::forceCreate([
+                'article_id' => $articles[$article % $articles->count()]->id,
+                'student_id' => $students[$student]->id,
+                'body' => $body,
+                'status' => $status,
+                'reply' => $reply,
+                'replied_by' => $reply ? $owner?->id : null,
+                'replied_at' => $reply ? $date->copy()->addHours(5) : null,
                 'created_at' => $date,
                 'updated_at' => $date,
             ]);

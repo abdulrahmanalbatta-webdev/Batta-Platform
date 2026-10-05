@@ -81,7 +81,7 @@ class DashboardPagesTest extends TestCase
 
         $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
 
-        $response->assertOk()->assertSee('"counts":{"messages":2,"reviews":1,"leads":3}', escape: false);
+        $response->assertOk()->assertSee('"counts":{"messages":2,"reviews":1,"comments":0,"leads":3}', escape: false);
     }
 
     public function test_course_edit_page_passes_course_id_to_body(): void

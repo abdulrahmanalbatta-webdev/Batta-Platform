@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Site\AccountController;
 use App\Http\Controllers\Site\AccountPasswordController;
+use App\Http\Controllers\Site\ArticleCommentController;
 use App\Http\Controllers\Site\ArticleController;
 use App\Http\Controllers\Site\ContactMessageController;
 use App\Http\Controllers\Site\ContentController;
@@ -40,6 +41,7 @@ Route::get('/courses/{slug}/reviews', [CourseReviewController::class, 'index'])-
 Route::get('/workshops', [WorkshopController::class, 'index'])->name('workshops.index');
 Route::get('/articles', [ArticleController::class, 'index'])->name('articles.index');
 Route::get('/articles/{slug}', [ArticleController::class, 'show'])->name('articles.show');
+Route::get('/articles/{slug}/comments', [ArticleCommentController::class, 'index'])->name('articles.comments.index');
 Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
 Route::post('/tools/{tool}/click', [ToolController::class, 'click'])->whereNumber('tool')->name('tools.click');
 
@@ -64,6 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me/courses', [MyCourseController::class, 'index'])->name('me.courses.index');
     Route::get('/me/courses/{slug}', [MyCourseController::class, 'show'])->name('me.courses.show');
     Route::put('/me/courses/{slug}/review', [MyReviewController::class, 'update'])->name('me.courses.review');
+    Route::post('/articles/{slug}/comments', [ArticleCommentController::class, 'store'])->middleware('throttle:site-forms')->name('articles.comments.store');
     Route::post('/me/lessons/{lesson}/completion', [LessonCompletionController::class, 'store'])->name('me.lessons.complete');
     Route::delete('/me/lessons/{lesson}/completion', [LessonCompletionController::class, 'destroy'])->name('me.lessons.uncomplete');
 });

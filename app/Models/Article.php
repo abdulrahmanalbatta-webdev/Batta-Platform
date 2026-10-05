@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 #[ObservedBy(ArticleObserver::class)]
@@ -56,6 +57,14 @@ class Article extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /**
+     * @return HasMany<ArticleComment, $this>
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(ArticleComment::class);
     }
 
     /**
