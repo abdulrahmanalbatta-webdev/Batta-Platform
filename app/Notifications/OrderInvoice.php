@@ -3,7 +3,6 @@
 namespace App\Notifications;
 
 use App\Enums\OrderStatus;
-use App\Enums\PaymentMethod;
 use App\Models\Order;
 use App\Models\Student;
 use App\Support\PlatformSettings;
@@ -64,8 +63,8 @@ class OrderInvoice extends Notification implements ShouldQueue
         $message->line('طريقة الدفع: '.$order->payment_method->label())
             ->line('الحالة: '.$order->status->label());
 
-        if ($order->status === OrderStatus::Pending && $order->payment_method === PaymentMethod::BankTransfer && filled($settings->get('bank_transfer_instructions'))) {
-            $message->line('لإتمام الدفع بالتحويل البنكي:')->line($settings->get('bank_transfer_instructions'));
+        if ($order->status === OrderStatus::Pending && filled($settings->get('payment_instructions'))) {
+            $message->line('لإتمام الدفع:')->line($settings->get('payment_instructions'));
         }
 
         if ($order->status === OrderStatus::Refunded) {

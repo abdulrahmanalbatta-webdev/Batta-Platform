@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\PaymentMethod;
 use App\Models\Setting;
 use App\Rules\GoogleServiceAccountKey;
 use Illuminate\Contracts\Encryption\DecryptException;
@@ -75,16 +76,8 @@ class PlatformSettings
             'pro_month_price' => ['label' => 'سعر شهر Pro', 'default' => (float) config('sales.pro_month_price'), 'rules' => ['required', 'numeric', 'min:1', 'max:1000'], 'public' => true],
             'invoice_note' => ['label' => 'ملاحظة الفاتورة', 'default' => 'شكراً لثقتك بـ Batta. للاستفسار: hello@batta.dev', 'rules' => $text(500)],
             'refund_guarantee' => ['label' => 'ضمان الاسترداد', 'default' => true, 'rules' => $bool, 'public' => true],
-            'stripe_enabled' => ['label' => 'Stripe', 'default' => false, 'rules' => $bool, 'owner' => true],
-            'stripe_publishable_key' => ['label' => 'المفتاح العام لـ Stripe', 'default' => null, 'rules' => ['nullable', 'string', 'starts_with:pk_', 'max:255'], 'owner' => true],
-            'stripe_secret_key' => ['label' => 'المفتاح السري لـ Stripe', 'default' => null, 'rules' => [...$secret, 'starts_with:sk_,rk_'], 'secret' => true, 'owner' => true],
-            'stripe_webhook_secret' => ['label' => 'سر الـ Webhook لـ Stripe', 'default' => null, 'rules' => [...$secret, 'starts_with:whsec_'], 'secret' => true, 'owner' => true],
-            'paypal_enabled' => ['label' => 'PayPal', 'default' => false, 'rules' => $bool, 'owner' => true],
-            'paypal_mode' => ['label' => 'وضع PayPal', 'default' => 'sandbox', 'rules' => ['required', Rule::in(['sandbox', 'live'])], 'owner' => true],
-            'paypal_client_id' => ['label' => 'Client ID لـ PayPal', 'default' => null, 'rules' => $text(255), 'owner' => true],
-            'paypal_secret' => ['label' => 'Secret لـ PayPal', 'default' => null, 'rules' => $secret, 'secret' => true, 'owner' => true],
-            'bank_transfer_enabled' => ['label' => 'التحويل البنكي', 'default' => false, 'rules' => $bool, 'owner' => true],
-            'bank_transfer_instructions' => ['label' => 'تعليمات التحويل البنكي', 'default' => null, 'rules' => $text(1000), 'owner' => true],
+            // payments are taken by hand (bank transfer, wallet, cash); the site shows the student how to pay
+            'payment_instructions' => ['label' => 'تعليمات الدفع', 'default' => null, 'rules' => $text(1000), 'public' => true, 'owner' => true],
 
             // outgoing email: empty host = the MAIL_* values in .env
             'mail_host' => ['label' => 'خادم SMTP', 'default' => null, 'rules' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9.-]+$/'], 'owner' => true],
@@ -180,7 +173,7 @@ class PlatformSettings
     }
 
     /**
-     * Remove a stored secret (e.g. disconnecting a payment gateway).
+     * Remove a stored secret (e.g. a revoked key).
      */
     public function clear(string $key): void
     {
@@ -245,26 +238,8 @@ class PlatformSettings
         return [
             ...collect(self::definitions())->filter(fn (array $definition): bool => $definition['public'] ?? false)->map(fn (array $definition, string $key): mixed => $values[$key])->all(),
             'currency_symbol' => $this->currencySymbol(),
-            'payment_methods' => [
-                'stripe' => $this->gatewayReady('stripe') ? ['publishable_key' => $values['stripe_publishable_key']] : null,
-                'paypal' => $this->gatewayReady('paypal') ? ['client_id' => $values['paypal_client_id'], 'mode' => $values['paypal_mode']] : null,
-                'bank_transfer' => $this->gatewayReady('bank_transfer') ? ['instructions' => $values['bank_transfer_instructions']] : null,
-            ],
+            'payment_methods' => collect(PaymentMethod::cases())->map(fn (PaymentMethod $method): array => ['value' => $method->value, 'label' => $method->label()])->all(),
         ];
-    }
-
-    /**
-     * Switched on and with everything it needs to take payments.
-     */
-    public function gatewayReady(string $gateway): bool
-    {
-        $values = $this->all();
-
-        return match ($gateway) {
-            'stripe' => $values['stripe_enabled'] && filled($values['stripe_publishable_key']) && filled($values['stripe_secret_key']),
-            'paypal' => $values['paypal_enabled'] && filled($values['paypal_client_id']) && filled($values['paypal_secret']),
-            'bank_transfer' => $values['bank_transfer_enabled'] && filled($values['bank_transfer_instructions']),
-        };
     }
 
     public function currencySymbol(): string

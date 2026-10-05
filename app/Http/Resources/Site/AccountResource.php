@@ -25,6 +25,7 @@ class AccountResource extends JsonResource
             'name' => $this->name,
             'initial' => $this->initial,
             'email' => $this->email,
+            'phone' => $this->phone,
             'country' => $this->country,
             'is_pro' => $this->isPro(),
             'pro_until' => $this->pro_until?->toIso8601String(),

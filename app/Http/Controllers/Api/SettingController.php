@@ -50,7 +50,6 @@ class SettingController extends Controller
             'data' => $settings->forClient(withHints: $request->user()->can('manage-platform-data')),
             'meta' => [
                 'owner_only' => PlatformSettings::ownerOnlyKeys(),
-                'gateways' => collect(['stripe', 'paypal', 'bank_transfer'])->mapWithKeys(fn (string $gateway): array => [$gateway => $settings->gatewayReady($gateway)]),
                 'currencies' => PlatformSettings::CURRENCIES,
                 'session_lifetimes' => PlatformSettings::SESSION_LIFETIMES,
             ],

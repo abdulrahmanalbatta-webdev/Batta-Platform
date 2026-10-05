@@ -42,7 +42,7 @@ class SettingsEffectsTest extends TestCase
             'currency' => 'JOD',
             'vat_percent' => 16,
             'invoice_note' => 'شكراً لك من فريق البطة.',
-            'bank_transfer_instructions' => 'IBAN JO00 1234',
+            'payment_instructions' => 'IBAN JO00 1234',
         ]);
         $order = Order::factory()->create(['total' => 116, 'subtotal' => 116, 'status' => OrderStatus::Pending, 'paid_at' => null, 'payment_method' => PaymentMethod::BankTransfer]);
 

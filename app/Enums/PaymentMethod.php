@@ -2,20 +2,21 @@
 
 namespace App\Enums;
 
+/**
+ * How a student paid. Payments are taken by hand (no card gateway reaches Gaza): the team confirms them on the order.
+ */
 enum PaymentMethod: string
 {
-    case Card = 'card';
-    case PayPal = 'paypal';
-    case ApplePay = 'apple-pay';
     case BankTransfer = 'bank-transfer';
+    case Wallet = 'wallet';
+    case Cash = 'cash';
 
     public function label(): string
     {
         return match ($this) {
-            self::Card => 'بطاقة',
-            self::PayPal => 'PayPal',
-            self::ApplePay => 'Apple Pay',
             self::BankTransfer => 'تحويل بنكي',
+            self::Wallet => 'محفظة إلكترونية',
+            self::Cash => 'نقداً',
         };
     }
 }

@@ -20,7 +20,7 @@ class FailOrderTest extends TestCase
     public function test_failed_order_gives_the_coupon_use_back(): void
     {
         $coupon = Coupon::factory()->create(['code' => 'BACK', 'usage_limit' => 1]);
-        $order = app(PlaceOrder::class)->handle(Student::factory()->create(), OrderItemType::Course, Course::factory()->published()->create(), PaymentMethod::Card, 'BACK');
+        $order = app(PlaceOrder::class)->handle(Student::factory()->create(), OrderItemType::Course, Course::factory()->published()->create(), PaymentMethod::BankTransfer, 'BACK');
 
         $order = app(FailOrder::class)->handle($order);
 

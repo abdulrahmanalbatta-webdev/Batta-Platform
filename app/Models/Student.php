@@ -21,7 +21,7 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * A learner on the public site. Signs in there through the site API with a Sanctum token (routes/site-api.php).
  */
-#[Fillable(['name', 'email', 'country'])]
+#[Fillable(['name', 'email', 'phone', 'country'])]
 #[Hidden(['password', 'remember_token'])]
 class Student extends Authenticatable
 {
@@ -37,6 +37,11 @@ class Student extends Authenticatable
      * One paid "month" of Pro, in days: a fixed length, so a refund takes back exactly what the order gave.
      */
     public const PRO_PERIOD_DAYS = 30;
+
+    /**
+     * A phone with its country code, digits and spaces (e.g. +970 59 000 0000).
+     */
+    public const PHONE_PATTERN = '/^\+?[0-9 ]{7,20}$/';
 
     /**
      * Get the attributes that should be cast.
@@ -103,6 +108,16 @@ class Student extends Authenticatable
     public function completions(): HasMany
     {
         return $this->hasMany(LessonCompletion::class);
+    }
+
+    /**
+     * A wa.me link to message the student on WhatsApp (digits only), when they gave a phone.
+     */
+    public function whatsappUrl(): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $this->phone);
+
+        return $digits === '' ? null : 'https://wa.me/'.$digits;
     }
 
     public function isPro(): bool

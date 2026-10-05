@@ -72,11 +72,11 @@ class AnalyticsControllerTest extends TestCase
         $saudi = Student::factory()->create(['country' => 'السعودية']);
         $jordan = Student::factory()->create(['country' => 'الأردن']);
         Order::factory()->for($saudi)->count(2)->create(['item_name' => 'Next.js', 'total' => 79]);
-        Order::factory()->for($jordan)->create(['item_name' => 'Git', 'total' => 29, 'payment_method' => PaymentMethod::PayPal]);
+        Order::factory()->for($jordan)->create(['item_name' => 'Git', 'total' => 29, 'payment_method' => PaymentMethod::Wallet]);
 
         $response = $this->actingAs(User::factory()->create())->getJson(route('api.analytics'));
 
-        $response->assertJsonPath('data.payment_methods', [['label' => 'بطاقة', 'value' => 2], ['label' => 'PayPal', 'value' => 1]])
+        $response->assertJsonPath('data.payment_methods', [['label' => 'تحويل بنكي', 'value' => 2], ['label' => 'محفظة إلكترونية', 'value' => 1]])
             ->assertJsonPath('data.top_products.0', ['name' => 'Next.js', 'type_label' => 'دورة', 'orders' => 2, 'revenue' => 158])
             ->assertJsonPath('data.countries', [['label' => 'السعودية', 'value' => 50], ['label' => 'الأردن', 'value' => 50]]);
     }

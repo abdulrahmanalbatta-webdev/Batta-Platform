@@ -22,7 +22,7 @@ class CompleteOrderTest extends TestCase
     {
         $student = Student::factory()->create();
         $course = Course::factory()->published()->create();
-        $order = app(PlaceOrder::class)->handle($student, OrderItemType::Course, $course, PaymentMethod::Card);
+        $order = app(PlaceOrder::class)->handle($student, OrderItemType::Course, $course, PaymentMethod::BankTransfer);
 
         $order = app(CompleteOrder::class)->handle($order, 2.5);
 
@@ -35,7 +35,7 @@ class CompleteOrderTest extends TestCase
     public function test_paid_workshop_order_takes_a_seat(): void
     {
         $workshop = Workshop::factory()->create(['seats' => 10]);
-        $order = app(PlaceOrder::class)->handle(Student::factory()->create(), OrderItemType::Workshop, $workshop, PaymentMethod::PayPal);
+        $order = app(PlaceOrder::class)->handle(Student::factory()->create(), OrderItemType::Workshop, $workshop, PaymentMethod::Wallet);
 
         app(CompleteOrder::class)->handle($order);
 
@@ -46,7 +46,7 @@ class CompleteOrderTest extends TestCase
     {
         $this->freezeSecond();
         $student = Student::factory()->create(['pro_until' => now()->addDays(10)]);
-        $order = app(PlaceOrder::class)->handle($student, OrderItemType::ProMonth, null, PaymentMethod::Card);
+        $order = app(PlaceOrder::class)->handle($student, OrderItemType::ProMonth, null, PaymentMethod::BankTransfer);
 
         app(CompleteOrder::class)->handle($order);
 
@@ -86,7 +86,7 @@ class CompleteOrderTest extends TestCase
 
     public function test_only_pending_orders_can_be_completed(): void
     {
-        $order = app(PlaceOrder::class)->handle(Student::factory()->create(), OrderItemType::ProMonth, null, PaymentMethod::Card);
+        $order = app(PlaceOrder::class)->handle(Student::factory()->create(), OrderItemType::ProMonth, null, PaymentMethod::BankTransfer);
         app(CompleteOrder::class)->handle($order);
 
         $this->expectException(ValidationException::class);

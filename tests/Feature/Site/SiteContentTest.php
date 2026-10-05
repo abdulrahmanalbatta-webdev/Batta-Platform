@@ -23,11 +23,8 @@ class SiteContentTest extends TestCase
     public function test_settings_never_include_secrets_and_list_the_project_services(): void
     {
         app(PlatformSettings::class)->update([
-            'bank_transfer_enabled' => true,
-            'bank_transfer_instructions' => 'IBAN PS00 0000',
-            'paypal_enabled' => true,
-            'paypal_client_id' => 'client-1',
-            'paypal_secret' => 'very-secret',
+            'payment_instructions' => 'IBAN PS00 0000 ثم أرسل الإيصال على واتساب',
+            'mail_password' => 'very-secret',
         ]);
 
         $response = $this->getJson(route('site.settings'));
@@ -35,9 +32,8 @@ class SiteContentTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.site_name', 'Batta')
             ->assertJsonPath('data.currency_symbol', '$')
-            ->assertJsonPath('data.payment_methods.bank_transfer.instructions', 'IBAN PS00 0000')
-            ->assertJsonPath('data.payment_methods.paypal', ['client_id' => 'client-1', 'mode' => 'sandbox'])
-            ->assertJsonPath('data.payment_methods.stripe', null)
+            ->assertJsonPath('data.payment_instructions', 'IBAN PS00 0000 ثم أرسل الإيصال على واتساب')
+            ->assertJsonPath('data.payment_methods.0', ['value' => 'bank-transfer', 'label' => 'تحويل بنكي'])
             ->assertJsonPath('data.project_services.0.value', 'websites')
             ->assertJsonMissingPath('data.invoice_note')
             ->assertDontSee('very-secret')

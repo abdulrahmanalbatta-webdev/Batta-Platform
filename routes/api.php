@@ -123,6 +123,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/coupons', [CouponController::class, 'index'])->name('coupons.index');
 
     Route::middleware('can:manage-sales')->group(function () {
+        Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::post('/orders/{order}/payment', [OrderPaymentController::class, 'store'])->name('orders.payment.store');
         Route::post('/orders/{order}/refund', [OrderRefundController::class, 'store'])->name('orders.refund.store');
         Route::post('/orders/{order}/failure', [OrderFailureController::class, 'store'])->name('orders.failure.store');

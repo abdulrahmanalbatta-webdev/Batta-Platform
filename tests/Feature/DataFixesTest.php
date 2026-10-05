@@ -50,11 +50,11 @@ class DataFixesTest extends TestCase
 
     public function test_a_secret_from_an_old_app_key_reads_as_unset_instead_of_crashing(): void
     {
-        Setting::query()->create(['key' => 'stripe_secret_key', 'value' => 'not-decryptable-under-this-key']);
+        Setting::query()->create(['key' => 'mail_password', 'value' => 'not-decryptable-under-this-key']);
         $settings = app(PlatformSettings::class);
         $settings->forget();
 
-        $this->assertNull($settings->get('stripe_secret_key'));
+        $this->assertNull($settings->get('mail_password'));
         $this->actingAs(User::factory()->create())->get(route('dashboard'))->assertOk();
     }
 

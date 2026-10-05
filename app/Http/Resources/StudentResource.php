@@ -37,6 +37,10 @@ class StudentResource extends JsonResource
             'name' => $this->name,
             'initial' => $this->initial,
             'email' => $this->email,
+            'phone' => $this->phone,
+            'whatsapp_url' => $this->whatsappUrl(),
+            // signed up on the site themselves (rather than added by the team)
+            'has_account' => $this->password !== null,
             'country' => $this->country,
             'is_pro' => $this->isPro(),
             'pro_until' => $this->pro_until?->toDateString(),

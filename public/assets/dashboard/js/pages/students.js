@@ -30,7 +30,7 @@ document.addEventListener('app:ready', async () => {
     rows,
     pageSize: 10,
     selectable: canManage,
-    searchKeys: ['name', 'email', 'code'],
+    searchKeys: ['name', 'email', 'phone', 'code'],
     onSelect: (ids) => {
       $('#bulk').hidden = !ids.length;
       $('#bulkCount').textContent = `تم تحديد ${ids.length}`;
@@ -206,19 +206,22 @@ document.addEventListener('app:ready', async () => {
           <div class="card">${full.orders.length ? full.orders.map((o) => `<div class="list-item"><span class="grow"><b>${esc(o.item_name)}</b><small>${esc(o.number)} · ${date(o.date)} · ${esc(o.status_label)}</small></span><b class="num">${money(o.total)}</b></div>`).join('') : '<div class="list-item muted">لا توجد طلبات.</div>'}</div>
         </div>
         <div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px;font-size:13.5px">
+          <span>${icon('phone', 'sm')} ${s.phone ? `<bdi class="mono">${esc(s.phone)}</bdi>` : '<span class="muted">لا يوجد رقم</span>'}</span>
           <span>${icon('globe', 'sm')} ${esc(s.country || '—')}</span>
           <span>${icon('calendar', 'sm')} انضم في ${date(s.joined)}</span>
         </div>
       </div>
       ${canManage ? `<div class="drawer-foot">
+        ${s.whatsapp_url ? `<a class="btn btn-soft" style="flex:1" href="${esc(s.whatsapp_url)}" target="_blank" rel="noopener">${icon('phone', 'sm')}واتساب</a>` : ''}
         <button class="btn btn-ghost" style="flex:1" data-mail="${s.id}">${icon('mail', 'sm')}مراسلة</button>
         <button class="btn ${s.state === 'suspended' ? 'btn-soft' : 'btn-danger-soft'}" style="flex:1" data-toggle="${s.id}">${s.state === 'suspended' ? 'إعادة التفعيل' : 'إيقاف الحساب'}</button>
-      </div>` : ''}`);
+      </div>` : ''}
+      ${App.can('manage_sales') ? `<div class="drawer-foot" style="border-top:0;padding-top:0"><a class="btn btn-primary" style="flex:1" href="${App.url('orders', { student: s.id }, 'new')}">${icon('plus', 'sm')}تسجيل طلب يدوي (بعد الدفع)</a></div>` : ''}`);
   }
 
   $('#export').addEventListener('click', () =>
     App.downloadCSV('students.csv', [
-      { key: 'code', label: 'المعرف' }, { key: 'name', label: 'الاسم' }, { key: 'email', label: 'البريد' }, { key: 'country', label: 'الدولة' },
+      { key: 'code', label: 'المعرف' }, { key: 'name', label: 'الاسم' }, { key: 'email', label: 'البريد' }, { key: 'phone', label: 'الهاتف' }, { key: 'country', label: 'الدولة' },
       { key: 'courses', label: 'الدورات' }, { key: 'progress', label: 'الإنجاز %' }, { key: 'spent', label: 'المدفوع' }, { key: 'joined', label: 'تاريخ الانضمام' }, { key: 'state_label', label: 'الحالة' },
     ], table.view),
   );

@@ -46,6 +46,7 @@ document.addEventListener('app:ready', () => {
     leads: ['طلب مشروع جديد', 'بريد عند وصول طلب من صفحة الخدمات.'],
     reviews: ['تقييم بانتظار المراجعة', 'بريد عند وصول تقييم جديد.'],
     messages: ['رسائل الطلاب والعملاء', 'بريد عند وصول رسالة جديدة.'],
+    students: ['طالب جديد سجّل في الموقع', 'بريد فيه اسمه ورقم واتساب للتواصل معه وترتيب الدفع.'],
   };
   const prefs = App.user?.email_preferences || {};
   $('#notifPrefs').innerHTML = Object.entries(prefs)
@@ -83,7 +84,6 @@ document.addEventListener('app:ready', () => {
   const save = $('#saveAll');
   const canEdit = App.can('manage_settings');
   const changed = new Set(); // keys edited since the last save
-  const GW_LABELS = { ready: ['متصل', 'success'], incomplete: ['ينقصه إعداد', 'warning'], off: ['غير مفعّل', ''] };
 
   const readField = (el) => {
     if (el.type === 'checkbox') return el.checked;
@@ -106,13 +106,6 @@ document.addEventListener('app:ready', () => {
       el.value = '';
       el.placeholder = secret.set ? `محفوظ${secret.hint ? ` ${secret.hint}` : ''} — اتركه فارغاً للإبقاء عليه` : 'غير محفوظ';
       el.disabled = !editable(el.dataset.secret);
-    });
-    Object.entries(res.meta.gateways).forEach(([gw, ready]) => {
-      const enabled = data[`${gw}_enabled`];
-      const [label, tone] = GW_LABELS[ready ? 'ready' : enabled ? 'incomplete' : 'off'];
-      const badge = $(`[data-gw-status="${gw}"]`);
-      badge.textContent = label;
-      badge.className = `badge dot ${tone}`;
     });
     changed.clear();
     save?.classList.remove('pulse');

@@ -20,6 +20,7 @@ class StudentFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
+            'phone' => '+97059'.fake()->numerify('#######'),
             'country' => fake()->randomElement(['فلسطين', 'الأردن', 'السعودية', 'مصر']),
             'last_active_at' => now()->subDays(fake()->numberBetween(0, 10)),
         ];

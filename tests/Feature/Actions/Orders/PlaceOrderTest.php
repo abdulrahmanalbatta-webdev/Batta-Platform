@@ -24,7 +24,7 @@ class PlaceOrderTest extends TestCase
 
     private function place(Student $student, OrderItemType $type, Course|Workshop|null $item, ?string $coupon = null): Order
     {
-        return app(PlaceOrder::class)->handle($student, $type, $item, PaymentMethod::Card, $coupon);
+        return app(PlaceOrder::class)->handle($student, $type, $item, PaymentMethod::BankTransfer, $coupon);
     }
 
     /**

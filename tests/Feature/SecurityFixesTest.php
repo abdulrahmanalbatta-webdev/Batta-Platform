@@ -75,7 +75,7 @@ class SecurityFixesTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        foreach (['mail_host' => 'smtp.attacker.test', 'stripe_secret_key' => 'sk_live_attacker', 'bank_transfer_instructions' => 'IBAN XX00', 'paypal_client_id' => 'x'] as $key => $value) {
+        foreach (['mail_host' => 'smtp.attacker.test', 'mail_password' => 'attacker', 'payment_instructions' => 'IBAN XX00 (attacker)'] as $key => $value) {
             $this->actingAs($admin)->putJson(route('api.settings.update'), [$key => $value])->assertForbidden();
         }
         $this->actingAs($admin)->postJson(route('api.settings.test-email'))->assertForbidden();
@@ -99,9 +99,9 @@ class SecurityFixesTest extends TestCase
 
     public function test_secret_hints_are_for_the_owner_only(): void
     {
-        app(PlatformSettings::class)->update(['stripe_secret_key' => 'sk_live_abcd1234']);
+        app(PlatformSettings::class)->update(['mail_password' => 'smtp_abcd1234']);
 
-        $this->actingAs(User::factory()->admin()->create())->getJson(route('api.settings.show'))->assertJsonPath('data.stripe_secret_key', ['set' => true, 'hint' => null]);
-        $this->actingAs(User::factory()->owner()->create())->getJson(route('api.settings.show'))->assertJsonPath('data.stripe_secret_key.hint', '••••1234');
+        $this->actingAs(User::factory()->admin()->create())->getJson(route('api.settings.show'))->assertJsonPath('data.mail_password', ['set' => true, 'hint' => null]);
+        $this->actingAs(User::factory()->owner()->create())->getJson(route('api.settings.show'))->assertJsonPath('data.mail_password.hint', '••••1234');
     }
 }

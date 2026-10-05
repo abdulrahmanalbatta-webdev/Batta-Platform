@@ -55,7 +55,7 @@ class PlatformDataTest extends TestCase
         Notification::fake();
         $owner = User::factory()->owner()->create();
         Order::factory()->count(2)->create();
-        app(PlatformSettings::class)->update(['stripe_secret_key' => 'sk_live_topsecret']);
+        app(PlatformSettings::class)->update(['mail_password' => 'sk_live_topsecret']);
 
         (new ExportPlatformData($owner))->handle();
 

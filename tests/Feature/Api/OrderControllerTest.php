@@ -8,6 +8,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\Role;
 use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\Order;
 use App\Models\Student;
 use App\Models\User;
@@ -42,7 +43,7 @@ class OrderControllerTest extends TestCase
             ->assertJsonPath('data.0.status_label', 'معلّق')
             ->assertJsonPath('data.1.number', '#'.(1000 + $older->id))
             ->assertJsonPath('data.1.item_type_label', 'دورة')
-            ->assertJsonPath('data.1.payment_method_label', 'بطاقة')
+            ->assertJsonPath('data.1.payment_method_label', 'تحويل بنكي')
             ->assertJsonPath('data.1.coupon_code', 'LAUNCH30');
     }
 
@@ -116,5 +117,57 @@ class OrderControllerTest extends TestCase
         $this->actingAs(User::factory()->role(Role::Editor)->create())->postJson(route('api.orders.refund.store', $order))->assertForbidden();
 
         $this->assertSame(OrderStatus::Completed, $order->fresh()->status);
+    }
+
+    public function test_a_manual_paid_order_enrols_the_student_at_once(): void
+    {
+        $student = Student::factory()->create();
+        $course = Course::factory()->published()->create(['price' => 40]);
+
+        $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->postJson(route('api.orders.store'), [
+            'student_id' => $student->id,
+            'item_type' => 'course',
+            'item_id' => $course->id,
+            'payment_method' => 'wallet',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.status', 'completed')
+            ->assertJsonPath('data.payment_method_label', 'محفظة إلكترونية')
+            ->assertJsonPath('data.total', 40);
+        $this->assertTrue($student->canAccess($course));
+    }
+
+    public function test_a_manual_order_can_wait_for_the_payment_and_pro_needs_no_item(): void
+    {
+        $student = Student::factory()->create();
+        $owner = User::factory()->owner()->create();
+
+        $this->actingAs($owner)->postJson(route('api.orders.store'), [
+            'student_id' => $student->id,
+            'item_type' => 'pro-month',
+            'payment_method' => 'cash',
+            'paid' => false,
+        ])->assertCreated()->assertJsonPath('data.status', 'pending');
+
+        $this->assertFalse($student->fresh()->isPro());
+        $this->actingAs($owner)->postJson(route('api.orders.payment.store', Order::query()->sole()))->assertOk();
+        $this->assertTrue($student->fresh()->isPro());
+    }
+
+    public function test_a_manual_order_is_validated_and_kept_to_the_sales_roles(): void
+    {
+        $student = Student::factory()->create();
+        $course = Course::factory()->published()->create();
+        Order::factory()->for($student)->create(['item_type' => OrderItemType::Course, 'item_id' => $course->id, 'status' => OrderStatus::Completed]);
+        Enrollment::factory()->for($student)->for($course)->create();
+        $owner = User::factory()->owner()->create();
+
+        $this->actingAs($owner)->postJson(route('api.orders.store'), ['student_id' => $student->id, 'item_type' => 'course', 'payment_method' => 'card'])
+            ->assertJsonValidationErrors(['item_id', 'payment_method']);
+        $this->actingAs($owner)->postJson(route('api.orders.store'), ['student_id' => $student->id, 'item_type' => 'course', 'item_id' => $course->id, 'payment_method' => 'cash'])
+            ->assertUnprocessable();
+        $this->actingAs(User::factory()->role(Role::Editor)->create())->postJson(route('api.orders.store'), ['student_id' => $student->id, 'item_type' => 'pro-month', 'payment_method' => 'cash'])
+            ->assertForbidden();
     }
 }

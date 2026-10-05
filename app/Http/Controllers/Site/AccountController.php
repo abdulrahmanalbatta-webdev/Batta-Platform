@@ -19,7 +19,7 @@ class AccountController extends Controller
     }
 
     /**
-     * Name, country and email. Changing the email needs the current password.
+     * Name, phone, country and email. Changing the email needs the current password.
      */
     public function update(Request $request): AccountResource
     {
@@ -29,6 +29,7 @@ class AccountController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(Student::class)->ignore($student->id)],
+            'phone' => ['required', 'string', 'regex:'.Student::PHONE_PATTERN],
             'country' => ['nullable', 'string', 'max:60'],
             'current_password' => [Rule::requiredIf($request->input('email') !== $student->email), 'nullable', 'string', 'current_password:sanctum'],
         ], [

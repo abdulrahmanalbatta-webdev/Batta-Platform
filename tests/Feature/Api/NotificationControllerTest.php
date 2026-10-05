@@ -65,9 +65,9 @@ class NotificationControllerTest extends TestCase
 
         $response = $this->actingAs($support)->putJson(route('api.notification-preferences.update'), ['messages' => true]);
 
-        $response->assertOk()->assertExactJson(['data' => ['reviews' => true, 'messages' => true]]);
+        $response->assertOk()->assertExactJson(['data' => ['reviews' => true, 'messages' => true, 'students' => true]]);
         $this->actingAs($support)->putJson(route('api.notification-preferences.update'), ['reviews' => false])
-            ->assertExactJson(['data' => ['reviews' => false, 'messages' => true]]);
+            ->assertExactJson(['data' => ['reviews' => false, 'messages' => true, 'students' => true]]);
     }
 
     public function test_preferences_must_be_booleans_of_known_types(): void

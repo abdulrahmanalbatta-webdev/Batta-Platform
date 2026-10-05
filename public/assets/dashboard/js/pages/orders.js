@@ -154,4 +154,76 @@ document.addEventListener('app:ready', async () => {
   );
 
   stats();
+  /* ---------- manual order: payment taken by hand (transfer, wallet, cash), then recorded here ---------- */
+  let catalog;
+  async function loadCatalog() {
+    if (catalog) return catalog;
+    const [students, courses, workshops] = await Promise.all([api.get('students'), api.get('courses'), api.get('workshops')]);
+    catalog = {
+      students: students.data,
+      course: courses.data.filter((c) => c.status === 'published').map((c) => ({ id: c.id, title: c.title, price: c.price })),
+      workshop: workshops.data.filter((w) => w.state === 'open').map((w) => ({ id: w.id, title: `${w.title} · ${date(w.date)}`, price: w.price })),
+    };
+    return catalog;
+  }
+  function fillItems() {
+    const type = $('#oType').value;
+    const items = catalog[type] || [];
+    $('#oItem').disabled = type === 'pro-month';
+    $('#oItem').innerHTML = type === 'pro-month' ? '<option value="">شهر واحد (30 يوماً)</option>' : items.map((i) => `<option value="${i.id}">${esc(i.title)}</option>`).join('') || '<option value="">لا يوجد عناصر متاحة</option>';
+    showPrice();
+  }
+  function showPrice() {
+    const item = (catalog[$('#oType').value] || []).find((i) => String(i.id) === $('#oItem').value);
+    $('#oPrice').textContent = $('#oType').value === 'pro-month' ? 'سعر شهر Pro من الإعدادات' : item ? money(item.price) : '—';
+  }
+  async function openNewOrder(studentId) {
+    try {
+      await loadCatalog();
+    } catch {
+      return;
+    }
+    $('#oStudent').innerHTML = catalog.students
+      .filter((st) => st.state !== 'suspended')
+      .map((st) => `<option value="${st.id}">${esc(st.name)} · ${esc(st.phone || st.email)}</option>`)
+      .join('');
+    if (studentId) $('#oStudent').value = String(studentId);
+    $('#oCoupon').value = '';
+    $('#oPaid').checked = true;
+    fillItems();
+    App.openModal('orderModal');
+  }
+  $('#oType')?.addEventListener('change', fillItems);
+  $('#oItem')?.addEventListener('change', showPrice);
+  $('#newOrder')?.addEventListener('click', () => openNewOrder());
+  $('#orderForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('#oSubmit');
+    btn.disabled = true;
+    try {
+      const order = (
+        await api.post('orders', {
+          student_id: Number($('#oStudent').value),
+          item_type: $('#oType').value,
+          item_id: $('#oType').value === 'pro-month' ? null : Number($('#oItem').value) || null,
+          payment_method: $('#oMethod').value,
+          coupon: $('#oCoupon').value.trim() || null,
+          paid: $('#oPaid').checked,
+        })
+      ).data;
+      rows.unshift(shape(order));
+      table.render();
+      stats();
+      renderSeg();
+      App.closeModal('orderModal');
+      toast(order.status === 'completed' ? `تم تسجيل الطلب ${order.number} وفُتح الوصول للطالب` : `تم تسجيل الطلب ${order.number} معلّقاً`);
+    } catch (err) {
+      showFieldErrors(err, { student_id: '#oStudent', item_id: '#oItem', coupon: '#oCoupon', status: '#oItem' });
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  // from a student's file: /dashboard/orders?student=12#new
+  const forStudent = Number(new URLSearchParams(location.search).get('student'));
+  if (canManage && location.hash === '#new') openNewOrder(forStudent || null);
 });

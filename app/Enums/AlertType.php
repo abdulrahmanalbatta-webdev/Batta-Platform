@@ -11,6 +11,7 @@ enum AlertType: string
     case Leads = 'leads';
     case Reviews = 'reviews';
     case Messages = 'messages';
+    case Students = 'students';
 
     /**
      * Whether members of this role receive this alert.
@@ -22,6 +23,7 @@ enum AlertType: string
             self::Leads => $role->canManageLeads(),
             self::Reviews => $role->canModerateReviews(),
             self::Messages => $role->canAnswerMessages(),
+            self::Students => $role->canManageStudents(),
         };
     }
 

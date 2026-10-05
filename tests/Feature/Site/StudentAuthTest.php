@@ -4,6 +4,8 @@ namespace Tests\Feature\Site;
 
 use App\Models\Activity;
 use App\Models\Student;
+use App\Models\User;
+use App\Notifications\Alerts\StudentRegistered;
 use App\Notifications\StudentPasswordReset;
 use App\Support\PlatformSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,6 +23,7 @@ class StudentAuthTest extends TestCase
         $response = $this->postJson(route('site.auth.register'), [
             'name' => 'ليلى',
             'email' => 'layla@example.com',
+            'phone' => '+970 59 123 4567',
             'password' => 'Secret-pass-1',
             'password_confirmation' => 'Secret-pass-1',
         ]);
@@ -38,7 +41,7 @@ class StudentAuthTest extends TestCase
     public function test_registration_can_be_closed_and_known_addresses_are_refused(): void
     {
         Student::factory()->create(['email' => 'known@example.com']);
-        $data = ['name' => 'س', 'email' => 'known@example.com', 'password' => 'Secret-pass-1', 'password_confirmation' => 'Secret-pass-1'];
+        $data = ['name' => 'س', 'email' => 'known@example.com', 'phone' => '+970591234567', 'password' => 'Secret-pass-1', 'password_confirmation' => 'Secret-pass-1'];
 
         $this->postJson(route('site.auth.register'), $data)->assertJsonValidationErrors('email');
 
@@ -134,14 +137,14 @@ class StudentAuthTest extends TestCase
         $student = Student::factory()->withPassword()->create(['email' => 'sara@example.com']);
         $headers = ['Authorization' => 'Bearer '.$student->createToken('web')->plainTextToken];
 
-        $this->putJson(route('site.me.update'), ['name' => 'سارة', 'email' => 'sara@example.com', 'country' => 'فلسطين'], $headers)
+        $this->putJson(route('site.me.update'), ['name' => 'سارة', 'email' => 'sara@example.com', 'phone' => '+970591234567', 'country' => 'فلسطين'], $headers)
             ->assertOk()
             ->assertJsonPath('data.name', 'سارة');
 
-        $this->putJson(route('site.me.update'), ['name' => 'سارة', 'email' => 'new@example.com'], $headers)
+        $this->putJson(route('site.me.update'), ['name' => 'سارة', 'email' => 'new@example.com', 'phone' => '+970591234567'], $headers)
             ->assertJsonValidationErrors('current_password');
 
-        $this->putJson(route('site.me.update'), ['name' => 'سارة', 'email' => 'new@example.com', 'current_password' => 'Secret-pass-1'], $headers)
+        $this->putJson(route('site.me.update'), ['name' => 'سارة', 'email' => 'new@example.com', 'phone' => '+970591234567', 'current_password' => 'Secret-pass-1'], $headers)
             ->assertOk()
             ->assertJsonPath('data.email', 'new@example.com');
     }
@@ -171,5 +174,34 @@ class StudentAuthTest extends TestCase
         }
 
         $this->postJson(route('site.auth.login'), ['email' => 'sara@example.com', 'password' => 'Secret-pass-1'])->assertTooManyRequests();
+    }
+
+    public function test_a_new_registration_alerts_the_team_with_the_whatsapp_number(): void
+    {
+        Notification::fake();
+        $owner = User::factory()->owner()->create();
+
+        $this->postJson(route('site.auth.register'), [
+            'name' => 'محمد',
+            'email' => 'mo@example.com',
+            'phone' => 'not a phone',
+            'password' => 'Secret-pass-1',
+            'password_confirmation' => 'Secret-pass-1',
+        ])->assertJsonValidationErrors('phone');
+
+        $this->postJson(route('site.auth.register'), [
+            'name' => 'محمد',
+            'email' => 'mo@example.com',
+            'phone' => '+970 59 123 4567',
+            'password' => 'Secret-pass-1',
+            'password_confirmation' => 'Secret-pass-1',
+        ])->assertCreated()->assertJsonPath('data.phone', '+970 59 123 4567');
+
+        Notification::assertSentTo($owner, StudentRegistered::class, fn (StudentRegistered $alert): bool => str_contains($alert->toArray($owner)['meta'], '+970 59 123 4567'));
+
+        $this->actingAs($owner)->getJson(route('api.students.index'))
+            ->assertJsonPath('data.0.phone', '+970 59 123 4567')
+            ->assertJsonPath('data.0.whatsapp_url', 'https://wa.me/970591234567')
+            ->assertJsonPath('data.0.has_account', true);
     }
 }

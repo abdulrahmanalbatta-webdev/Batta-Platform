@@ -24,8 +24,7 @@ class SettingControllerTest extends TestCase
             ->assertJsonPath('data.site_name', 'Batta')
             ->assertJsonPath('data.currency', 'USD')
             ->assertJsonPath('data.session_lifetime', 120)
-            ->assertJsonPath('data.stripe_secret_key', ['set' => false, 'hint' => null])
-            ->assertJsonPath('meta.gateways.stripe', false)
+            ->assertJsonPath('data.mail_password', ['set' => false, 'hint' => null])
             ->assertJsonPath('meta.currencies.USD', '$');
     }
 
@@ -50,23 +49,21 @@ class SettingControllerTest extends TestCase
         $owner = User::factory()->owner()->create();
 
         $this->actingAs($owner)->putJson(route('api.settings.update'), [
-            'stripe_enabled' => true,
-            'stripe_publishable_key' => 'pk_test_123',
-            'stripe_secret_key' => 'sk_test_abcd9876',
+            'mail_host' => 'smtp.batta.dev',
+            'mail_password' => 'smtp_pass_abcd9876',
         ])->assertOk()
-            ->assertJsonPath('data.stripe_secret_key', ['set' => true, 'hint' => '••••9876'])
-            ->assertJsonPath('meta.gateways.stripe', true)
-            ->assertDontSee('sk_test_abcd9876');
+            ->assertJsonPath('data.mail_password', ['set' => true, 'hint' => '••••9876'])
+            ->assertDontSee('smtp_pass_abcd9876');
 
-        $stored = Setting::find('stripe_secret_key')->value;
-        $this->assertStringNotContainsString('sk_test', $stored);
-        $this->assertSame('"sk_test_abcd9876"', Crypt::decryptString($stored));
+        $stored = Setting::find('mail_password')->value;
+        $this->assertStringNotContainsString('smtp_pass', $stored);
+        $this->assertSame('"smtp_pass_abcd9876"', Crypt::decryptString($stored));
 
         // an empty secret field keeps what's stored
-        $this->actingAs($owner)->putJson(route('api.settings.update'), ['stripe_secret_key' => ''])->assertJsonPath('data.stripe_secret_key.set', true);
+        $this->actingAs($owner)->putJson(route('api.settings.update'), ['mail_password' => ''])->assertJsonPath('data.mail_password.set', true);
 
-        $this->actingAs($owner)->deleteJson(route('api.settings.secrets.destroy', 'stripe_secret_key'))->assertNoContent();
-        $this->assertFalse(app(PlatformSettings::class)->gatewayReady('stripe'));
+        $this->actingAs($owner)->deleteJson(route('api.settings.secrets.destroy', 'mail_password'))->assertNoContent();
+        $this->assertNull(app(PlatformSettings::class)->get('mail_password'));
     }
 
     public function test_only_secrets_can_be_cleared(): void
@@ -80,12 +77,12 @@ class SettingControllerTest extends TestCase
             'site_url' => 'batta',
             'currency' => 'EUR',
             'vat_percent' => 50,
-            'stripe_secret_key' => 'pk_wrong',
+            'ga_credentials' => '{"type":"user"}',
             'session_lifetime' => 45,
         ]);
 
         $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['site_url', 'currency', 'vat_percent', 'stripe_secret_key', 'session_lifetime'])
+            ->assertJsonValidationErrors(['site_url', 'currency', 'vat_percent', 'ga_credentials', 'session_lifetime'])
             ->assertJsonPath('errors.vat_percent.0', 'قيمة ضريبة القيمة المضافة يجب ألا تتجاوز 30.');
     }
 

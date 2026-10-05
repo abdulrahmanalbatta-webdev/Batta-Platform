@@ -32,7 +32,7 @@ class OrderFactory extends Factory
             'subtotal' => 49,
             'discount' => 0,
             'total' => 49,
-            'payment_method' => PaymentMethod::Card,
+            'payment_method' => PaymentMethod::BankTransfer,
             'status' => OrderStatus::Completed,
             'paid_at' => now(),
         ];

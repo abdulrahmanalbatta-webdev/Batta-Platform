@@ -70,7 +70,7 @@ class SalesSeeder extends Seeder
                 default => [OrderItemType::ProMonth, null],
             };
             $coupon = mt_rand(0, 100) > 70 ? ['LAUNCH30', 'STUDENT10', 'NEXT20', 'WORKSHOP5'][mt_rand(0, 3)] : null;
-            $method = [PaymentMethod::Card, PaymentMethod::Card, PaymentMethod::PayPal, PaymentMethod::ApplePay, PaymentMethod::BankTransfer][mt_rand(0, 4)];
+            $method = [PaymentMethod::BankTransfer, PaymentMethod::BankTransfer, PaymentMethod::Wallet, PaymentMethod::Wallet, PaymentMethod::Cash][mt_rand(0, 4)];
 
             try {
                 $order = $place->handle($student, $type, $item, $method, $coupon);

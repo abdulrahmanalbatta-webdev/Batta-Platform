@@ -47,31 +47,10 @@
 
         <!-- payments -->
         <div class="tab-panel card-body" data-panel-group="settings" data-panel="payments">
-          <div class="grid g3" style="margin-bottom:22px" id="gateways">
-            <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--fg)">Stripe</b><span class="badge dot" data-gw-status="stripe">—</span></div>
-              <small class="muted">بطاقات Visa / Mastercard و Apple Pay.</small>
-              <label class="switch"><input type="checkbox" data-setting="stripe_enabled"><span class="track"></span>مفعّل</label>
-              <div class="field"><label for="stripePk">المفتاح العام</label><input class="input ltr" id="stripePk" data-setting="stripe_publishable_key" placeholder="pk_live_…" autocomplete="off"></div>
-              <div class="field"><label for="stripeSk">المفتاح السري</label><input class="input ltr" id="stripeSk" type="password" data-secret="stripe_secret_key" placeholder="sk_live_…" autocomplete="new-password"></div>
-              <div class="field"><label for="stripeWh">سر الـ Webhook</label><input class="input ltr" id="stripeWh" type="password" data-secret="stripe_webhook_secret" placeholder="whsec_…" autocomplete="new-password"></div>
-            </div>
-            <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--fg)">PayPal</b><span class="badge dot" data-gw-status="paypal">—</span></div>
-              <small class="muted">الدفع عبر حساب PayPal.</small>
-              <label class="switch"><input type="checkbox" data-setting="paypal_enabled"><span class="track"></span>مفعّل</label>
-              <div class="field"><label for="ppMode">الوضع</label><select class="select" id="ppMode" data-setting="paypal_mode"><option value="sandbox">تجريبي (Sandbox)</option><option value="live">مباشر (Live)</option></select></div>
-              <div class="field"><label for="ppId">Client ID</label><input class="input ltr" id="ppId" data-setting="paypal_client_id" autocomplete="off"></div>
-              <div class="field"><label for="ppSecret">Secret</label><input class="input ltr" id="ppSecret" type="password" data-secret="paypal_secret" autocomplete="new-password"></div>
-            </div>
-            <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--fg)">تحويل بنكي</b><span class="badge dot" data-gw-status="bank_transfer">—</span></div>
-              <small class="muted">تأكيد يدوي للطلبات من صفحة الطلبات.</small>
-              <label class="switch"><input type="checkbox" data-setting="bank_transfer_enabled"><span class="track"></span>مفعّل</label>
-              <div class="field"><label for="bankInfo">تعليمات التحويل</label><textarea class="textarea" id="bankInfo" rows="5" data-setting="bank_transfer_instructions" placeholder="اسم البنك، اسم الحساب، IBAN…"></textarea></div>
-            </div>
+          <div class="form-grid" style="margin-bottom:18px">
+            <div class="field full"><label for="payInfo">تعليمات الدفع — للمالك فقط</label><textarea class="textarea" id="payInfo" rows="5" data-setting="payment_instructions" maxlength="1000" placeholder="مثال: تحويل بنكي إلى بنك فلسطين، الحساب 000000، أو محفظة جوال باي على الرقم 059…، ثم أرسل صورة الإيصال على واتساب."></textarea><small class="muted">يعرضها الموقع للطالب، وتظهر في فاتورة الطلب المعلّق.</small></div>
           </div>
-          <p class="muted" style="font-size:12.5px;margin:-8px 0 18px">بوابات الدفع وإعدادات البريد يغيّرها المالك فقط. المفاتيح السرية تُحفظ مشفّرة ولا تُعرض بعد الحفظ؛ اترك الحقل فارغاً للإبقاء على المحفوظ. ربط الدفع الفعلي بالبوابات يتم في الموقع العام.</p>
+          <p class="muted" style="font-size:12.5px;margin:-8px 0 18px">الدفع يدوي: تتواصل مع الطالب، وبعد استلام المبلغ تسجّل الطلب من صفحة الطلبات (تحويل بنكي، محفظة إلكترونية أو نقداً) فتُفتح له الدورة.</p>
           <div class="form-grid">
             <div class="field"><label for="currency">العملة</label><select class="select" id="currency" data-setting="currency"><option value="USD">دولار أمريكي (USD)</option><option value="SAR">ريال سعودي (SAR)</option><option value="JOD">دينار أردني (JOD)</option></select></div>
             <div class="field"><label for="vat">ضريبة القيمة المضافة % (ضمن السعر)</label><input class="input ltr" id="vat" data-setting="vat_percent" type="number" min="0" max="30" step="0.5"></div>
