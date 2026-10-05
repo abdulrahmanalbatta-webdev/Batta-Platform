@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Enums\Role;
 use App\Models\Activity;
+use App\Models\SiteBlock;
 use App\Models\User;
 use App\Support\SiteContent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -130,6 +131,19 @@ class SiteContentTest extends TestCase
         $texts['contact']['budgets'][0]['amount'] = '1000';
         $this->actingAs($editor)->putJson(route('api.site-content.update', 'texts_pages'), ['value' => $texts])->assertOk();
         $this->getJson(route('site.content'))->assertJsonPath('data.texts_pages.contact.budgets.0', ['label' => 'حوالي ألف', 'amount' => '1000']);
+    }
+
+    public function test_a_section_saved_before_a_field_existed_gets_that_fields_original_text(): void
+    {
+        $old = SiteContent::defaults()['texts_general'];
+        unset($old['footer']['made_with'], $old['maintenance']);
+        $old['login']['title'] = 'عنوان محفوظ قديماً';
+        SiteBlock::query()->create(['key' => 'texts_general', 'value' => $old]);
+
+        $this->getJson(route('site.content'))
+            ->assertJsonPath('data.texts_general.login.title', 'عنوان محفوظ قديماً')
+            ->assertJsonPath('data.texts_general.footer.made_with', 'صُنع بـ Vue')
+            ->assertJsonPath('data.texts_general.maintenance', SiteContent::defaults()['texts_general']['maintenance']);
     }
 
     /**
