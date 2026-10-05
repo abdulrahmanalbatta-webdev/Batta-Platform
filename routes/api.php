@@ -36,6 +36,8 @@ use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\SettingSecretController;
+use App\Http\Controllers\Api\SiteContentController;
+use App\Http\Controllers\Api\SitePhotoController;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\StudentMessageController;
@@ -165,6 +167,15 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('can:manage-leads')->group(function () {
         Route::apiResource('leads', LeadController::class)->only(['store', 'update', 'destroy']);
+    });
+
+    // the public site's own content (announcement, about, services, case studies…): members read, content editors change it
+    Route::get('/site-content', [SiteContentController::class, 'show'])->name('site-content.show');
+    Route::middleware('can:manage-content')->group(function () {
+        Route::put('/site-content/{key}', [SiteContentController::class, 'update'])->name('site-content.update');
+        Route::delete('/site-content/{key}', [SiteContentController::class, 'destroy'])->name('site-content.destroy');
+        Route::post('/site-photo', [SitePhotoController::class, 'store'])->name('site-photo.store');
+        Route::delete('/site-photo', [SitePhotoController::class, 'destroy'])->name('site-photo.destroy');
     });
 
     // platform settings: every member reads (secrets stay masked); owner and admin change them (Role::canManageSettings)
