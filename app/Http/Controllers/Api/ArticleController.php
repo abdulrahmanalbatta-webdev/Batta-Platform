@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ReviewStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ArticleRequest;
 use App\Http\Resources\ArticleResource;
@@ -18,7 +19,11 @@ class ArticleController extends Controller
      */
     public function index(): AnonymousResourceCollection
     {
-        return ArticleResource::collection(Article::query()->latest('updated_at')->latest('id')->get());
+        return ArticleResource::collection(
+            Article::query()
+                ->withCount(['comments as published_comments_count' => fn ($query) => $query->where('status', ReviewStatus::Published)])
+                ->latest('updated_at')->latest('id')->get(),
+        );
     }
 
     public function show(Article $article): ArticleResource

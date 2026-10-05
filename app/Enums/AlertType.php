@@ -10,6 +10,7 @@ enum AlertType: string
     case Orders = 'orders';
     case Leads = 'leads';
     case Reviews = 'reviews';
+    case Comments = 'comments';
     case Messages = 'messages';
     case Students = 'students';
 
@@ -21,7 +22,7 @@ enum AlertType: string
         return match ($this) {
             self::Orders => $role->canManageSales(),
             self::Leads => $role->canManageLeads(),
-            self::Reviews => $role->canModerateReviews(),
+            self::Reviews, self::Comments => $role->canModerateReviews(),
             self::Messages => $role->canAnswerMessages(),
             self::Students => $role->canManageStudents(),
         };

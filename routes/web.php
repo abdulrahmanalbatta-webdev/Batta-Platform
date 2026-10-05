@@ -52,6 +52,7 @@ Route::middleware('auth')->prefix('dashboard')->group(function () {
     Route::view('/subscribers', 'subscribers.index')->name('subscribers.index');
     Route::view('/messages', 'messages.index')->name('messages.index');
     Route::view('/reviews', 'reviews.index')->name('reviews.index');
+    Route::view('/comments', 'comments.index')->name('comments.index');
 
     // system
     Route::view('/settings', 'settings.index')->name('settings.index');

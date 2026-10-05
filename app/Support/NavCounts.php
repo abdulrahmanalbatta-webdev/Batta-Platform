@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Enums\LeadStage;
 use App\Enums\ReviewStatus;
+use App\Models\ArticleComment;
 use App\Models\Conversation;
 use App\Models\Lead;
 use App\Models\Review;
@@ -14,13 +15,14 @@ use App\Models\Review;
 class NavCounts
 {
     /**
-     * @return array{messages: int, reviews: int, leads: int}
+     * @return array{messages: int, reviews: int, comments: int, leads: int}
      */
     public static function all(): array
     {
         return [
             'messages' => Conversation::query()->whereNull('read_at')->count(),
             'reviews' => Review::query()->where('status', ReviewStatus::Pending)->count(),
+            'comments' => ArticleComment::query()->where('status', ReviewStatus::Pending)->count(),
             'leads' => Lead::query()->where('stage', LeadStage::New)->count(),
         ];
     }

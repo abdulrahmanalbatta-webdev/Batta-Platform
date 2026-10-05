@@ -1,7 +1,7 @@
 # لوحة تحكم Batta داخل Laravel
 
 الواجهات صارت Blade في `resources/views` ومقسمة حسب الكيان. التنسيقات والسكربتات والصور في `public/assets/dashboard`.
-مربوط بقاعدة البيانات عبر الـ API: الدخول، الملف الشخصي، الفريق، الأجهزة المتصلة، الدورات (مع المنهج)، الورش، المقالات، الأدوات وتصنيفاتها، الطلاب، الطلبات والكوبونات، الرسائل، التقييمات، طلبات المشاريع، جرس الإشعارات، سجل النشاط، والبحث العام.
+مربوط بقاعدة البيانات عبر الـ API: الدخول، الملف الشخصي، الفريق، الأجهزة المتصلة، الدورات (مع المنهج)، الورش، المقالات، الأدوات وتصنيفاتها، الطلاب، الطلبات والكوبونات، الرسائل، التقييمات، تعليقات المقالات، طلبات المشاريع، جرس الإشعارات، سجل النشاط، والبحث العام.
 والرئيسية والتحليلات بأرقام حقيقية من المبيعات والطلاب. ما ضل في بيانات تجريبية (`data.js` انحذف)، والإعدادات (عام، الدفع، البريد، الإشعارات، الأمان) محفوظة بقاعدة البيانات ومطبّقة.
 
 ## التشغيل
@@ -107,6 +107,7 @@ resources/views/
 ├── students/  index               الطلاب
 ├── messages/  index               الرسائل
 ├── reviews/   index               التقييمات
+├── comments/  index               تعليقات المقالات
 ├── settings/  index               الإعدادات
 ├── profile/   index               الملف الشخصي
 ├── auth/login.blade.php           تسجيل الدخول
@@ -142,6 +143,7 @@ resources/views/
 | `/dashboard/students` | `students.index` | `students.index` |
 | `/dashboard/messages` | `messages.index` | `messages.index` |
 | `/dashboard/reviews` | `reviews.index` | `reviews.index` |
+| `/dashboard/comments` | `comments.index` | `comments.index` |
 | `/dashboard/settings` | `settings.index` | `settings.index` |
 | `/dashboard/profile` | `profile` | `profile.index` |
 | `/login` | `login` | `auth.login` (للزوار فقط) |
@@ -304,6 +306,8 @@ try {
 | PUT | `reviews/{id}/status` | `moderate-reviews` | `published` (نشر) أو `hidden` (رفض/إخفاء) |
 | PUT · DELETE | `reviews/{id}/reply` | `moderate-reviews` | كتابة/تعديل الرد العام (بيتسجل مين رد) · حذفه |
 | DELETE | `reviews/{id}` | `moderate-reviews` | حذف نهائي (للسبام) |
+| GET | `comments` | الكل | تعليقات المقالات مع الطالب والمقال والرد |
+| PUT · PUT · DELETE · DELETE | `comments/{id}/status` · `comments/{id}/reply` · `comments/{id}/reply` · `comments/{id}` | `moderate-reviews` | نفس التقييمات: نشر أو إخفاء، كتابة الرد أو حذفه، حذف نهائي |
 | GET · POST | `leads` | الكل · `manage-leads` | طلبات المشاريع · إضافة (بتبدأ بمرحلة "جديد") |
 | PATCH · DELETE | `leads/{id}` | `manage-leads` | نقل لمرحلة (`stage`) أو تعديل أي حقل · حذف (محادثته بتضل) |
 
@@ -320,6 +324,7 @@ try {
 | `OrderPaid` | طلب صار مكتمل | `manage-sales` | ✓ |
 | `LeadReceived` | طلب مشروع جديد | `manage-leads` | ✓ |
 | `ReviewSubmitted` | تقييم جديد بانتظار المراجعة | `moderate-reviews` | ✓ |
+| `CommentSubmitted` | تعليق جديد على مقال بانتظار المراجعة | `moderate-reviews` | ✓ |
 | `ContactMessageReceived` | رسالة من طالب أو عميل (وبترجّع المحادثة غير مقروءة) | `answer-messages` | — |
 
 الـ Observers في `app/Observers` بتطلقهم من أي مكان صار فيه الحدث (اللوحة، أو بعدين الموقع العام وبوابة الدفع).
@@ -444,6 +449,7 @@ if (id) {
 | GET | `courses/{slug}/reviews` | التقييمات المنشورة، 20 بالصفحة، بالاسم الأول بس |
 | GET | `workshops` | الورش من اليوم وطالع مع `seats_left` |
 | GET | `articles` · `articles/{slug}` | المقالات المنشورة، 12 بالصفحة (`?per_page=` لحد 50، `?category=`، `?featured=1`) · المقال كامل، وكل قراءة بتزيد المشاهدات |
+| GET | `articles/{slug}/comments` | التعليقات المنشورة تحت المقال، الأقدم أولاً، 50 بالصفحة، بالاسم الأول بس ومع الرد |
 | GET | `tools` | الأدوات المنشورة مجمّعة حسب التصنيف |
 | POST | `tools/{id}/click` | بيعدّ نقرة على رابط الأداة (عمود النقرات باللوحة) |
 | POST | `contact` | `name`, `email`, `message` ← بتوصل للرسائل باللوحة وبتنبّه الفريق. لو معه token بتنضاف لمحادثة الطالب نفسه |
@@ -465,6 +471,7 @@ if (id) {
 | POST | `auth/logout` | بيلغي الـ token الحالي |
 | GET · PUT | `me` | حسابه · تعديل `name`, `email`, `phone`, `country` (تغيير البريد بدو `current_password`) |
 | PUT | `me/password` | `current_password`, `password` + `password_confirmation`، وبيطلّعه من باقي الأجهزة |
+| POST | `articles/{slug}/comments` | `body` ← تعليق على مقال منشور، بيستنى المراجعة بصفحة "التعليقات" باللوحة وبينبّه الفريق. لو التعليقات مسكّرة من الإعدادات 403 |
 | GET | `me/courses` | الدورات اللي اشتراها + دورات Pro المنشورة طول ما الاشتراك شغّال، مع `progress` و`completed_lessons` و`access` (`purchased` أو `pro`) |
 | GET | `me/courses/{slug}` | الدورة مع المنهج وتقدّمه وتقييمه (`my_review`). بدون وصول 403 |
 | POST · DELETE | `me/lessons/{id}/completion` | إنهاء درس · إلغاؤه، وبيرجع التقدّم الجديد |
