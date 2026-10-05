@@ -72,10 +72,10 @@ class CourseResource extends JsonResource
             'rating' => round((float) ($this->reviews_avg_rating ?? 0), 1),
             'reviews' => (int) ($this->reviews_count ?? 0),
             'cover_url' => $this->cover_url,
+            'outcomes' => $this->outcomes ?? [],
+            'tags' => $this->tags ?? [],
             $this->mergeWhen($this->withContent, fn (): array => [
                 'description' => $this->description,
-                'outcomes' => $this->outcomes ?? [],
-                'tags' => $this->tags ?? [],
                 'has_regional_pricing' => $this->has_regional_pricing,
                 'allows_questions' => $this->allows_questions,
                 'modules' => $this->modules()->with('lessons')->get()->map(fn (CourseModule $module): array => [

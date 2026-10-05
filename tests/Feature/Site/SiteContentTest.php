@@ -53,7 +53,7 @@ class SiteContentTest extends TestCase
 
     public function test_courses_list_only_published_ones_with_their_numbers(): void
     {
-        $course = Course::factory()->published()->create(['title' => 'Laravel من الصفر', 'price' => 49]);
+        $course = Course::factory()->published()->create(['title' => 'Laravel من الصفر', 'price' => 49, 'outcomes' => ['مشروع منشور']]);
         Lesson::factory()->count(2)->for(CourseModule::factory()->for($course), 'module')->create(['duration_seconds' => 1800]);
         Enrollment::factory()->for($course)->create();
         Review::factory()->published()->for($course)->create(['rating' => 4]);
@@ -70,6 +70,7 @@ class SiteContentTest extends TestCase
             ->assertJsonPath('data.0.students', 1)
             ->assertJsonPath('data.0.rating', 4)
             ->assertJsonPath('data.0.reviews', 1)
+            ->assertJsonPath('data.0.outcomes', ['مشروع منشور'])
             ->assertJsonMissingPath('data.0.revenue')
             ->assertJsonMissingPath('data.0.status');
     }
@@ -125,7 +126,11 @@ class SiteContentTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonMissingPath('data.0.body')
-            ->assertJsonPath('meta.total', 1);
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('meta.per_page', 12);
+
+        $this->getJson(route('site.articles.index', ['per_page' => 50]))->assertJsonPath('meta.per_page', 50);
+        $this->getJson(route('site.articles.index', ['per_page' => 500]))->assertJsonValidationErrors('per_page');
 
         $this->getJson(route('site.articles.show', 'hello'))->assertOk()->assertJsonPath('data.body', '<p>نص</p>');
         $this->getJson(route('site.articles.show', 'draft'))->assertNotFound();

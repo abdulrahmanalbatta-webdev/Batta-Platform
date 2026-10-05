@@ -425,7 +425,7 @@ if (id) {
 
 ## API الموقع العام (routes/site-api.php)
 
-الموقع العام (Vue) بيحكي مع اللوحة عبر `/api/v1` (مش `/dashboard/api/v1`). هاد الـ API **بدون جلسة ولا CSRF**: الطالب بيسجّل دخول وبياخد token (Laravel Sanctum) وبيبعته بكل طلب بـ `Authorization: Bearer <token>`. الطلبات من دومين ثاني مسموحة بس من `CORS_ALLOWED_ORIGINS` (`config/cors.php`). الـ token صالح 30 يوم (`config/sanctum.php`)، وبيبلش بـ `batta_` عشان أدوات فحص الأسرار تلقطه لو انتشر.
+الموقع العام (مستودع `batta-website`، Vue) بيحكي مع اللوحة عبر `/api/v1` (مش `/dashboard/api/v1`). هاد الـ API **بدون جلسة ولا CSRF**: الطالب بيسجّل دخول وبياخد token (Laravel Sanctum) وبيبعته بكل طلب بـ `Authorization: Bearer <token>`. الطلبات من دومين ثاني مسموحة بس من `CORS_ALLOWED_ORIGINS` (`config/cors.php`). الـ token صالح 30 يوم (`config/sanctum.php`)، وبيبلش بـ `batta_` عشان أدوات فحص الأسرار تلقطه لو انتشر.
 
 الأخطاء JSON زي اللوحة: 401 بدون token صالح، 403 بدون صلاحية، 404، 422 مع `errors`، و429 للحدود. الحدود: 120 طلب بالدقيقة لكل عنوان IP، و5 محاولات دخول بالدقيقة لكل بريد+IP، و5 بالدقيقة لكل نموذج (تواصل، طلب مشروع، تسجيل، نسيت كلمة المرور، تعيينها).
 
@@ -437,7 +437,7 @@ if (id) {
 | GET | `courses` · `courses/{slug}` | الدورات المنشورة (بدون الإيرادات والحالة) · صفحة الدورة مع المنهج (عناوين الدروس ومددها) |
 | GET | `courses/{slug}/reviews` | التقييمات المنشورة، 20 بالصفحة، بالاسم الأول بس |
 | GET | `workshops` | الورش من اليوم وطالع مع `seats_left` |
-| GET | `articles` · `articles/{slug}` | المقالات المنشورة، 12 بالصفحة (`?category=`، `?featured=1`) · المقال كامل، وكل قراءة بتزيد المشاهدات |
+| GET | `articles` · `articles/{slug}` | المقالات المنشورة، 12 بالصفحة (`?per_page=` لحد 50، `?category=`، `?featured=1`) · المقال كامل، وكل قراءة بتزيد المشاهدات |
 | GET | `tools` | الأدوات المنشورة مجمّعة حسب التصنيف |
 | POST | `tools/{id}/click` | بيعدّ نقرة على رابط الأداة (عمود النقرات باللوحة) |
 | POST | `contact` | `name`, `email`, `message` ← بتوصل للرسائل باللوحة وبتنبّه الفريق. لو معه token بتنضاف لمحادثة الطالب نفسه |
