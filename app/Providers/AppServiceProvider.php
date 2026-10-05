@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Student;
 use App\Models\User;
 use App\Support\PlatformSettings;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -12,7 +13,10 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 use Throwable;
 
 class AppServiceProvider extends ServiceProvider
@@ -42,6 +46,16 @@ class AppServiceProvider extends ServiceProvider
 
         // 300 calls a minute per member (per address before sign-in): far above normal use, low enough to stop scripts
         RateLimiter::for('dashboard-api', fn (Request $request) => Limit::perMinute(300)->by($request->user()?->id ?: $request->ip()));
+
+        // the public site's API: overall per address, and tighter on sign-in and on the forms that write or send mail
+        RateLimiter::for('site-api', fn (Request $request) => Limit::perMinute(120)->by($request->ip()));
+        RateLimiter::for('student-login', fn (Request $request) => Limit::perMinute(5)->by(Str::lower((string) $request->input('email')).'|'.$request->ip()));
+        RateLimiter::for('site-forms', fn (Request $request) => Limit::perMinute(5)->by($request->path().'|'.$request->ip()));
+
+        // a suspended student's token stops working at once, even before it is deleted
+        Sanctum::authenticateAccessTokensUsing(
+            fn (PersonalAccessToken $token, bool $isValid): bool => $isValid && ! ($token->tokenable instanceof Student && $token->tokenable->isSuspended()),
+        );
 
         $this->applyPlatformSettings();
 

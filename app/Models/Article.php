@@ -111,4 +111,14 @@ class Article extends Model
     {
         return ['published_at'];
     }
+
+    /**
+     * What the public site may show.
+     *
+     * @param  Builder<Article>  $query
+     */
+    public function scopePublished(Builder $query): void
+    {
+        $query->where('status', ArticleStatus::Published);
+    }
 }

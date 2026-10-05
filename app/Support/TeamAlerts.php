@@ -28,7 +28,7 @@ class TeamAlerts
         return User::query()
             ->whereIn('role', $alert->type()->roles())
             ->whereNotNull('email_verified_at')
-            ->when(Auth::id(), fn ($query, int|string $id) => $query->whereKeyNot($id))
+            ->when(Auth::guard('web')->id(), fn ($query, int|string $id) => $query->whereKeyNot($id))
             ->get();
     }
 }

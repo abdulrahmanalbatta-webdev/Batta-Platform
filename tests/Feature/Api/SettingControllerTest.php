@@ -123,26 +123,4 @@ class SettingControllerTest extends TestCase
 
         $response->assertOk()->assertJsonPath('sent_to', 'owner@batta.dev');
     }
-
-    public function test_public_site_settings_never_include_secrets(): void
-    {
-        app(PlatformSettings::class)->update([
-            'bank_transfer_enabled' => true,
-            'bank_transfer_instructions' => 'IBAN PS00 0000',
-            'paypal_enabled' => true,
-            'paypal_client_id' => 'client-1',
-            'paypal_secret' => 'very-secret',
-        ]);
-
-        $response = $this->getJson(route('api.site-settings'));
-
-        $response->assertOk()
-            ->assertJsonPath('data.site_name', 'Batta')
-            ->assertJsonPath('data.currency_symbol', '$')
-            ->assertJsonPath('data.payment_methods.bank_transfer.instructions', 'IBAN PS00 0000')
-            ->assertJsonPath('data.payment_methods.paypal', ['client_id' => 'client-1', 'mode' => 'sandbox'])
-            ->assertJsonPath('data.payment_methods.stripe', null)
-            ->assertJsonMissingPath('data.invoice_note')
-            ->assertDontSee('very-secret');
-    }
 }

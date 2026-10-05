@@ -2,23 +2,31 @@
 
 namespace App\Models;
 
+use App\Enums\CourseStatus;
 use App\Enums\OrderStatus;
 use App\Models\Concerns\LogsActivity;
+use App\Notifications\StudentPasswordReset;
 use Database\Factories\StudentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * A learner on the public site. Signs in there through the site API with a Sanctum token (routes/site-api.php).
+ */
 #[Fillable(['name', 'email', 'country'])]
-class Student extends Model
+#[Hidden(['password', 'remember_token'])]
+class Student extends Authenticatable
 {
     /** @use HasFactory<StudentFactory> */
-    use HasFactory, LogsActivity, Notifiable;
+    use HasApiTokens, HasFactory, LogsActivity, Notifiable;
 
     /**
      * A student who hasn't been active for this many days counts as inactive.
@@ -41,7 +49,20 @@ class Student extends Model
             'pro_until' => 'datetime',
             'suspended_at' => 'datetime',
             'last_active_at' => 'datetime',
+            'password' => 'hashed',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // a suspended or deleted student is signed out of the site everywhere
+        static::updated(function (Student $student): void {
+            if ($student->wasChanged('suspended_at') && $student->isSuspended()) {
+                $student->tokens()->delete();
+            }
+        });
+
+        static::deleting(fn (Student $student) => $student->tokens()->delete());
     }
 
     /**
@@ -95,6 +116,28 @@ class Student extends Model
     }
 
     /**
+     * Bought (enrolled), or a published course included in Pro while the membership runs.
+     */
+    public function canAccess(Course $course): bool
+    {
+        if ($this->enrollments()->where('course_id', $course->id)->exists()) {
+            return true;
+        }
+
+        return $this->isPro() && $course->is_included_in_pro && $course->status === CourseStatus::Published;
+    }
+
+    /**
+     * The reset link points at the public site's page, not the dashboard's.
+     *
+     * @param  string  $token
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new StudentPasswordReset($token));
+    }
+
+    /**
      * suspended | inactive | active
      */
     public function state(): string
@@ -142,6 +185,6 @@ class Student extends Model
      */
     protected function activityIgnoredAttributes(): array
     {
-        return ['pro_until'];
+        return ['pro_until', 'password', 'remember_token'];
     }
 }

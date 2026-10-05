@@ -7,9 +7,11 @@ use App\Enums\CourseLevel;
 use App\Enums\CourseStatus;
 use App\Enums\OrderItemType;
 use App\Enums\OrderStatus;
+use App\Enums\ReviewStatus;
 use App\Models\Concerns\LogsActivity;
 use Database\Factories\CourseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -124,5 +126,29 @@ class Course extends Model
     protected function activityStateLabel(): ?string
     {
         return $this->status->label();
+    }
+
+    /**
+     * What the public site may show.
+     *
+     * @param  Builder<Course>  $query
+     */
+    public function scopePublished(Builder $query): void
+    {
+        $query->where('status', CourseStatus::Published);
+    }
+
+    /**
+     * The numbers a course card shows: lessons, length, enrolments, and the count and average of published reviews.
+     *
+     * @param  Builder<Course>  $query
+     */
+    public function scopeWithCardNumbers(Builder $query): void
+    {
+        $published = fn ($reviews) => $reviews->where('status', ReviewStatus::Published);
+
+        $query->withCount(['lessons', 'enrollments', 'reviews' => $published])
+            ->withSum('lessons', 'duration_seconds')
+            ->withAvg(['reviews' => $published], 'rating');
     }
 }

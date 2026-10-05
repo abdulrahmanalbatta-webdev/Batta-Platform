@@ -25,6 +25,14 @@ class StudentFactory extends Factory
         ];
     }
 
+    /**
+     * A student who signed up on the site and can sign in with this password.
+     */
+    public function withPassword(string $password = 'Secret-pass-1'): static
+    {
+        return $this->state(fn (array $attributes) => ['password' => $password]);
+    }
+
     public function pro(): static
     {
         return $this->state(fn (array $attributes) => ['pro_until' => now()->addMonth()]);

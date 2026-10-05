@@ -63,6 +63,42 @@ class CourseProgress
     }
 
     /**
+     * One student's progress in the given courses, with the lessons they finished (the site's "my courses").
+     *
+     * @param  Collection<int, int>|array<int, int>  $courseIds
+     * @return array<int, array{percent: int, completed: list<int>}> course id => progress
+     */
+    public function forStudent(int $studentId, Collection|array $courseIds): array
+    {
+        $courseIds = collect($courseIds)->values();
+
+        $lessonsPerCourse = DB::table('lessons')
+            ->join('course_modules', 'course_modules.id', '=', 'lessons.course_module_id')
+            ->whereIn('course_modules.course_id', $courseIds)
+            ->groupBy('course_modules.course_id')
+            ->pluck(DB::raw('count(*)'), 'course_modules.course_id');
+
+        $completed = DB::table('lesson_completions')
+            ->join('lessons', 'lessons.id', '=', 'lesson_completions.lesson_id')
+            ->join('course_modules', 'course_modules.id', '=', 'lessons.course_module_id')
+            ->where('lesson_completions.student_id', $studentId)
+            ->whereIn('course_modules.course_id', $courseIds)
+            ->orderBy('lesson_completions.lesson_id')
+            ->get(['course_modules.course_id', 'lesson_completions.lesson_id'])
+            ->groupBy('course_id');
+
+        return $courseIds->mapWithKeys(function (int $courseId) use ($lessonsPerCourse, $completed): array {
+            $total = (int) ($lessonsPerCourse[$courseId] ?? 0);
+            $lessonIds = collect($completed[$courseId] ?? [])->pluck('lesson_id')->map(fn ($id): int => (int) $id)->values()->all();
+
+            return [$courseId => [
+                'percent' => $total > 0 ? (int) round(min(count($lessonIds), $total) / $total * 100) : 0,
+                'completed' => $lessonIds,
+            ]];
+        })->all();
+    }
+
+    /**
      * A student's overall progress: the average over their courses (0 without courses).
      *
      * @param  array<int, int>  $perCourse

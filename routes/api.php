@@ -35,7 +35,6 @@ use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\SettingSecretController;
-use App\Http\Controllers\Api\SiteSettingsController;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\StudentMessageController;
@@ -59,8 +58,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/status', StatusController::class)->name('status');
-
-Route::get('/site-settings', SiteSettingsController::class)->middleware('throttle:60,1,site-settings')->name('site-settings');
 
 Route::post('/invitations/accept', [AcceptedInvitationController::class, 'store'])
     ->middleware(['guest', 'throttle:6,1,invitations'])

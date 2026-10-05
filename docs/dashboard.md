@@ -54,6 +54,7 @@ SESSION_ENCRYPT=true
 SESSION_SECURE_COOKIE=true            # الجلسة بس على HTTPS
 QUEUE_CONNECTION=database
 CACHE_STORE=database
+CORS_ALLOWED_ORIGINS=https://batta.dev,https://www.batta.dev   # دومين الموقع العام (Vue) اللي بينادي /api/v1
 ```
 
 **أول مرة:**
@@ -342,7 +343,6 @@ try {
 | PUT | `settings` | `manage-settings` | حفظ أي مجموعة إعدادات (المفتاح السري الفاضي بيضل زي ما هو) |
 | DELETE | `settings/secrets/{key}` | `manage-platform-data` | حذف مفتاح سري محفوظ |
 | POST | `settings/test-email` | `manage-platform-data` | رسالة تجريبية فورية لبريدك |
-| GET | `site-settings` | بدون دخول | اللي بيحتاجه الموقع العام: الاسم، التواصل، الصيانة، التسجيل، العملة، الضريبة، وطرق الدفع الجاهزة مع مفاتيحها العامة |
 | GET · POST | `data-exports` | `manage-platform-data` | النسخ الجاهزة · تجهيز نسخة بالخلفية (بيوصلك إشعار) |
 | GET · DELETE | `data-exports/{file}` | `manage-platform-data` | تنزيل · حذف نسخة |
 | POST | `data-wipe` | `manage-platform-data` | حذف كل البيانات (`password` + `confirmation: "احذف كل البيانات"`) |
@@ -391,6 +391,50 @@ try {
 
 `App.api` بيبعت توكن CSRF من `<meta name="csrf-token">`، وبيعرض إشعار خطأ بالعربي لكل الحالات ما عدا 422، وبيحوّل على صفحة الدخول عند 401.
 لرفع الملفات أرسل `FormData` مع `post` (PHP لا يقرأ ملفات `PUT`).
+
+## API الموقع العام (routes/site-api.php)
+
+الموقع العام (Vue) بيحكي مع اللوحة عبر `/api/v1` (مش `/dashboard/api/v1`). هاد الـ API **بدون جلسة ولا CSRF**: الطالب بيسجّل دخول وبياخد token (Laravel Sanctum) وبيبعته بكل طلب بـ `Authorization: Bearer <token>`. الطلبات من دومين ثاني مسموحة بس من `CORS_ALLOWED_ORIGINS` (`config/cors.php`). الـ token صالح 30 يوم (`config/sanctum.php`)، وبيبلش بـ `batta_` عشان أدوات فحص الأسرار تلقطه لو انتشر.
+
+الأخطاء JSON زي اللوحة: 401 بدون token صالح، 403 بدون صلاحية، 404، 422 مع `errors`، و429 للحدود. الحدود: 120 طلب بالدقيقة لكل عنوان IP، و5 محاولات دخول بالدقيقة لكل بريد+IP، و5 بالدقيقة لكل نموذج (تواصل، طلب مشروع، تسجيل، نسيت كلمة المرور، تعيينها).
+
+#### بدون دخول
+
+| الطريقة | المسار | الوظيفة |
+|---|---|---|
+| GET | `settings` | الاسم، التواصل، الصيانة، `registration_open`، العملة، الضريبة، طرق الدفع الجاهزة مع مفاتيحها العامة، و`project_services` لنموذج طلب المشروع. ولا مفتاح سري |
+| GET | `courses` · `courses/{slug}` | الدورات المنشورة (بدون الإيرادات والحالة) · صفحة الدورة مع المنهج (عناوين الدروس ومددها) |
+| GET | `courses/{slug}/reviews` | التقييمات المنشورة، 20 بالصفحة، بالاسم الأول بس |
+| GET | `workshops` | الورش من اليوم وطالع مع `seats_left` |
+| GET | `articles` · `articles/{slug}` | المقالات المنشورة، 12 بالصفحة (`?category=`، `?featured=1`) · المقال كامل، وكل قراءة بتزيد المشاهدات |
+| GET | `tools` | الأدوات المنشورة مجمّعة حسب التصنيف |
+| POST | `tools/{id}/click` | بيعدّ نقرة على رابط الأداة (عمود النقرات باللوحة) |
+| POST | `contact` | `name`, `email`, `message` ← بتوصل للرسائل باللوحة وبتنبّه الفريق. لو معه token بتنضاف لمحادثة الطالب نفسه |
+| POST | `project-requests` | `name`, `email`, `service`, `details` (+ `company`, `phone`, `budget`) ← عميل جديد بمرحلة "جديد" وتنبيه |
+| POST | `auth/register` | `name`, `email`, `password` + `password_confirmation` (+ `country`, `device_name`) ← `{token, data}`. بيرجع 403 لو التسجيل مسكّر من الإعدادات |
+| POST | `auth/login` | `email`, `password` (+ `device_name`) ← `{token, data}`. الحساب الموقوف 403 |
+| POST | `auth/forgot-password` | بيبعت رابط لـ `site_url/reset-password?token=…&email=…`. نفس الرد سواء البريد موجود أو لا |
+| POST | `auth/reset-password` | `token`, `email`, `password` + `password_confirmation`، وبيطلّع الطالب من كل أجهزته |
+
+النموذجين (`contact` و`project-requests`) فيهم حقل مخفي `website`: الموقع لازم يخليه فاضي ومخفي، والبوتات اللي بتعبّيه بتاخد نفس الرد بس ما بينحفظ إشي.
+
+الطالب اللي ضافه الفريق أو اشترى قبل ما يكون عنده حساب ما إله كلمة مرور: التسجيل بنفس البريد بيرفض، وبيعيّنها من "نسيت كلمة المرور".
+
+#### للطالب المسجّل (Bearer token)
+
+| الطريقة | المسار | الوظيفة |
+|---|---|---|
+| POST | `auth/logout` | بيلغي الـ token الحالي |
+| GET · PUT | `me` | حسابه · تعديل `name`, `email`, `country` (تغيير البريد بدو `current_password`) |
+| PUT | `me/password` | `current_password`, `password` + `password_confirmation`، وبيطلّعه من باقي الأجهزة |
+| GET | `me/courses` | الدورات اللي اشتراها + دورات Pro المنشورة طول ما الاشتراك شغّال، مع `progress` و`completed_lessons` و`access` (`purchased` أو `pro`) |
+| GET | `me/courses/{slug}` | الدورة مع المنهج وتقدّمه وتقييمه (`my_review`). بدون وصول 403 |
+| POST · DELETE | `me/lessons/{id}/completion` | إنهاء درس · إلغاؤه، وبيرجع التقدّم الجديد |
+| PUT | `me/courses/{slug}/review` | `rating` (1-5) و`body` ← تقييم جديد أو تعديله، وبيرجع "بانتظار المراجعة" بكل تعديل |
+
+**الوصول لدورة** (`Student::canAccess`): اشتراها، أو منشورة و"ضمن Pro" واشتراكه Pro لسا شغّال. إيقاف الطالب من اللوحة بيلغي كل الـ tokens تبعته فوراً.
+
+الدروس نفسها (الفيديو) لسا مش بقاعدة البيانات، فالـ API بيرجع المنهج والتقدّم بس. الشراء والدفع من الموقع مرحلة لاحقة.
 
 ## إضافة صفحة جديدة
 

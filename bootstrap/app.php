@@ -18,6 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->prefix('dashboard/api/v1')
                 ->name('api.')
                 ->group(base_path('routes/api.php'));
+
+            // the public site's API: stateless (Bearer tokens for students, no session or CSRF), CORS in config/cors.php
+            Route::middleware(['api', 'throttle:site-api'])
+                ->prefix('api/v1')
+                ->name('site.')
+                ->group(base_path('routes/site-api.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -27,6 +33,6 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('dashboard/api/*') || $request->expectsJson(),
+            fn (Request $request) => $request->is('dashboard/api/*', 'api/*') || $request->expectsJson(),
         );
     })->create();

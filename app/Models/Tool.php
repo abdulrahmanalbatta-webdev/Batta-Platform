@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\LogsActivity;
 use Database\Factories\ToolFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -49,5 +50,15 @@ class Tool extends Model
     protected function activityStateLabel(): ?string
     {
         return $this->is_published ? 'منشورة' : 'مخفية';
+    }
+
+    /**
+     * What the public site may show.
+     *
+     * @param  Builder<Tool>  $query
+     */
+    public function scopePublished(Builder $query): void
+    {
+        $query->where('is_published', true);
     }
 }

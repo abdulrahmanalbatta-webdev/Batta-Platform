@@ -4,6 +4,7 @@ namespace App\Actions\PlatformData;
 
 use App\Models\Activity;
 use App\Models\ConversationMessage;
+use App\Models\Student;
 use App\Models\User;
 use App\Support\DashboardSummary;
 use App\Support\SalesReport;
@@ -29,6 +30,10 @@ class WipePlatformData
             foreach (PlatformTables::BUSINESS as $table) {
                 $deleted[$table] = DB::table($table)->delete();
             }
+
+            // the students' site sign-ins and reset links
+            DB::table('personal_access_tokens')->where('tokenable_type', (new Student)->getMorphClass())->delete();
+            DB::table('student_password_reset_tokens')->delete();
 
             // bell entries pointing at what's gone
             DatabaseNotification::query()->delete();

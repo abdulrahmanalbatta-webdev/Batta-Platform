@@ -64,7 +64,8 @@ trait LogsActivity
 
     protected function logActivity(string $action): void
     {
-        if (! Auth::check()) {
+        // team members only: a student acting through the site API (Sanctum) is never the author
+        if (! Auth::guard('web')->check()) {
             return;
         }
 
@@ -88,7 +89,7 @@ trait LogsActivity
 
         Activity::create([
             // a member deleting their own account can't be the author of the entry
-            'user_id' => $action === 'deleted' && $this->is(Auth::user()) ? null : Auth::id(),
+            'user_id' => $action === 'deleted' && $this->is(Auth::guard('web')->user()) ? null : Auth::guard('web')->id(),
             'action' => $action,
             'subject_type' => $this->getMorphClass(),
             'subject_id' => $this->getKey(),
