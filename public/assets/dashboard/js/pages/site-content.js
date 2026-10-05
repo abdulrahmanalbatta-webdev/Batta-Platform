@@ -254,7 +254,7 @@ document.addEventListener('app:ready', async () => {
   /* ---------- photo ---------- */
   async function upload(file) {
     const form = new FormData();
-    form.append('photo', file);
+    form.append('photo', await App.shrinkImage(file, 1200));
     try {
       photo = (await api.post('site-photo', form)).data.photo;
     } catch (err) {

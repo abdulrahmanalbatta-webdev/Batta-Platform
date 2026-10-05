@@ -904,7 +904,7 @@
   // other failures show a toast and reject too. Files: send FormData with POST (PHP does not parse multipart PUT).
   class ApiError extends Error {
     constructor(status, body) {
-      super(body?.message || `HTTP ${status}`);
+      super(body?.message || (status ? `حدث خطأ غير متوقع (${status})، حاول مرة أخرى` : 'تعذّر الاتصال بالخادم'));
       this.name = 'ApiError';
       this.status = status;
       this.errors = body?.errors || {};
@@ -913,6 +913,7 @@
   const API_MESSAGES = {
     403: 'ليست لديك صلاحية لهذا الإجراء',
     404: 'العنصر المطلوب غير موجود',
+    413: 'الملف أكبر من الحد الذي يقبله الخادم',
     419: 'انتهت صلاحية الجلسة، حدّث الصفحة وحاول مرة أخرى',
     429: 'طلبات كثيرة خلال وقت قصير، انتظر قليلاً ثم حاول',
   };
@@ -970,6 +971,36 @@
     toast(err.errors[first ?? keys[0]]?.[0] || err.message, 'error');
     return true;
   }
+  // big photos are scaled down in the browser before they're uploaded (longest side 1920px): faster, and well
+  // under PHP's upload limit (2MB by default), which would otherwise reject them with "فشل رفع الصورة"
+  async function shrinkImage(file, maxSide = 1920) {
+    if (!/^image\/(jpeg|png|webp)$/.test(file?.type)) return file;
+    let bitmap;
+    try {
+      bitmap = await createImageBitmap(file);
+    } catch {
+      return file;
+    }
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    if (scale === 1 && file.size <= 1.5 * 1024 * 1024) {
+      bitmap.close();
+      return file;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    // PNG becomes WebP to keep any transparency
+    const type = file.type === 'image/jpeg' ? 'image/jpeg' : 'image/webp';
+    let blob = null;
+    for (const quality of [0.85, 0.72, 0.6]) {
+      blob = await new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+      if (!blob || blob.size <= 1.8 * 1024 * 1024) break;
+    }
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], `${file.name.replace(/\.\w+$/, '')}.${type === 'image/jpeg' ? 'jpg' : 'webp'}`, { type });
+  }
   // what the signed-in member may do, e.g. App.can('manage_content') — the server enforces it either way
   const can = (permission) => !!USER?.permissions?.[permission];
   const api = {
@@ -981,7 +1012,7 @@
   };
 
   /* ---------- boot ---------- */
-  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, user: USER, can, ago, activityTone, siteUrl: String(CFG.site_url || '').replace(/\/$/, '') };
+  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, shrinkImage, user: USER, can, ago, activityTone, siteUrl: String(CFG.site_url || '').replace(/\/$/, '') };
 
   // no inline handlers (the Content-Security-Policy blocks them): a broken avatar image falls back to the initial,
   // and [data-back] goes to the previous page
