@@ -306,7 +306,12 @@
           "value": "71%",
           "label": "حجوزات أونلاين"
         }
-      ]
+      ],
+      "cover": null,
+      "gallery": [],
+      "client": "",
+      "year": "",
+      "link": null
     },
     {
       "id": "coffee",
@@ -329,7 +334,12 @@
           "value": "1.1s",
           "label": "زمن التحميل"
         }
-      ]
+      ],
+      "cover": null,
+      "gallery": [],
+      "client": "",
+      "year": "",
+      "link": null
     },
     {
       "id": "incubator",
@@ -352,7 +362,12 @@
           "value": "14 يوماً",
           "label": "مدة التسليم"
         }
-      ]
+      ],
+      "cover": null,
+      "gallery": [],
+      "client": "",
+      "year": "",
+      "link": null
     }
   ],
   "testimonials": [

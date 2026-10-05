@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\SettingSecretController;
 use App\Http\Controllers\Api\SiteContentController;
+use App\Http\Controllers\Api\SiteImageController;
 use App\Http\Controllers\Api\SitePhotoController;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\StudentController;
@@ -185,6 +186,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/site-content/{key}', [SiteContentController::class, 'update'])->name('site-content.update');
         Route::delete('/site-content/{key}', [SiteContentController::class, 'destroy'])->name('site-content.destroy');
         Route::post('/site-photo', [SitePhotoController::class, 'store'])->name('site-photo.store');
+        Route::post('/site-images', [SiteImageController::class, 'store'])->name('site-images.store');
         Route::delete('/site-photo', [SitePhotoController::class, 'destroy'])->name('site-photo.destroy');
     });
 

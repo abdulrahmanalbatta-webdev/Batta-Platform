@@ -146,6 +146,56 @@ class SiteContentTest extends TestCase
             ->assertJsonPath('data.texts_general.maintenance', SiteContent::defaults()['texts_general']['maintenance']);
     }
 
+    public function test_project_images_are_uploaded_shown_as_urls_and_deleted_when_dropped(): void
+    {
+        Storage::fake('public');
+        $editor = User::factory()->role(Role::Editor)->create();
+        $upload = fn (): string => $this->actingAs($editor)->postJson(route('api.site-images.store'), ['image' => $this->png('shot.png', 400)])
+            ->assertCreated()->json('data.path');
+        $cover = $upload();
+        $shot = $upload();
+
+        $studies = SiteContent::defaults()['case_studies'];
+        $studies[0]['cover'] = $cover;
+        $studies[0]['gallery'] = [$shot];
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'case_studies'), ['value' => $studies])->assertOk();
+
+        $this->getJson(route('site.content'))
+            ->assertJsonPath('data.case_studies.0.cover', Storage::disk('public')->url($cover))
+            ->assertJsonPath('data.case_studies.0.gallery', [Storage::disk('public')->url($shot)])
+            ->assertJsonPath('data.case_studies.1.cover', null);
+        $this->actingAs($editor)->getJson(route('api.site-content.show'))->assertJsonPath('data.case_studies.0.cover', $cover);
+
+        $studies[0]['gallery'] = [];
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'case_studies'), ['value' => $studies])->assertOk();
+        Storage::disk('public')->assertMissing($shot);
+        Storage::disk('public')->assertExists($cover);
+
+        $this->actingAs($editor)->deleteJson(route('api.site-content.destroy', 'case_studies'))->assertOk();
+        Storage::disk('public')->assertMissing($cover);
+    }
+
+    public function test_images_must_be_uploaded_ones(): void
+    {
+        $studies = SiteContent::defaults()['case_studies'];
+        $studies[0]['cover'] = '../../.env';
+
+        $this->actingAs(User::factory()->role(Role::Editor)->create())->putJson(route('api.site-content.update', 'case_studies'), ['value' => $studies])
+            ->assertJsonValidationErrors('value.0.cover');
+    }
+
+    public function test_projects_saved_before_images_existed_get_empty_ones(): void
+    {
+        $studies = SiteContent::defaults()['case_studies'];
+        unset($studies[0]['cover'], $studies[0]['gallery'], $studies[0]['link']);
+        SiteBlock::query()->create(['key' => 'case_studies', 'value' => $studies]);
+
+        $this->getJson(route('site.content'))
+            ->assertJsonPath('data.case_studies.0.cover', null)
+            ->assertJsonPath('data.case_studies.0.gallery', [])
+            ->assertJsonPath('data.case_studies.0.title', $studies[0]['title']);
+    }
+
     /**
      * A real PNG of the given size, built without the GD extension (as in AvatarControllerTest).
      */
