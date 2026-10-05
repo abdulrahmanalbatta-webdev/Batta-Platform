@@ -34,7 +34,7 @@ class SiteContent
      * Logos the site bundles for the technologies strip (simple-icons slugs).
      */
     public const TECHNOLOGIES = [
-        'vuedotjs' => 'Vue.js', 'nuxtdotjs' => 'Nuxt', 'nextdotjs' => 'Next.js', 'react' => 'React', 'svelte' => 'Svelte',
+        'vuedotjs' => 'Vue.js', 'nuxt' => 'Nuxt', 'nextdotjs' => 'Next.js', 'react' => 'React', 'svelte' => 'Svelte',
         'javascript' => 'JavaScript', 'typescript' => 'TypeScript', 'nodedotjs' => 'Node.js', 'laravel' => 'Laravel',
         'php' => 'PHP', 'python' => 'Python', 'postgresql' => 'PostgreSQL', 'mysql' => 'MySQL', 'mongodb' => 'MongoDB',
         'redis' => 'Redis', 'prisma' => 'Prisma', 'supabase' => 'Supabase', 'firebase' => 'Firebase',
