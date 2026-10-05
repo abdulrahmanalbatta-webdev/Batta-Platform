@@ -4,6 +4,7 @@ use App\Http\Controllers\Site\AccountController;
 use App\Http\Controllers\Site\AccountPasswordController;
 use App\Http\Controllers\Site\ArticleController;
 use App\Http\Controllers\Site\ContactMessageController;
+use App\Http\Controllers\Site\ContentController;
 use App\Http\Controllers\Site\CourseController;
 use App\Http\Controllers\Site\CourseReviewController;
 use App\Http\Controllers\Site\LessonCompletionController;
@@ -31,6 +32,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/settings', SettingsController::class)->name('settings');
 Route::get('/stats', StatsController::class)->name('stats');
+Route::get('/content', ContentController::class)->name('content');
 
 Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
 Route::get('/courses/{slug}', [CourseController::class, 'show'])->name('courses.show');

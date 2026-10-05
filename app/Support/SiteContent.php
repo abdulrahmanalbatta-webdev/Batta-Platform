@@ -1,0 +1,299 @@
+<?php
+
+namespace App\Support;
+
+use App\Models\SiteBlock;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+
+/**
+ * The public site's own content, edited on the dashboard's "محتوى الموقع" page: the announcement bar, the home
+ * page, the about page, services and packages, case studies, testimonials and FAQs.
+ *
+ * Each section has a schema (fields and limits) that drives both the validation here and the editor in the
+ * dashboard. Sections never edited fall back to resources/data/site-content.json (the site's original texts).
+ */
+class SiteContent
+{
+    public const CACHE_KEY = 'site.content';
+
+    public const PHOTO_PATH = 'site/profile';
+
+    /**
+     * Icons the site can draw (src/components/ui/BaseIcon.vue in the site).
+     */
+    public const ICONS = [
+        'code' => 'كود', 'globe' => 'كرة أرضية', 'briefcase' => 'حقيبة', 'monitor' => 'شاشة', 'clock' => 'ساعة',
+        'users' => 'أشخاص', 'play' => 'تشغيل', 'calendar' => 'تقويم', 'article' => 'مقال', 'award' => 'شهادة',
+        'star' => 'نجمة', 'chat' => 'محادثة', 'mail' => 'بريد', 'lock' => 'قفل', 'bulb' => 'فكرة', 'check' => 'صح',
+        'link' => 'رابط', 'pin' => 'موقع', 'user' => 'شخص', 'search' => 'بحث',
+    ];
+
+    /**
+     * Logos the site bundles for the technologies strip (simple-icons slugs).
+     */
+    public const TECHNOLOGIES = [
+        'vuedotjs' => 'Vue.js', 'nuxtdotjs' => 'Nuxt', 'nextdotjs' => 'Next.js', 'react' => 'React', 'svelte' => 'Svelte',
+        'javascript' => 'JavaScript', 'typescript' => 'TypeScript', 'nodedotjs' => 'Node.js', 'laravel' => 'Laravel',
+        'php' => 'PHP', 'python' => 'Python', 'postgresql' => 'PostgreSQL', 'mysql' => 'MySQL', 'mongodb' => 'MongoDB',
+        'redis' => 'Redis', 'prisma' => 'Prisma', 'supabase' => 'Supabase', 'firebase' => 'Firebase',
+        'tailwindcss' => 'Tailwind CSS', 'html5' => 'HTML5', 'graphql' => 'GraphQL', 'docker' => 'Docker', 'git' => 'Git',
+        'github' => 'GitHub', 'vercel' => 'Vercel', 'stripe' => 'Stripe', 'figma' => 'Figma', 'wordpress' => 'WordPress',
+        'flutter' => 'Flutter',
+    ];
+
+    public const NETWORKS = [
+        'github' => 'GitHub', 'linkedin' => 'LinkedIn', 'x' => 'X', 'youtube' => 'YouTube', 'instagram' => 'Instagram',
+        'facebook' => 'Facebook', 'tiktok' => 'TikTok', 'behance' => 'Behance', 'dribbble' => 'Dribbble',
+    ];
+
+    /** @var array<string, mixed>|null */
+    private ?array $values = null;
+
+    /**
+     * Sections, in the editor's order. Field types: text, textarea, bool, icon, select (options), strings (a list of
+     * short texts), tags (several options), list (repeated items with their own fields), object (fixed fields).
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function definitions(): array
+    {
+        $text = fn (string $label, int $max = 120, bool $required = true, string $hint = ''): array => ['type' => 'text', 'label' => $label, 'max' => $max, 'required' => $required, 'hint' => $hint];
+        $long = fn (string $label, int $max = 1000, bool $required = true): array => ['type' => 'textarea', 'label' => $label, 'max' => $max, 'required' => $required];
+        $strings = fn (string $label, int $items, int $max = 120): array => ['type' => 'strings', 'label' => $label, 'max_items' => $items, 'max' => $max];
+
+        return [
+            // الرئيسية
+            'announcement' => ['group' => 'home', 'label' => 'شريط الإعلان', 'hint' => 'السطر أعلى كل صفحات الموقع.', 'type' => 'object', 'fields' => [
+                'enabled' => ['type' => 'bool', 'label' => 'إظهار الشريط'],
+                'text' => $text('النص', 200, false),
+                'link' => $text('الرابط', 255, false, 'صفحة في الموقع مثل /courses، أو رابط كامل'),
+                'link_label' => $text('نص الرابط', 40, false),
+            ]],
+            'hero' => ['group' => 'home', 'label' => 'العنوان الرئيسي', 'hint' => 'الكلمات التي تتبدّل في عنوان الصفحة الرئيسية.', 'type' => 'object', 'fields' => [
+                'words' => $strings('الكلمات المتبدّلة', 8, 30),
+            ]],
+            'technologies' => ['group' => 'home', 'label' => 'شريط التقنيات', 'type' => 'tags', 'options' => self::TECHNOLOGIES, 'max_items' => 30],
+            'reasons' => ['group' => 'home', 'label' => 'لماذا تعمل معي', 'type' => 'strings', 'max_items' => 12, 'max' => 160],
+
+            // عنك
+            'profile' => ['group' => 'about', 'label' => 'التعريف', 'type' => 'object', 'fields' => [
+                'name' => $text('الاسم', 60),
+                'role' => $text('المسمّى', 80),
+                'available' => $text('حالة التوفّر', 60, false, 'مثل: متاح لمشاريع جديدة. اتركه فارغاً لإخفائه'),
+                'short' => $long('النبذة القصيرة (الرئيسية)', 600),
+                'story' => ['type' => 'strings', 'label' => 'القصة (صفحة من أنا) — فقرة لكل سطر', 'max_items' => 8, 'max' => 1000, 'long' => true],
+                'skills' => $strings('المهارات', 30, 40),
+            ]],
+            'highlights' => ['group' => 'about', 'label' => 'ماذا أفعل', 'type' => 'list', 'max_items' => 6, 'title' => 'title', 'item' => [
+                'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],
+                'title' => $text('العنوان', 60),
+                'text' => $text('الوصف', 160),
+            ]],
+            'journey' => ['group' => 'about', 'label' => 'المسيرة', 'type' => 'list', 'max_items' => 10, 'title' => 'title', 'item' => [
+                'label' => $text('المرحلة', 40),
+                'title' => $text('العنوان', 60),
+                'text' => $text('الوصف', 200),
+            ]],
+            'values' => ['group' => 'about', 'label' => 'قيمي في العمل', 'type' => 'list', 'max_items' => 8, 'title' => 'title', 'item' => [
+                'title' => $text('العنوان', 60),
+                'text' => $text('الوصف', 200),
+            ]],
+            'socials' => ['group' => 'about', 'label' => 'حساباتك', 'hint' => 'واتساب والبريد يُضبطان من الإعدادات ← عام.', 'type' => 'list', 'max_items' => 9, 'title' => 'network', 'item' => [
+                'network' => ['type' => 'select', 'label' => 'المنصة', 'options' => self::NETWORKS],
+                'url' => ['type' => 'url', 'label' => 'الرابط', 'max' => 255, 'required' => true],
+            ]],
+
+            // الخدمات
+            'services' => ['group' => 'services', 'label' => 'الخدمات', 'hint' => 'تظهر في الرئيسية وصفحة الخدمات والقائمة، ونموذج "اطلب عرض سعر".', 'type' => 'list', 'max_items' => 12, 'title' => 'title', 'item' => [
+                'id' => ['type' => 'text', 'label' => 'المعرّف (بالإنجليزية)', 'max' => 40, 'required' => true, 'pattern' => '/^[a-z0-9-]+$/', 'hint' => 'جزء الرابط /services#…'],
+                'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],
+                'title' => $text('الاسم', 60),
+                'text' => $text('الوصف', 200),
+                'from' => $text('يبدأ من', 40, false),
+                'duration' => $text('المدة', 40, false),
+                'features' => $strings('ما تشمله', 8, 80),
+            ]],
+            'packages' => ['group' => 'services', 'label' => 'الباقات', 'type' => 'list', 'max_items' => 6, 'title' => 'title', 'item' => [
+                'id' => ['type' => 'text', 'label' => 'المعرّف (بالإنجليزية)', 'max' => 40, 'required' => true, 'pattern' => '/^[a-z0-9-]+$/'],
+                'label' => $text('الشارة', 30),
+                'title' => $text('الاسم', 60),
+                'price' => $text('السعر', 30),
+                'price_note' => $text('بجانب السعر', 30, false, 'مثل: تبدأ من، أو / شهرياً'),
+                'desc' => $text('الوصف', 200),
+                'features' => $strings('ما تشمله', 8, 80),
+                'popular' => ['type' => 'bool', 'label' => 'مميّزة (الأكثر طلباً)'],
+            ]],
+            'process' => ['group' => 'services', 'label' => 'مراحل العمل', 'type' => 'list', 'max_items' => 8, 'title' => 'title', 'item' => [
+                'title' => $text('المرحلة', 60),
+                'text' => $text('الوصف', 200),
+            ]],
+
+            // الأعمال والآراء
+            'case_studies' => ['group' => 'work', 'label' => 'الأعمال', 'type' => 'list', 'max_items' => 20, 'title' => 'title', 'item' => [
+                'id' => ['type' => 'text', 'label' => 'المعرّف (بالإنجليزية)', 'max' => 40, 'required' => true, 'pattern' => '/^[a-z0-9-]+$/'],
+                'title' => $text('العنوان', 80),
+                'tag' => $text('النوع', 30),
+                'sector' => $text('القطاع', 40),
+                'problem' => $long('المشكلة', 400),
+                'solution' => $long('الحل', 400),
+                'tech' => $strings('التقنيات', 8, 30),
+                'kpis' => ['type' => 'list', 'label' => 'النتائج', 'max_items' => 4, 'title' => 'label', 'item' => [
+                    'value' => $text('الرقم', 20),
+                    'label' => $text('الوصف', 40),
+                ]],
+            ]],
+            'testimonials' => ['group' => 'work', 'label' => 'آراء العملاء والطلاب', 'type' => 'list', 'max_items' => 20, 'title' => 'name', 'item' => [
+                'name' => $text('الاسم', 60),
+                'role' => $text('الصفة', 80),
+                'text' => $long('الرأي', 500),
+            ]],
+            'faqs' => ['group' => 'work', 'label' => 'الأسئلة الشائعة', 'type' => 'list', 'max_items' => 20, 'title' => 'q', 'item' => [
+                'q' => $text('السؤال', 160),
+                'a' => $long('الجواب', 800),
+            ]],
+        ];
+    }
+
+    /**
+     * The editor's tabs.
+     *
+     * @return array<string, string>
+     */
+    public static function groups(): array
+    {
+        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'work' => 'الأعمال والآراء'];
+    }
+
+    /**
+     * Every section: what was saved, else the site's original text; plus the uploaded photo.
+     *
+     * @return array<string, mixed>
+     */
+    public function all(): array
+    {
+        if ($this->values !== null) {
+            return $this->values;
+        }
+
+        $saved = Cache::rememberForever(self::CACHE_KEY, fn (): array => SiteBlock::query()->pluck('value', 'key')->map(fn ($value) => is_string($value) ? json_decode($value, true) : $value)->all());
+        $defaults = self::defaults();
+
+        $values = [];
+        foreach (array_keys(self::definitions()) as $key) {
+            $values[$key] = $saved[$key] ?? $defaults[$key];
+        }
+        $values['photo'] = isset($saved['photo']['path']) ? Storage::disk('public')->url($saved['photo']['path']) : null;
+
+        return $this->values = $values;
+    }
+
+    /**
+     * Save one section (already validated): only the fields the schema knows are kept.
+     */
+    public function update(string $key, mixed $value): mixed
+    {
+        $clean = self::clean(self::definitions()[$key], $value);
+        SiteBlock::query()->updateOrCreate(['key' => $key], ['value' => $clean]);
+        $this->forget();
+
+        return $clean;
+    }
+
+    /**
+     * Back to the site's original text.
+     */
+    public function reset(string $key): void
+    {
+        SiteBlock::query()->whereKey($key)->delete();
+        $this->forget();
+    }
+
+    public function setPhoto(?string $path): void
+    {
+        $old = SiteBlock::query()->find('photo')?->value['path'] ?? null;
+
+        if ($path === null) {
+            SiteBlock::query()->whereKey('photo')->delete();
+        } else {
+            SiteBlock::query()->updateOrCreate(['key' => 'photo'], ['value' => ['path' => $path]]);
+        }
+
+        if ($old && $old !== $path) {
+            Storage::disk('public')->delete($old);
+        }
+        $this->forget();
+    }
+
+    public function forget(): void
+    {
+        Cache::forget(self::CACHE_KEY);
+        $this->values = null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function defaults(): array
+    {
+        return json_decode((string) file_get_contents(resource_path('data/site-content.json')), true);
+    }
+
+    /**
+     * Laravel rules for one section, from its schema, under the "value" key of the request.
+     *
+     * @param  array<string, mixed>  $definition
+     * @return array<string, list<mixed>>
+     */
+    public static function rules(array $definition, string $path = 'value'): array
+    {
+        $required = ($definition['required'] ?? false) ? 'required' : 'nullable';
+
+        return match ($definition['type']) {
+            'object' => [$path => ['required', 'array'], ...collect($definition['fields'])->flatMap(fn (array $field, string $name): array => self::rules($field, "{$path}.{$name}"))->all()],
+            'list' => [$path => ['present', 'array', 'max:'.$definition['max_items']], ...collect($definition['item'])->flatMap(fn (array $field, string $name): array => self::rules($field, "{$path}.*.{$name}"))->all()],
+            'strings' => [$path => ['present', 'array', 'max:'.$definition['max_items']], "{$path}.*" => ['required', 'string', 'max:'.$definition['max']]],
+            'tags' => [$path => ['present', 'array', 'max:'.$definition['max_items']], "{$path}.*" => ['distinct', Rule::in(array_keys($definition['options']))]],
+            'text', 'textarea' => [$path => [$required, 'string', 'max:'.($definition['max'] ?? 1000), ...(isset($definition['pattern']) ? ['regex:'.$definition['pattern']] : [])]],
+            'url' => [$path => [$required, 'string', 'max:255', 'url:http,https']],
+            'bool' => [$path => ['boolean']],
+            'icon' => [$path => ['required', Rule::in(array_keys(self::ICONS))]],
+            'select' => [$path => ['required', Rule::in(array_keys($definition['options']))]],
+        };
+    }
+
+    /**
+     * Field names for the validation messages ("حقل المعرّف مطلوب" rather than "value.3.id").
+     *
+     * @param  array<string, mixed>  $definition
+     * @return array<string, string>
+     */
+    public static function attributes(array $definition, string $path = 'value'): array
+    {
+        $own = [$path => $definition['label'] ?? ''];
+
+        return match ($definition['type']) {
+            'object' => [...$own, ...collect($definition['fields'])->flatMap(fn (array $field, string $name): array => self::attributes($field, "{$path}.{$name}"))->all()],
+            'list' => [...$own, ...collect($definition['item'])->flatMap(fn (array $field, string $name): array => self::attributes($field, "{$path}.*.{$name}"))->all()],
+            'strings', 'tags' => [...$own, "{$path}.*" => $definition['label']],
+            default => $own,
+        };
+    }
+
+    /**
+     * Keeps only the fields the schema knows, with the right types (no stray keys reach the site).
+     *
+     * @param  array<string, mixed>  $definition
+     */
+    private static function clean(array $definition, mixed $value): mixed
+    {
+        return match ($definition['type']) {
+            'object' => collect($definition['fields'])->map(fn (array $field, string $name): mixed => self::clean($field, $value[$name] ?? null))->all(),
+            'list' => array_values(array_map(fn ($item): array => collect($definition['item'])->map(fn (array $field, string $name): mixed => self::clean($field, $item[$name] ?? null))->all(), $value ?? [])),
+            'strings', 'tags' => array_values(array_map('strval', $value ?? [])),
+            'bool' => (bool) $value,
+            default => $value === null ? null : (string) $value,
+        };
+    }
+}

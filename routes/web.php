@@ -40,6 +40,7 @@ Route::middleware('auth')->prefix('dashboard')->group(function () {
         ->middleware('can:manage-content')->name('articles.edit');
 
     Route::view('/tools', 'tools.index')->name('tools.index');
+    Route::view('/site-content', 'site-content.index')->name('site-content.index');
 
     // sales
     Route::view('/orders', 'orders.index')->name('orders.index');

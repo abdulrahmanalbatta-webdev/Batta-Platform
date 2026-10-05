@@ -149,6 +149,7 @@
       { page: 'workshops', href: url('workshops'), icon: 'calendar', label: 'الورش' },
       { page: 'articles', href: url('articles'), icon: 'article', label: 'المقالات', also: ['article-editor'] },
       { page: 'tools', href: url('tools'), icon: 'code', label: 'الأدوات' },
+      { page: 'site-content', href: url('site-content'), icon: 'globe', label: 'محتوى الموقع' },
     ] },
     { label: 'المبيعات', items: [
       { page: 'orders', href: url('orders'), icon: 'cart', label: 'الطلبات' },

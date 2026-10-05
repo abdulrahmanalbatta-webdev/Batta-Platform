@@ -1358,3 +1358,26 @@ html.app-ready .content > :nth-child(n + 5) { animation-delay: 0.16s; }
 @media (prefers-reduced-motion: reduce) {
   html.app-ready .sidebar > *, html.app-ready .topbar > *, html.app-ready .content > * { animation: none; }
 }
+
+/* ---------- site content editor (محتوى الموقع) ---------- */
+.sc-section { border-bottom: 1px solid var(--line); padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.sc-section:last-child { border-bottom: 0; }
+.sc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sc-head h3 { font-size: 16px; }
+.sc-head p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.sc-actions { display: flex; gap: 8px; }
+.sc-item { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.sc-item > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 12px 14px; font-weight: 700; color: var(--fg); }
+.sc-item > summary::-webkit-details-marker { display: none; }
+.sc-item > summary .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-item[open] > summary { border-bottom: 1px solid var(--line); }
+.sc-item-body { padding: 14px; display: grid; gap: 14px; }
+.sc-list { display: flex; flex-direction: column; gap: 10px; }
+.sc-row { display: flex; gap: 8px; align-items: flex-start; }
+.sc-row > .input, .sc-row > .textarea { flex: 1; }
+.sc-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.sc-tags label { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px; cursor: pointer; font-size: 13.5px; }
+.sc-tags input { accent-color: var(--primary); }
+.sc-photo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.sc-photo img, .sc-photo .ph { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: var(--tint); display: grid; place-items: center; color: var(--muted); font-size: 12px; text-align: center; }
+.sc-item .invalid, .sc-section .invalid { border-color: var(--danger) !important; }
