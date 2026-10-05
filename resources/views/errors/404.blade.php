@@ -12,7 +12,7 @@
       <p class="muted">ربما تم نقل هذه الصفحة أو حذفها، أو أن الرابط غير صحيح.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
         <a class="btn btn-primary" href="{{ route('dashboard') }}"><i data-icon="home" class="sm"></i>العودة للرئيسية</a>
-        <button class="btn btn-ghost" onclick="history.back()"><i data-icon="chevron-right" class="sm"></i>الصفحة السابقة</button>
+        <button class="btn btn-ghost" data-back><i data-icon="chevron-right" class="sm"></i>الصفحة السابقة</button>
       </div>
     </div>
   </div>

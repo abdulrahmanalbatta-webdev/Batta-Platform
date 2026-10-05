@@ -60,3 +60,5 @@ Schedule::call(function () {
         ->filter(fn (string $path): bool => $disk->lastModified($path) < now()->subDays(ExportPlatformData::KEEP_DAYS)->getTimestamp())
         ->each(fn (string $path) => $disk->delete($path));
 })->daily()->name('exports:prune');
+// a database backup every night, kept 14 days in storage/app/private/backups — copy them off the server too
+Schedule::command('app:backup-database')->dailyAt('3:00')->withoutOverlapping();

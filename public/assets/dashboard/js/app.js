@@ -167,7 +167,7 @@
   ];
 
   const avatarHTML = (cls = '') => {
-    return `<span class="avatar ${cls}">${ME.photo ? `<img src="${esc(ME.photo)}" alt="" onerror="this.remove()">` : ''}${esc(ME.initial)}</span>`;
+    return `<span class="avatar ${cls}">${ME.photo ? `<img src="${esc(ME.photo)}" alt="">` : ''}${esc(ME.initial)}</span>`;
   };
 
   /* ---------- sidebar toggle: collapse to an icon rail on desktop, slide-in panel on mobile ---------- */
@@ -319,7 +319,7 @@
               <a href="${url('coupons', {}, 'new')}">${icon('tag', 'sm')}كوبون خصم</a>
             </div>
           </div>
-          <a class="tb-btn hide-sm" href="#" data-tip="عرض الموقع" data-tip-pos="bottom" aria-label="عرض الموقع" onclick="event.preventDefault();window.App.toast('افتح الموقع من مشروع batta-platform')">${icon('external')}</a>
+          <a class="tb-btn hide-sm" href="${esc(CFG.site_url || '#')}" target="_blank" rel="noopener" data-tip="عرض الموقع" data-tip-pos="bottom" aria-label="عرض الموقع">${icon('external')}</a>
           <div class="dropdown">
             <button class="tb-btn" id="bellBtn" data-dropdown aria-label="الإشعارات" data-tip="الإشعارات" data-tip-pos="bottom">${icon('bell')}</button>
             <div class="menu notif-menu">
@@ -980,6 +980,11 @@
 
   /* ---------- boot ---------- */
   window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, user: USER, can, ago, activityTone, siteUrl: String(CFG.site_url || '').replace(/\/$/, '') };
+
+  // no inline handlers (the Content-Security-Policy blocks them): a broken avatar image falls back to the initial,
+  // and [data-back] goes to the previous page
+  document.addEventListener('error', (e) => e.target.matches?.('.avatar img') && e.target.remove(), true);
+  document.addEventListener('click', (e) => e.target.closest('[data-back]') && history.back());
 
   document.addEventListener('DOMContentLoaded', () => {
     buildLayout();

@@ -4,9 +4,12 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Support\PlatformSettings;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -36,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('manage-leads', fn (User $user): bool => $user->role->canManageLeads());
         Gate::define('manage-settings', fn (User $user): bool => $user->role->canManageSettings());
         Gate::define('manage-platform-data', fn (User $user): bool => $user->role->canManagePlatformData());
+
+        // 300 calls a minute per member (per address before sign-in): far above normal use, low enough to stop scripts
+        RateLimiter::for('dashboard-api', fn (Request $request) => Limit::perMinute(300)->by($request->user()?->id ?: $request->ip()));
 
         $this->applyPlatformSettings();
 

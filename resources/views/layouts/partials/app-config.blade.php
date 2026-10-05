@@ -36,6 +36,6 @@
     ];
 @endphp
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     window.APP = @json($appConfig);
 </script>

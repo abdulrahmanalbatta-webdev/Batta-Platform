@@ -64,5 +64,9 @@ jobs:
         if: matrix.database == 'mysql'
         run: php artisan migrate:fresh --seed --force
 
+      - name: Back up the database (mysqldump)
+        if: matrix.database == 'mysql'
+        run: php artisan app:backup-database && ls -la storage/app/private/backups
+
       - name: Run tests
         run: php artisan test

@@ -40,6 +40,52 @@ php artisan app:create-owner admin@batta.dev "عبدالرحمن البطة"
   نفس الـ scheduler بيحذف يومياً سجل النشاط الأقدم من سنة، والإشعارات المقروءة الأقدم من 90 يوم، ونسخ البيانات الأقدم من 7 أيام، وبيبعت التقرير الأسبوعي كل أحد الساعة 8 (`reports:weekly`).
 - **تصدير البيانات** كمان Job على الـ queue، فبدون worker النسخة ما بتجهز.
 
+## النشر على خادم (Production)
+
+**`.env` على الخادم** (غير الموجود بـ `.env.example`):
+
+```dotenv
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://dash.example.com      # روابط الإيميلات بتنبني عليه، والطلبات بـ host ثاني بترجع 400
+LOG_LEVEL=warning
+DB_CONNECTION=mysql                   # مع DB_HOST/DB_DATABASE/DB_USERNAME/DB_PASSWORD
+SESSION_ENCRYPT=true
+SESSION_SECURE_COOKIE=true            # الجلسة بس على HTTPS
+QUEUE_CONNECTION=database
+CACHE_STORE=database
+```
+
+**أول مرة:**
+
+```bash
+composer install --no-dev --optimize-autoloader
+php artisan key:generate              # مرة وحدة بس: تغييره بيخلي المفاتيح السرية المحفوظة "غير محفوظة"
+php artisan migrate --force
+php artisan storage:link
+php artisan app:create-owner admin@example.com "الاسم"
+php artisan optimize                  # config + routes + views cache
+```
+
+**مع كل تحديث:** `git pull && composer install --no-dev -o && php artisan migrate --force && php artisan optimize && php artisan queue:restart`
+
+**عمليتين لازم يضلوا شغّالين:**
+- **الـ queue** (الإيميلات، التصدير، التقرير الأسبوعي) تحت Supervisor:
+  ```ini
+  [program:batta-queue]
+  command=php /var/www/batta/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+  autostart=true
+  autorestart=true
+  user=www-data
+  ```
+- **الـ scheduler** بسطر cron واحد: `* * * * * cd /var/www/batta && php artisan schedule:run >> /dev/null 2>&1`
+
+**الخادم (nginx)**: الـ root على `public/`، وHTTPS (Let's Encrypt)، وكل الطلبات لـ `index.php`. الـ `server_name` لازم يطابق `APP_URL`.
+
+**الأمان المفعّل تلقائياً بالإنتاج**: Content-Security-Policy بـ nonce (`config/security.php`؛ طافي بالبيئة المحلية بس)، و`X-Frame-Options`/`nosniff`/`Referrer-Policy`، وHSTS على HTTPS، وحد 300 طلب بالدقيقة لكل عضو على الـ API (فوق الحدود الخاصة ببعض الروابط)، و`trustHosts`.
+
+**النسخ الاحتياطي**: `app:backup-database` كل ليلة الساعة 3 (`mysqldump` بلقطة وحدة متسقة، مضغوط) بـ `storage/app/private/backups`، وبيحذف الأقدم من 14 يوم. **انسخهم برّا الخادم** (rclone/S3 أو نسخ مزوّد الاستضافة)، لأن نسخة على نفس الخادم ما بتحمي من خرابه. نسخة البيانات من الإعدادات (ZIP/JSON) للنقل والأرشيف، مش بديل عن هاد.
+
 ## الواجهات (resources/views)
 
 ```
