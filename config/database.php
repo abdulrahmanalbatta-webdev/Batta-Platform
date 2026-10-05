@@ -127,6 +127,12 @@ return [
     |
     */
 
+    /*
+    | The mysqldump program used by "php artisan app:backup-database".
+    */
+
+    'mysqldump' => env('MYSQLDUMP_BINARY', 'mysqldump'),
+
     'migrations' => [
         'table' => 'migrations',
         'update_date_on_publish' => true,

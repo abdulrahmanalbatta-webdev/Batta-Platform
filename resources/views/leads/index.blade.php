@@ -1,4 +1,5 @@
 @extends('layouts.dashboard')
+@use('App\Enums\LeadService')
 
 @section('title', 'طلبات المشاريع')
 @section('page', 'leads')
@@ -11,7 +12,7 @@
         <p>اسحب البطاقة بين المراحل لتحديث حالة الطلب.</p>
       </div>
       <div class="page-actions">
-        <button class="btn btn-primary" data-open="leadModal"><i data-icon="plus" class="sm"></i>طلب جديد</button>
+        <button class="btn btn-primary" data-open="leadModal" data-requires="manage_leads"><i data-icon="plus" class="sm"></i>طلب جديد</button>
       </div>
     </div>
 
@@ -26,8 +27,10 @@
       <div class="modal-body form-grid">
         <div class="field"><label for="lName">اسم العميل *</label><input class="input" id="lName" required></div>
         <div class="field"><label for="lCompany">الجهة</label><input class="input" id="lCompany"></div>
-        <div class="field"><label for="lService">الخدمة</label><select class="select" id="lService"><option>تطوير المواقع</option><option>تطبيقات الويب</option><option>المتاجر الإلكترونية</option><option>لوحات التحكم والأنظمة</option><option>الصيانة والتطوير المستمر</option><option>تدريب الفرق والجامعات</option></select></div>
-        <div class="field"><label for="lBudget">الميزانية ($)</label><input class="input ltr" id="lBudget" type="number" min="0" value="1000"></div>
+        <div class="field"><label for="lService">الخدمة</label><select class="select" id="lService">@foreach (LeadService::cases() as $service)<option value="{{ $service->value }}">{{ $service->label() }}</option>@endforeach</select></div>
+        <div class="field"><label for="lEmail">البريد الإلكتروني</label><input class="input ltr" id="lEmail" type="email"></div>
+        <div class="field"><label for="lPhone">الهاتف</label><input class="input ltr" id="lPhone" type="tel"></div>
+        <div class="field"><label for="lBudget">الميزانية ({{ trim($currencySymbol) }})</label><input class="input ltr" id="lBudget" type="number" min="0" value="1000"></div>
         <div class="field full"><label for="lNote">ملاحظات</label><textarea class="textarea" id="lNote" rows="3"></textarea></div>
       </div>
       <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>إلغاء</button><button class="btn btn-primary" type="submit">إضافة</button></div>

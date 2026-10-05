@@ -1,5 +1,14 @@
-document.addEventListener('app:ready', () => {
-  const { $, $$, esc, icon, toast, confirmDialog } = App;
+document.addEventListener('app:ready', async () => {
+  const { $, $$, esc, icon, toast, confirmDialog, api, showFieldErrors } = App;
+  const id = Number(document.body.dataset.id) || null; // set by the edit route: /dashboard/courses/{id}/edit
+  let existing = null;
+  if (id) {
+    try {
+      existing = (await api.get(`courses/${id}`)).data;
+    } catch {
+      return;
+    }
+  }
 
   /* ---------- tags inputs (outcomes + tags) ---------- */
   function tagsInput(root, initial = []) {
@@ -34,10 +43,10 @@ document.addEventListener('app:ready', () => {
   }
 
   /* ---------- curriculum builder ---------- */
-  let modules = [
-    { title: 'البداية والتجهيز', lessons: [{ title: 'مقدمة الدورة', dur: '05:20' }, { title: 'تجهيز بيئة العمل', dur: '12:40' }] },
-    { title: 'المشروع الأول', lessons: [{ title: 'هيكلة المشروع', dur: '18:05' }] },
-  ];
+  // saved modules and lessons keep their ids, so the server updates them in place instead of recreating them
+  let modules = existing
+    ? existing.modules.map((m) => ({ id: m.id, title: m.title || '', lessons: m.lessons.map((l) => ({ id: l.id, title: l.title || '', dur: l.duration })) }))
+    : [{ title: '', lessons: [{ title: '', dur: '' }] }];
 
   function renderModules() {
     const host = $('#modules');
@@ -116,12 +125,20 @@ document.addEventListener('app:ready', () => {
 
   /* ---------- cover image preview (drag & drop or pick) ---------- */
   const cover = $('#cover');
-  const showCover = (file) => {
-    if (!file || !file.type.startsWith('image/')) return toast('اختر ملف صورة', 'error');
-    const url = URL.createObjectURL(file);
+  let coverFile = null; // uploaded right after the course is saved
+  const coverImage = (src) => {
     cover.classList.add('has-image');
-    cover.querySelectorAll('img').forEach((i) => i.remove());
-    cover.insertAdjacentHTML('afterbegin', `<img src="${url}" alt="معاينة الغلاف">`);
+    cover.querySelectorAll('img').forEach((i) => {
+      if (i.src.startsWith('blob:')) URL.revokeObjectURL(i.src);
+      i.remove();
+    });
+    cover.insertAdjacentHTML('afterbegin', `<img src="${esc(src)}" alt="معاينة الغلاف">`);
+  };
+  const showCover = (file) => {
+    if (!file || !/^image\/(jpeg|png|webp)$/.test(file.type)) return toast('اختر صورة بصيغة JPG أو PNG أو WebP', 'error');
+    if (file.size > 5 * 1024 * 1024) return toast('الحد الأقصى للصورة 5MB', 'error');
+    coverFile = file;
+    coverImage(URL.createObjectURL(file));
   };
   $('input', cover).addEventListener('change', (e) => showCover(e.target.files[0]));
   ['dragover', 'dragenter'].forEach((ev) => cover.addEventListener(ev, (e) => { e.preventDefault(); cover.classList.add('over'); }));
@@ -141,25 +158,35 @@ document.addEventListener('app:ready', () => {
   });
   $('#short').addEventListener('input', (e) => ($('#shortCount').textContent = e.target.value.length));
 
-  /* ---------- edit mode: ?id=C-101 ---------- */
-  const id = document.body.dataset.id; // set by the edit route: /dashboard/courses/{id}/edit
-  const existing = DB.courses.find((c) => c.id === id);
+  /* ---------- edit mode: fill the form from the saved course ---------- */
   let outcomes;
   let tags;
-  if (existing) {
-    document.title = `تعديل: ${existing.title} | لوحة التحكم`;
+  function fillFrom(c) {
+    document.title = `تعديل: ${c.title} | لوحة التحكم`;
     $('#pageTitle').textContent = 'تعديل الدورة';
-    $('#crumb').textContent = existing.title;
-    $('#title').value = existing.title;
-    $('#slug').value = existing.id.toLowerCase();
+    $('#crumb').textContent = c.title;
+    $('#title').value = c.title;
+    $('#slug').value = c.slug;
     slugTouched = true;
-    $('#short').value = 'دورة عملية تنتهي بمشروع حقيقي منشور.';
+    $('#short').value = c.short_description || '';
     $('#shortCount').textContent = $('#short').value.length;
-    $('#price').value = existing.price;
-    $('#level').value = existing.level;
-    $('#status').value = existing.status;
-    outcomes = tagsInput($('#outcomes'), ['بناء مشروع كامل', 'نشر المشروع على الإنترنت']);
-    tags = tagsInput($('#tags'), [existing.level, 'مشروع عملي']);
+    $('#desc').value = c.description || '';
+    $('#price').value = c.price;
+    $('#oldPrice').value = c.old_price ?? '';
+    $('#ppp').checked = c.has_regional_pricing;
+    $('#pro').checked = c.is_included_in_pro;
+    $('#status').value = c.status;
+    $('#publishAt').value = c.publish_at || '';
+    $('#certificate').checked = c.has_certificate;
+    $('#comments').checked = c.allows_questions;
+    $('#level').value = c.level;
+    $('#category').value = c.category;
+    if (c.cover_url) coverImage(c.cover_url);
+  }
+  if (existing) {
+    fillFrom(existing);
+    outcomes = tagsInput($('#outcomes'), existing.outcomes);
+    tags = tagsInput($('#tags'), existing.tags);
   } else {
     outcomes = tagsInput($('#outcomes'));
     tags = tagsInput($('#tags'));
@@ -173,8 +200,11 @@ document.addEventListener('app:ready', () => {
   window.addEventListener('beforeunload', (e) => dirty && e.preventDefault());
 
   /* ---------- save ---------- */
+  // "publish" puts the course live; "draft" keeps the status chosen in the side panel unless it says published
+  let saving = false;
   document.querySelectorAll('[data-save]').forEach((btn) =>
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      if (saving) return;
       if (!$('#title').value.trim()) {
         $('#title').classList.add('invalid');
         $('#titleError').hidden = false;
@@ -190,13 +220,44 @@ document.addEventListener('app:ready', () => {
         badDur[0].focus();
         return toast('مدة الدرس بصيغة دقائق:ثوانٍ، مثل 12:40', 'error');
       }
-      if (btn.dataset.save === 'publish' && !modules.some((m) => m.lessons.some((l) => l.title.trim()))) {
-        toast('أضف درساً واحداً على الأقل قبل النشر', 'error');
-        return;
+      const chosen = $('#status').value;
+      const status = btn.dataset.save === 'publish' ? 'published' : chosen === 'published' ? 'draft' : chosen;
+      const data = {
+        title: $('#title').value.trim(),
+        slug: $('#slug').value.trim() || null,
+        short_description: $('#short').value.trim() || null,
+        description: $('#desc').value.trim() || null,
+        outcomes: [...outcomes],
+        tags: [...tags],
+        level: $('#level').value,
+        category: $('#category').value,
+        status,
+        publish_at: $('#publishAt').value || null,
+        price: Number($('#price').value) || 0,
+        old_price: $('#oldPrice').value === '' ? null : Number($('#oldPrice').value),
+        has_regional_pricing: $('#ppp').checked,
+        is_included_in_pro: $('#pro').checked,
+        has_certificate: $('#certificate').checked,
+        allows_questions: $('#comments').checked,
+        modules: modules.map((m) => ({ id: m.id ?? null, title: m.title.trim() || null, lessons: m.lessons.map((l) => ({ id: l.id ?? null, title: l.title.trim() || null, duration: l.dur.trim() || null })) })),
+      };
+      const fields = { title: '#title', slug: '#slug', short_description: '#short', description: '#desc', price: '#price', old_price: '#oldPrice', publish_at: '#publishAt' };
+      saving = true;
+      try {
+        existing = (await (existing ? api.put(`courses/${existing.id}`, data) : api.post('courses', data))).data;
+        if (coverFile) {
+          const form = new FormData();
+          form.append('cover', coverFile);
+          existing = (await api.post(`courses/${existing.id}/cover`, form)).data;
+          coverFile = null;
+        }
+      } catch (err) {
+        return showFieldErrors(err, fields);
+      } finally {
+        saving = false;
       }
       dirty = false;
-      // TODO: أرسل البيانات إلى الخادم (POST /api/courses)
-      toast(btn.dataset.save === 'publish' ? 'تم نشر الدورة' : 'تم حفظ المسودة');
+      toast(status === 'published' ? 'تم نشر الدورة' : 'تم حفظ الدورة');
       setTimeout(() => (location.href = App.url('courses')), 900);
     }),
   );

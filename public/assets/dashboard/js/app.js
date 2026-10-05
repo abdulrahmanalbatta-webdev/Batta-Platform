@@ -12,7 +12,8 @@
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = (n) => Number(n).toLocaleString('en-US');
-  const money = (n) => `${num(n)}$`;
+  // amounts in the platform currency (settings → الدفع), e.g. "1,200$" or "49 ر.س"
+  const money = (n) => `${num(n)}${CFG.currency_symbol ?? '$'}`;
   const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   const date = (iso) => {
     const [y, m, d] = String(iso).split('-').map(Number);
@@ -124,15 +125,19 @@
       delete rest.id;
     }
     const qs = new URLSearchParams(rest).toString();
-    return `${u}${qs ? `?${qs}` : ''}${hash ? `#${hash}` : ''}`;
+    return `${u}${qs ? `?${qs}` : ''}${hash ? `#${encodeURIComponent(hash)}` : ''}`;
   }
   const asset = (p) => `${CFG.assets}/${p}`;
 
   /* ---------- navigation ---------- */
-  const DB = window.DB || {};
-  const unreadMsgs = (DB.threads || []).filter((t) => t.unread).length;
-  const newLeads = (DB.leads || []).filter((l) => l.stage === 'new').length;
-  const pendingReviews = (DB.reviews || []).filter((r) => r.status === 'بانتظار المراجعة').length;
+  // the signed-in member, from Laravel (null on the sign-in pages)
+  const USER = CFG.user || null;
+  const ME = { name: USER?.name || '', role: USER?.role_label || '', initial: USER?.initial || '', photo: USER?.avatar_url || null };
+  // sidebar badges from the server; pages update them with setNavCount after a change
+  const COUNTS = CFG.counts || {};
+  const unreadMsgs = COUNTS.messages || 0;
+  const newLeads = COUNTS.leads || 0;
+  const pendingReviews = COUNTS.reviews || 0;
 
   const NAV = [
     { label: 'الرئيسية', items: [
@@ -161,8 +166,9 @@
     ] },
   ];
 
-  const avatarHTML = (cls = '') =>
-    `<span class="avatar ${cls}"><img src="${asset(DB.admin.photo)}" alt="" onerror="this.remove()">${DB.admin.initial}</span>`;
+  const avatarHTML = (cls = '') => {
+    return `<span class="avatar ${cls}">${ME.photo ? `<img src="${esc(ME.photo)}" alt="">` : ''}${esc(ME.initial)}</span>`;
+  };
 
   /* ---------- sidebar toggle: collapse to an icon rail on desktop, slide-in panel on mobile ---------- */
   const SB_KEY = 'batta-sb-collapsed';
@@ -275,7 +281,7 @@
       <aside class="sidebar" id="sidebar" aria-label="القائمة الجانبية">
         <a class="sb-brand" href="${url('dashboard')}">
           <img src="${asset('img/logo-white.png')}" alt="">
-          <span class="sb-text"><b>${esc(DB.admin.name)}</b><small>لوحة التحكم</small></span>
+          <span class="sb-text"><b>${esc(CFG.app_name)}</b><small>لوحة التحكم</small></span>
         </a>
         <nav class="sb-nav">${navHTML}</nav>
         <div class="sb-foot">
@@ -284,25 +290,14 @@
             <p>استخدمت 6.2 من 10 جيجابايت لفيديوهات الدورات.</p>
             <div class="bar"><i style="width:62%"></i></div>
           </div>
-          <a class="sb-user" href="${url('profile')}" data-tip="${esc(DB.admin.name)}">
+          <a class="sb-user" href="${url('profile')}" data-tip="${esc(ME.name)}">
             ${avatarHTML('sm')}
-            <span class="sb-text"><b>${esc(DB.admin.name)}</b><small>${esc(DB.admin.role)}</small></span>
+            <span class="sb-text"><b>${esc(ME.name)}</b><small>${esc(ME.role)}</small></span>
             ${icon('chevron-left', 'sm')}
           </a>
         </div>
       </aside>
       <div class="sb-backdrop" id="sbBackdrop"></div>`;
-
-    const unread = DB.notifications.filter((n) => n.unread).length;
-    const notifItems = DB.notifications
-      .map(
-        (n) => `
-        <a class="notif ${n.unread ? 'unread' : ''}" href="${n.href ? url(n.href) : '#'}">
-          <span class="n-ico ${n.tone}">${icon(n.icon, 'sm')}</span>
-          <span><b>${esc(n.title)}</b><small>${esc(n.meta)} · ${esc(n.time)}</small></span>
-        </a>`,
-      )
-      .join('');
 
     const topbar = `
       <header class="topbar">
@@ -314,7 +309,7 @@
           <kbd>/</kbd>
         </label>
         <div class="tb-actions">
-          <div class="dropdown hide-xs">
+          <div class="dropdown hide-xs" data-requires="manage_content">
             <button class="btn btn-primary btn-sm" data-dropdown>${icon('plus', 'sm')}<span>إنشاء</span></button>
             <div class="menu">
               <a href="${url('course-create')}">${icon('play', 'sm')}دورة جديدة</a>
@@ -324,18 +319,18 @@
               <a href="${url('coupons', {}, 'new')}">${icon('tag', 'sm')}كوبون خصم</a>
             </div>
           </div>
-          <a class="tb-btn hide-sm" href="#" data-tip="عرض الموقع" data-tip-pos="bottom" aria-label="عرض الموقع" onclick="event.preventDefault();window.App.toast('افتح الموقع من مشروع batta-platform')">${icon('external')}</a>
+          <a class="tb-btn hide-sm" href="${esc(CFG.site_url || '#')}" target="_blank" rel="noopener" data-tip="عرض الموقع" data-tip-pos="bottom" aria-label="عرض الموقع">${icon('external')}</a>
           <div class="dropdown">
-            <button class="tb-btn" data-dropdown aria-label="الإشعارات" data-tip="الإشعارات" data-tip-pos="bottom">${icon('bell')}${unread ? '<span class="dot"></span>' : ''}</button>
+            <button class="tb-btn" id="bellBtn" data-dropdown aria-label="الإشعارات" data-tip="الإشعارات" data-tip-pos="bottom">${icon('bell')}</button>
             <div class="menu notif-menu">
-              <div class="menu-head"><b>الإشعارات</b><button class="link" style="width:auto;padding:0" data-mark-read>تعليم الكل كمقروء</button></div>
-              ${notifItems}
+              <div class="menu-head"><b>الإشعارات</b><button class="link" style="width:auto;padding:0" data-mark-read hidden>تعليم الكل كمقروء</button></div>
+              <div id="notifList"></div>
             </div>
           </div>
           <div class="dropdown">
             <button class="tb-user" data-dropdown aria-label="حسابي">
               ${avatarHTML('sm')}
-              <span class="who"><b>${esc(DB.admin.name)}</b><small>${esc(DB.admin.role)}</small></span>
+              <span class="who"><b>${esc(ME.name)}</b><small>${esc(ME.role)}</small></span>
               ${icon('chevron-down', 'sm')}
             </button>
             <div class="menu">
@@ -343,7 +338,7 @@
               <a href="${url('settings')}">${icon('settings', 'sm')}الإعدادات</a>
               <a href="${url('messages')}">${icon('chat', 'sm')}الرسائل</a>
               <hr>
-              <a class="danger" href="${url('login')}">${icon('logout', 'sm')}تسجيل الخروج</a>
+              <button type="button" class="danger" data-logout>${icon('logout', 'sm')}تسجيل الخروج</button>
             </div>
           </div>
         </div>
@@ -359,7 +354,7 @@
 
     initSidebarToggle();
 
-    // "/" focuses the global search; Enter searches students
+    // "/" focuses the global search
     const gs = $('#globalSearch');
     document.addEventListener('keydown', (e) => {
       if (e.key === '/' && !/input|textarea|select/i.test(document.activeElement.tagName)) {
@@ -367,17 +362,157 @@
         gs.focus();
       }
     });
-    gs.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && gs.value.trim()) location.href = url('students', { q: gs.value.trim() });
-    });
+    initGlobalSearch(gs);
 
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
+      if (e.target.closest('[data-logout]')) {
+        try {
+          await api.post('auth/logout');
+        } catch {
+          return;
+        }
+        location.href = url('login');
+      }
       if (e.target.closest('[data-mark-read]')) {
-        $$('.notif.unread').forEach((n) => n.classList.remove('unread'));
-        $('.tb-btn .dot')?.remove();
+        try {
+          await api.post('notifications/read');
+        } catch {
+          return;
+        }
+        notifications.forEach((n) => (n.unread = false));
+        renderNotifications();
         toast('تم تعليم كل الإشعارات كمقروءة');
       }
+      const item = e.target.closest('[data-notif]');
+      if (item) {
+        e.preventDefault();
+        const n = notifications.find((x) => x.id === item.dataset.notif);
+        if (n?.unread) await api.post(`notifications/${n.id}/read`).catch(() => {});
+        location.href = item.href;
+      }
     });
+
+    loadNotifications();
+    // check for new ones every minute while the tab is visible
+    setInterval(() => document.visibilityState === 'visible' && loadNotifications(), 60000);
+  }
+
+  /* ---------- topbar search: results from /search as you type; arrows + Enter to open one ---------- */
+  function initGlobalSearch(input) {
+    const pop = document.createElement('div');
+    pop.className = 'search-pop';
+    pop.id = 'searchPop';
+    pop.setAttribute('role', 'listbox');
+    pop.hidden = true;
+    input.closest('.tb-search').appendChild(pop);
+    input.setAttribute('aria-controls', 'searchPop');
+    let seq = 0;
+    let active = -1;
+    const links = () => $$('a', pop);
+    const close = () => {
+      pop.hidden = true;
+      active = -1;
+    };
+    const highlight = (i) => {
+      const all = links();
+      active = all.length ? (i + all.length) % all.length : -1;
+      all.forEach((a, n) => a.classList.toggle('on', n === active));
+      all[active]?.scrollIntoView({ block: 'nearest' });
+    };
+    const search = debounce(async () => {
+      const q = input.value.trim();
+      const mine = ++seq;
+      if (q.length < 2) return close();
+      let res;
+      try {
+        res = await api.get('search', { q });
+      } catch {
+        return;
+      }
+      if (mine !== seq) return; // a newer search is on its way
+      pop.innerHTML =
+        res.data
+          .map(
+            (g) =>
+              `<div class="sp-group">${esc(g.label)}</div>${g.items
+                .map((it) => `<a href="${url(it.page, it.params)}" role="option"><b>${esc(it.title)}</b>${it.subtitle ? `<small>${esc(it.subtitle)}</small>` : ''}</a>`)
+                .join('')}`,
+          )
+          .join('') || `<div class="sp-empty">لا توجد نتائج لـ "${esc(q)}"</div>`;
+      pop.hidden = false;
+      highlight(0);
+    }, 200);
+    input.addEventListener('input', search);
+    input.addEventListener('focus', () => input.value.trim().length >= 2 && pop.innerHTML && (pop.hidden = false));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') return close();
+      if (pop.hidden) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlight(active + (e.key === 'ArrowDown' ? 1 : -1));
+      } else if (e.key === 'Enter') {
+        const target = links()[Math.max(active, 0)];
+        if (target) {
+          e.preventDefault();
+          location.href = target.href;
+        }
+      }
+    });
+    document.addEventListener('click', (e) => !e.target.closest('.tb-search') && close());
+  }
+
+  // the dot colour of an activity-log entry by its action
+  const activityTone = (action) => ({ created: '#0e9f6e', updated: '#0066ff', status: '#c27803', deleted: '#e02424', exported: '#0891b2', wiped: '#e02424' })[action] || '#94a3b8';
+
+  /* ---------- bell: the member's notifications from /notifications ---------- */
+  const ALERT_STYLE = {
+    orders: ['cart', 'c-green'],
+    leads: ['briefcase', 'c-blue'],
+    reviews: ['star', 'c-amber'],
+    messages: ['chat', 'c-violet'],
+    export: ['download', 'c-blue'],
+  };
+  let notifications = [];
+  // "قبل 5 دقائق", "أمس", or the date for older ones
+  function ago(iso) {
+    const minutes = Math.floor((Date.now() - new Date(iso)) / 60000);
+    if (minutes < 1) return 'الآن';
+    if (minutes < 60) return minutes === 1 ? 'قبل دقيقة' : minutes === 2 ? 'قبل دقيقتين' : `قبل ${minutes} ${minutes <= 10 ? 'دقائق' : 'دقيقة'}`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours === 1 ? 'قبل ساعة' : hours === 2 ? 'قبل ساعتين' : `قبل ${hours} ${hours <= 10 ? 'ساعات' : 'ساعة'}`;
+    if (hours < 48) return 'أمس';
+    const d = new Date(iso);
+    return date(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  }
+  function renderNotifications() {
+    const list = $('#notifList');
+    if (!list) return;
+    const unread = notifications.filter((n) => n.unread).length;
+    list.innerHTML =
+      notifications
+        .map((n) => {
+          const [ic, tone] = ALERT_STYLE[n.type] || ['bell', 'c-blue'];
+          return `
+        <a class="notif ${n.unread ? 'unread' : ''}" href="${url(n.page, n.params || {}, n.hash || '')}" data-notif="${esc(n.id)}">
+          <span class="n-ico ${tone}">${icon(ic, 'sm')}</span>
+          <span><b>${esc(n.title)}</b><small>${esc(n.meta)} · ${esc(ago(n.at))}</small></span>
+        </a>`;
+        })
+        .join('') || '<div class="muted" style="padding:22px 16px;text-align:center;font-size:13px">لا توجد إشعارات</div>';
+    $('[data-mark-read]').hidden = !unread;
+    const bell = $('#bellBtn');
+    bell.querySelector('.dot')?.remove();
+    if (unread) bell.insertAdjacentHTML('beforeend', '<span class="dot"></span>');
+    bell.setAttribute('aria-label', unread ? `الإشعارات (${unread} غير مقروءة)` : 'الإشعارات');
+  }
+  async function loadNotifications() {
+    if (!USER) return;
+    try {
+      notifications = (await api.get('notifications')).data;
+    } catch {
+      return;
+    }
+    renderNotifications();
   }
 
   /* ---------- toast ---------- */
@@ -715,7 +850,9 @@
 
   // export a CSV file from rows (works when the dashboard is opened locally)
   function downloadCSV(filename, columns, rows) {
-    const line = (arr) => arr.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',');
+    // text starting with = + - @ (or a tab/CR) would run as a formula in Excel: prefix it with ' (numbers stay numbers)
+    const cell = (v) => (typeof v === 'string' && /^[=+\-@\t\r]/.test(v) ? `'${v}` : String(v ?? ''));
+    const line = (arr) => arr.map((v) => `"${cell(v).replace(/"/g, '""')}"`).join(',');
     const csv = '﻿' + [line(columns.map((c) => c.label)), ...rows.map((r) => line(columns.map((c) => r[c.key])))].join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -759,11 +896,100 @@
     else fallback();
   }
 
+  /* ---------- API: JSON calls to /dashboard/api/v1 with the session cookie + CSRF token ---------- */
+  // const { data } = await App.api.get('courses', { page: 2 });
+  // await App.api.post('courses', { title }) → on 422 it rejects with err.errors = { title: ['…'] } for the page to show;
+  // other failures show a toast and reject too. Files: send FormData with POST (PHP does not parse multipart PUT).
+  class ApiError extends Error {
+    constructor(status, body) {
+      super(body?.message || `HTTP ${status}`);
+      this.name = 'ApiError';
+      this.status = status;
+      this.errors = body?.errors || {};
+    }
+  }
+  const API_MESSAGES = {
+    403: 'ليست لديك صلاحية لهذا الإجراء',
+    404: 'العنصر المطلوب غير موجود',
+    419: 'انتهت صلاحية الجلسة، حدّث الصفحة وحاول مرة أخرى',
+    429: 'طلبات كثيرة خلال وقت قصير، انتظر قليلاً ثم حاول',
+  };
+  // a write that is already on its way (same method, path and data) isn't sent twice: a double click on
+  // "send reminder" or "add" rejects the second call quietly (err.duplicate) instead of emailing or creating twice
+  const inFlight = new Set();
+  async function request(method, path, data) {
+    const key = method !== 'GET' && !(data instanceof FormData) ? `${method} ${path} ${JSON.stringify(data ?? null)}` : null;
+    if (key && inFlight.has(key)) {
+      const dup = new ApiError(0, { message: 'duplicate request' });
+      dup.duplicate = true;
+      throw dup;
+    }
+    if (key) inFlight.add(key);
+    try {
+      return await send(method, path, data);
+    } finally {
+      if (key) inFlight.delete(key);
+    }
+  }
+  async function send(method, path, data) {
+    const headers = {
+      Accept: 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]')?.content || '',
+    };
+    let body;
+    if (data instanceof FormData) body = data;
+    else if (data !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(data);
+    }
+    let res;
+    try {
+      res = await fetch(`${CFG.api}/${String(path).replace(/^\//, '')}`, { method, headers, body, credentials: 'same-origin' });
+    } catch {
+      toast('تعذّر الاتصال بالخادم، تحقق من اتصالك بالإنترنت', 'error');
+      throw new ApiError(0);
+    }
+    const json = res.status === 204 ? null : await res.json().catch(() => null);
+    if (res.ok) return json;
+    const err = new ApiError(res.status, json);
+    if (res.status === 401) location.href = url('login');
+    else if (res.status !== 422) toast(API_MESSAGES[res.status] || 'حدث خطأ غير متوقع، حاول مرة أخرى', 'error');
+    throw err;
+  }
+  // after a 422: mark the inputs named in the errors ({ email: '#iEmail' }), focus the first and toast its message.
+  // Returns false for any other failure (App.api already showed a toast for those).
+  function showFieldErrors(err, fields = {}) {
+    if (!(err instanceof ApiError) || err.status !== 422) return false;
+    const keys = Object.keys(err.errors);
+    keys.forEach((k) => fields[k] && $(fields[k])?.classList.add('invalid'));
+    const first = keys.find((k) => fields[k] && $(fields[k]));
+    if (first) $(fields[first]).focus();
+    toast(err.errors[first ?? keys[0]]?.[0] || err.message, 'error');
+    return true;
+  }
+  // what the signed-in member may do, e.g. App.can('manage_content') — the server enforces it either way
+  const can = (permission) => !!USER?.permissions?.[permission];
+  const api = {
+    get: (path, query) => request('GET', query ? `${path}?${new URLSearchParams(query)}` : path),
+    post: (path, data) => request('POST', path, data),
+    put: (path, data) => request('PUT', path, data),
+    patch: (path, data) => request('PATCH', path, data),
+    delete: (path) => request('DELETE', path),
+  };
+
   /* ---------- boot ---------- */
-  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset };
+  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, user: USER, can, ago, activityTone, siteUrl: String(CFG.site_url || '').replace(/\/$/, '') };
+
+  // no inline handlers (the Content-Security-Policy blocks them): a broken avatar image falls back to the initial,
+  // and [data-back] goes to the previous page
+  document.addEventListener('error', (e) => e.target.matches?.('.avatar img') && e.target.remove(), true);
+  document.addEventListener('click', (e) => e.target.closest('[data-back]') && history.back());
 
   document.addEventListener('DOMContentLoaded', () => {
     buildLayout();
+    // <button data-requires="manage_content"> disappears for members without that permission
+    if (USER) $$('[data-requires]').forEach((el) => (el.hidden = !can(el.dataset.requires)));
     hydrateIcons();
     initDropdowns();
     initTabs();

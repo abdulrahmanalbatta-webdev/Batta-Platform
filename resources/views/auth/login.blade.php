@@ -28,7 +28,6 @@
           </div>
           <label class="check"><input type="checkbox" id="remember" checked>تذكرني على هذا الجهاز</label>
           <button class="btn btn-primary btn-lg" type="submit" id="submit">تسجيل الدخول</button>
-          <p class="muted" style="font-size:13px;text-align:center">هذه واجهة تجريبية — أي بريد صحيح وكلمة مرور من 6 أحرف تكفي للدخول.</p>
         </form>
       </div>
       <small class="muted">© 2026 Batta. جميع الحقوق محفوظة.</small>

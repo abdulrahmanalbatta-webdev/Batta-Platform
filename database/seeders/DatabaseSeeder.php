@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -11,15 +12,19 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed a local team (sign in as admin@batta.dev / password) sample content and sample sales.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        User::factory()->owner()->create([
+            'name' => 'عبدالرحمن البطة',
+            'email' => 'admin@batta.dev',
+            'title' => 'مطوّر ويب ومدرّب',
         ]);
+
+        User::factory()->role(Role::Editor)->create(['name' => 'سارة النجار', 'email' => 'sara@batta.dev']);
+        User::factory()->role(Role::Support)->create(['name' => 'يوسف عودة', 'email' => 'yousef@batta.dev']);
+
+        $this->call([ContentSeeder::class, SalesSeeder::class, CommunitySeeder::class, ActivitySeeder::class]);
     }
 }

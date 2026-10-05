@@ -4,6 +4,8 @@
    ========================================================================== */
 (function () {
   'use strict';
+  // labels and names may come from the database: escape them before they go into the SVG/HTML
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const NS = 'http://www.w3.org/2000/svg';
   const fmt = (n) => Number(n).toLocaleString('en-US');
 
@@ -49,7 +51,7 @@
       grid += `<text x="${pad.l - 10}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#8a94a3">${format(v)}</text>`;
     }
     const xLabels = labels
-      .map((l, i) => (i % Math.max(xEvery, Math.ceil(labels.length / Math.max(2, Math.floor(iw / 44)))) === 0 ? `<text x="${x(i)}" y="${H - 10}" text-anchor="middle" font-size="11" fill="#8a94a3">${l}</text>` : ''))
+      .map((l, i) => (i % Math.max(xEvery, Math.ceil(labels.length / Math.max(2, Math.floor(iw / 44)))) === 0 ? `<text x="${x(i)}" y="${H - 10}" text-anchor="middle" font-size="11" fill="#8a94a3">${esc(l)}</text>` : ''))
       .join('');
 
     const paths = series
@@ -96,7 +98,7 @@
         d.setAttribute('cy', y(series[si].data[i]));
         d.setAttribute('visibility', 'visible');
       });
-      tip.innerHTML = `<small>${labels[i]}</small>${series.map((s) => `<div><span style="color:${s.color}">●</span> ${s.name}: <b>${format(s.data[i])}</b></div>`).join('')}`;
+      tip.innerHTML = `<small>${esc(labels[i])}</small>${series.map((s) => `<div><span style="color:${s.color}">●</span> ${esc(s.name)}: <b>${esc(format(s.data[i]))}</b></div>`).join('')}`;
       tip.style.left = `${(x(i) / W) * r.width}px`;
       tip.style.top = `${(Math.min(...series.map((s) => y(s.data[i]))) / H) * r.height}px`;
       tip.classList.add('show');
@@ -147,7 +149,7 @@
           rects += `<rect x="${cx - bw / 2 + gw * si + 1}" y="${y(v)}" width="${gw - 2}" height="${y(0) - y(v)}" rx="4" fill="${s.color}" data-i="${i}"/>`;
         });
       }
-      if (i % Math.ceil(labels.length / Math.max(2, Math.floor(iw / 50))) === 0) rects += `<text x="${cx}" y="${H - 10}" text-anchor="middle" font-size="11" fill="#8a94a3">${l}</text>`;
+      if (i % Math.ceil(labels.length / Math.max(2, Math.floor(iw / 50))) === 0) rects += `<text x="${cx}" y="${H - 10}" text-anchor="middle" font-size="11" fill="#8a94a3">${esc(l)}</text>`;
       rects += `<rect class="col" x="${cx - band / 2}" y="${pad.t}" width="${band}" height="${ih}" fill="transparent" data-i="${i}"/>`;
     });
 
@@ -160,7 +162,7 @@
         const r = svg.getBoundingClientRect();
         const cx = pad.l + iw - band * i - band / 2;
         c.setAttribute('fill', 'rgba(11,13,18,0.04)');
-        tip.innerHTML = `<small>${labels[i]}</small>${series.map((s) => `<div><span style="color:${s.color}">●</span> ${s.name}: <b>${format(s.data[i])}</b></div>`).join('')}${stacked ? `<div>المجموع: <b>${format(totals[i])}</b></div>` : ''}`;
+        tip.innerHTML = `<small>${esc(labels[i])}</small>${series.map((s) => `<div><span style="color:${s.color}">●</span> ${esc(s.name)}: <b>${esc(format(s.data[i]))}</b></div>`).join('')}${stacked ? `<div>المجموع: <b>${esc(format(totals[i]))}</b></div>` : ''}`;
         tip.style.left = `${(cx / W) * r.width}px`;
         tip.style.top = `${(y(totals[i]) / H) * r.height}px`;
         tip.classList.add('show');
@@ -182,17 +184,17 @@
     const arcs = items
       .map((it) => {
         const len = (it.value / total) * c;
-        const s = `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${it.color}" stroke-width="${thickness}" stroke-dasharray="${len - 2} ${c - len + 2}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${size / 2} ${size / 2})"><title>${it.label}: ${it.value}%</title></circle>`;
+        const s = `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${it.color}" stroke-width="${thickness}" stroke-dasharray="${len - 2} ${c - len + 2}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${size / 2} ${size / 2})"><title>${esc(it.label)}: ${esc(it.value)}%</title></circle>`;
         offset += len;
         return s;
       })
       .join('');
     el.innerHTML = `
-      <svg class="chart" viewBox="0 0 ${size} ${size}" style="max-width:${size}px;margin-inline:auto" role="img" aria-label="${centerLabel}">
+      <svg class="chart" viewBox="0 0 ${size} ${size}" style="max-width:${size}px;margin-inline:auto" role="img" aria-label="${esc(centerLabel)}">
         <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#edf1f8" stroke-width="${thickness}"/>
         ${arcs}
-        <text x="${size / 2}" y="${size / 2 - 2}" text-anchor="middle" font-size="26" font-weight="800" fill="#0b0d12">${centerValue}</text>
-        <text x="${size / 2}" y="${size / 2 + 20}" text-anchor="middle" font-size="12" fill="#8a94a3">${centerLabel}</text>
+        <text x="${size / 2}" y="${size / 2 - 2}" text-anchor="middle" font-size="26" font-weight="800" fill="#0b0d12">${esc(centerValue)}</text>
+        <text x="${size / 2}" y="${size / 2 + 20}" text-anchor="middle" font-size="12" fill="#8a94a3">${esc(centerLabel)}</text>
       </svg>`;
   }
 

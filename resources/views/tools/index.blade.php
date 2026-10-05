@@ -11,9 +11,9 @@
         <p>الأدوات التي تظهر في صفحة "أدواتي" بالموقع: أضف، عدّل، رتّب، وأخفِ ما تريد.</p>
       </div>
       <div class="page-actions">
-        <button class="btn btn-ghost" id="manageCats"><i data-icon="layers" class="sm"></i>التصنيفات</button>
+        <button class="btn btn-ghost" id="manageCats" data-requires="manage_content"><i data-icon="layers" class="sm"></i>التصنيفات</button>
         <button class="btn btn-ghost" id="export"><i data-icon="download" class="sm"></i>تصدير CSV</button>
-        <button class="btn btn-primary" id="addTool"><i data-icon="plus" class="sm"></i>أداة جديدة</button>
+        <button class="btn btn-primary" id="addTool" data-requires="manage_content"><i data-icon="plus" class="sm"></i>أداة جديدة</button>
       </div>
     </div>
 

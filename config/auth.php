@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Student;
 use App\Models\User;
 
 return [
@@ -67,6 +68,12 @@ return [
             'model' => env('AUTH_MODEL', User::class),
         ],
 
+        // learners on the public site (tokens through the site API, never the dashboard session)
+        'students' => [
+            'driver' => 'eloquent',
+            'model' => Student::class,
+        ],
+
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',
@@ -96,6 +103,21 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        // team invitations: the member sets their first password; own table and a longer expiry
+        'invitations' => [
+            'provider' => 'users',
+            'table' => 'invitation_tokens',
+            'expire' => 60 * 24 * 7,
+            'throttle' => 0,
+        ],
+        // students resetting their site password: own table, the link opens the public site
+        'students' => [
+            'provider' => 'students',
+            'table' => 'student_password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],

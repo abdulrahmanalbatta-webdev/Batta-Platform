@@ -29,7 +29,7 @@
             </div>
             <div class="field full">
               <label for="slug">رابط الدورة</label>
-              <div class="input-group"><span class="addon ltr">batta.dev/courses/</span><input class="input ltr" id="slug" placeholder="nextjs-production" style="text-align:left"></div>
+              <div class="input-group"><span class="addon ltr">{{ parse_url($siteUrl, PHP_URL_HOST) }}/courses/</span><input class="input ltr" id="slug" placeholder="nextjs-production" style="text-align:left"></div>
             </div>
             <div class="field full">
               <label for="short">وصف قصير</label>
@@ -60,12 +60,12 @@
           <div class="card-body form-grid">
             <div class="field">
               <label for="price">السعر</label>
-              <div class="input-group"><input class="input ltr" id="price" type="number" min="0" placeholder="0" style="text-align:left"><span class="addon">$</span></div>
+              <div class="input-group"><input class="input ltr" id="price" type="number" min="0" placeholder="0" style="text-align:left"><span class="addon">{{ trim($currencySymbol) }}</span></div>
               <span class="hint">اترك 0 لدورة مجانية</span>
             </div>
             <div class="field">
               <label for="oldPrice">السعر قبل الخصم</label>
-              <div class="input-group"><input class="input ltr" id="oldPrice" type="number" min="0" placeholder="اختياري" style="text-align:left"><span class="addon">$</span></div>
+              <div class="input-group"><input class="input ltr" id="oldPrice" type="number" min="0" placeholder="اختياري" style="text-align:left"><span class="addon">{{ trim($currencySymbol) }}</span></div>
             </div>
             <div class="field full">
               <label class="switch"><input type="checkbox" id="ppp" checked><span class="track"></span>تسعير إقليمي تلقائي (أسعار أقل للدول ذات الدخل المنخفض)</label>
@@ -83,7 +83,7 @@
           <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
             <div class="field">
               <label for="status">الحالة</label>
-              <select class="select" id="status"><option>مسودة</option><option>قيد المراجعة</option><option>منشورة</option></select>
+              <select class="select" id="status"><option value="draft">مسودة</option><option value="review">قيد المراجعة</option><option value="published">منشورة</option></select>
             </div>
             <div class="field">
               <label for="publishAt">موعد النشر</label>
@@ -111,11 +111,11 @@
           <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
             <div class="field">
               <label for="level">المستوى</label>
-              <select class="select" id="level"><option>مبتدئ</option><option>متوسط</option><option>متقدم</option></select>
+              <select class="select" id="level"><option value="beginner">مبتدئ</option><option value="intermediate">متوسط</option><option value="advanced">متقدم</option></select>
             </div>
             <div class="field">
               <label for="category">القسم</label>
-              <select class="select" id="category"><option>تطوير الواجهات</option><option>تطوير الخلفية</option><option>Full-stack</option><option>العمل الحر</option></select>
+              <select class="select" id="category"><option value="frontend">تطوير الواجهات</option><option value="backend">تطوير الخلفية</option><option value="full-stack">Full-stack</option><option value="freelancing">العمل الحر</option></select>
             </div>
             <div class="field">
               <label>الوسوم</label>

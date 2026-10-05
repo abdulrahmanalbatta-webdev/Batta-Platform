@@ -1,82 +1,219 @@
 document.addEventListener('app:ready', () => {
-  const { $, esc, num } = App;
-  const days = DB.traffic.labels.map((l) => l.split(' ')[0]);
+  const { $, $$, esc, num, money, icon, api } = App;
+  const METHOD_COLORS = ['#0066ff', '#0b0d12', '#0e9f6e', '#c27803', '#7c3aed'];
+  const PERIODS = { 7: 'آخر 7 أيام', 30: 'آخر 30 يوماً', 90: 'آخر 90 يوماً', 365: 'آخر 12 شهراً' };
+  let report;
+  let metric = 'revenue';
 
-  function draw(metric) {
-    const isVisits = metric === 'visits';
-    Charts.line($('#trafficChart'), {
-      labels: days,
-      xEvery: 3,
+  const trend = (k) =>
+    k.change === null ? '<span class="trend">—</span> لا توجد فترة سابقة للمقارنة' : `<span class="trend ${k.change >= 0 ? 'up' : 'down'}">${k.change >= 0 ? '+' : ''}${k.change}%</span> عن الفترة السابقة`;
+
+  function kpis() {
+    const k = report.kpis;
+    $('#kpis').innerHTML = [
+      ['dollar', 'c-blue', 'الإيرادات', money(k.revenue.value), k.revenue],
+      ['cart', 'c-green', 'الطلبات المكتملة', num(k.orders.value), k.orders],
+      ['users', 'c-violet', 'طلاب جدد', num(k.students.value), k.students],
+      ['tag', 'c-amber', 'متوسط قيمة الطلب', money(k.average_order.value), k.average_order],
+    ]
+      .map(([ic, tone, label, value, kpi]) => `<div class="card kpi"><div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-ico ${tone}">${icon(ic)}</span></div><div class="kpi-value">${value}</div><div class="kpi-note">${trend(kpi)}</div></div>`)
+      .join('');
+  }
+
+  function series() {
+    const isRevenue = metric === 'revenue';
+    const s = report.series;
+    $('#seriesTitle').textContent = isRevenue ? 'الإيرادات' : 'الطلاب الجدد';
+    $('#seriesNote').textContent = `${PERIODS[report.days]} · ${report.days > 90 ? 'شهرياً' : 'يومياً'}`;
+    Charts.line($('#seriesChart'), {
+      labels: s.labels,
+      xEvery: Math.max(1, Math.ceil(s.labels.length / 10)),
       height: 300,
-      series: [{ name: isVisits ? 'الزيارات' : 'حسابات جديدة', color: isVisits ? '#0066ff' : '#7c3aed', data: DB.traffic[metric], area: true }],
+      series: [{ name: isRevenue ? 'الإيرادات' : 'طلاب جدد', color: isRevenue ? '#0066ff' : '#7c3aed', data: s[metric], area: true }],
+      ...(isRevenue ? { format: (v) => money(v) } : {}),
     });
   }
-  draw('visits');
-  $('#metric').addEventListener('click', (e) => {
-    const b = e.target.closest('button');
-    if (!b) return;
-    $('#metric').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
-    draw(b.dataset.m);
-  });
 
-  // funnel: each bar as wide as its share of the first step
-  const first = DB.funnel[0].value;
-  $('#funnel').innerHTML = DB.funnel
-    .map((s, i) => {
-      const pct = (s.value / first) * 100;
-      const drop = i ? Math.round((s.value / DB.funnel[i - 1].value) * 100) : 100;
-      return `
+  // each step as wide as its share of the first one
+  function funnel() {
+    const first = report.funnel[0].value || 1;
+    $('#funnel').innerHTML = report.funnel
+      .map((step, i) => {
+        const prev = report.funnel[i - 1]?.value;
+        const kept = i && prev ? `· ${Math.round((step.value / prev) * 100)}% من الخطوة السابقة` : '';
+        return `
       <div style="margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px">
-          <b style="color:var(--fg)">${esc(s.label)}</b>
-          <span><b class="num" style="color:var(--fg)">${num(s.value)}</b> <span class="muted">${i ? `· ${drop}% من الخطوة السابقة` : ''}</span></span>
+          <b style="color:var(--fg)">${esc(step.label)}</b>
+          <span><b class="num" style="color:var(--fg)">${num(step.value)}</b> <span class="muted">${kept}</span></span>
         </div>
         <div style="height:30px;border-radius:8px;background:var(--tint);overflow:hidden">
-          <div style="height:100%;width:${Math.max(pct, 2)}%;background:linear-gradient(90deg,#0052cc,#0066ff);border-radius:8px;opacity:${1 - i * 0.12}"></div>
+          <div style="height:100%;width:${Math.max((step.value / first) * 100, step.value ? 2 : 0)}%;background:linear-gradient(90deg,#0052cc,#0066ff);border-radius:8px;opacity:${1 - i * 0.12}"></div>
         </div>
       </div>`;
-    })
-    .join('');
+      })
+      .join('');
+  }
 
-  Charts.donut($('#devicesChart'), {
-    items: [
-      { label: 'جوال', value: 61, color: '#0066ff' },
-      { label: 'كمبيوتر', value: 33, color: '#0b0d12' },
-      { label: 'تابلت', value: 6, color: '#94a3b8' },
-    ],
-    centerValue: '61%',
-    centerLabel: 'من الجوال',
+  function methods() {
+    const total = report.payment_methods.reduce((a, m) => a + m.value, 0);
+    const items = report.payment_methods.map((m, i) => ({ label: m.label, value: Math.round((m.value / total) * 100), color: METHOD_COLORS[i % METHOD_COLORS.length] }));
+    Charts.donut($('#methodsChart'), { items, centerValue: num(total), centerLabel: 'طلب مكتمل' });
+    $('#methodsLegend').innerHTML = items.map((m) => `<span><i style="background:${m.color}"></i>${esc(m.label)} <bdi>${m.value}%</bdi></span>`).join('') || '<span class="muted">لا توجد طلبات في هذه الفترة</span>';
+  }
+
+  function products() {
+    const max = report.top_products[0]?.revenue || 1;
+    $('#topProducts').innerHTML =
+      report.top_products
+        .map(
+          (p) => `<tr>
+        <td><b style="color:var(--fg)">${esc(p.name)}</b><div class="muted" style="font-size:12px">${esc(p.type_label)}</div></td>
+        <td class="num">${num(p.orders)}</td>
+        <td class="num">${money(p.revenue)}</td>
+        <td><div class="progress"><i style="width:${(p.revenue / max) * 100}%"></i></div></td>
+      </tr>`,
+        )
+        .join('') || '<tr><td colspan="4" class="muted" style="text-align:center">لا توجد مبيعات في هذه الفترة</td></tr>';
+  }
+
+  function countries() {
+    const max = Math.max(...report.countries.map((c) => c.value), 1);
+    $('#countries').innerHTML =
+      report.countries
+        .map(
+          (c) => `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px"><span style="color:var(--fg);font-weight:700">${esc(c.label)}</span><b class="num">${c.value}%</b></div>
+        <div class="progress"><i style="width:${(c.value / max) * 100}%"></i></div>
+      </div>`,
+        )
+        .join('') || '<p class="muted">لا يوجد مشترون في هذه الفترة</p>';
+  }
+
+  /* ---------- site traffic (Google Analytics): loaded on its own so a slow or failing Google never holds up the sales ---------- */
+  const DEVICE_COLORS = ['#0066ff', '#7c3aed', '#0e9f6e', '#c27803'];
+  let trafficRequest = 0;
+
+  function trafficEmpty(title, text, tone) {
+    $('#traffic').hidden = true;
+    $('#trafficEmpty').hidden = false;
+    $('#trafficEmptyIcon').className = `kpi-ico ${tone}`;
+    $('#trafficEmptyIcon').innerHTML = icon(tone === 'c-red' ? 'alert' : 'chart');
+    $('#trafficEmptyTitle').textContent = title;
+    $('#trafficEmptyText').innerHTML = text;
+  }
+
+  function renderTraffic(t) {
+    $('#trafficEmpty').hidden = true;
+    $('#traffic').hidden = false;
+    const k = t.kpis;
+    $('#trafficKpis').innerHTML = [
+      ['users', 'c-blue', 'الزوار', num(k.users.value), k.users],
+      ['monitor', 'c-violet', 'الجلسات', num(k.sessions.value), k.sessions],
+      ['eye', 'c-green', 'مشاهدات الصفحات', num(k.views.value), k.views],
+      ['trend', 'c-amber', 'معدل التفاعل', `<bdi>${k.engagement.value}%</bdi>`, k.engagement],
+    ]
+      .map(([ic, tone, label, value, kpi]) => `<div class="card kpi"><div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-ico ${tone}">${icon(ic)}</span></div><div class="kpi-value">${value}</div><div class="kpi-note">${trend(kpi)}</div></div>`)
+      .join('');
+
+    $('#trafficSeriesNote').textContent = `${PERIODS[t.days]} · ${t.days > 90 ? 'شهرياً' : 'يومياً'}`;
+    Charts.line($('#trafficChart'), {
+      labels: t.series.labels,
+      xEvery: Math.max(1, Math.ceil(t.series.labels.length / 10)),
+      height: 280,
+      series: [
+        { name: 'الزوار', color: '#0066ff', data: t.series.users, area: true },
+        { name: 'الجلسات', color: '#7c3aed', data: t.series.sessions },
+      ],
+    });
+
+    $('#trafficSources').innerHTML =
+      t.sources
+        .map(
+          (s) => `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px"><span style="color:var(--fg);font-weight:700">${esc(s.label)}</span><span><b class="num">${s.value}%</b> <span class="muted num">· ${num(s.sessions)}</span></span></div>
+        <div class="progress"><i style="width:${s.value}%"></i></div>
+      </div>`,
+        )
+        .join('') || '<p class="muted">لا توجد زيارات في هذه الفترة</p>';
+
+    const devices = t.devices.map((d, i) => ({ label: d.label, value: d.value, color: DEVICE_COLORS[i % DEVICE_COLORS.length] }));
+    Charts.donut($('#devicesChart'), { items: devices, centerValue: num(k.sessions.value), centerLabel: 'جلسة' });
+    $('#devicesLegend').innerHTML = devices.map((d) => `<span><i style="background:${d.color}"></i>${esc(d.label)} <bdi>${d.value}%</bdi></span>`).join('') || '<span class="muted">لا توجد زيارات في هذه الفترة</span>';
+
+    $('#trafficPages').innerHTML =
+      t.pages
+        .map(
+          (p) => `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
+        <div style="min-width:0"><b style="color:var(--fg);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title || p.path)}</b>
+        <a class="muted mono ltr" style="font-size:12px" href="${esc(App.siteUrl + p.path)}" target="_blank" rel="noopener">${esc(p.path)}</a></div>
+        <b class="num" style="color:var(--fg)">${num(p.views)}</b>
+      </div>`,
+        )
+        .join('') || '<p class="muted">لا توجد زيارات في هذه الفترة</p>';
+  }
+
+  async function loadTraffic(days) {
+    const request = ++trafficRequest;
+    $('#trafficNote').textContent = 'جارٍ التحميل من Google Analytics…';
+    let res;
+    try {
+      res = await api.get('analytics/traffic', { days });
+    } catch {
+      return;
+    }
+    if (request !== trafficRequest) return; // the period changed meanwhile
+    $('#trafficNote').textContent = 'من Google Analytics، لنفس الفترة. تُحدَّث كل ساعة.';
+    if (!res.meta.configured) {
+      const how = App.can('manage_settings') ? `اربطه من <a href="${App.url('settings', {}, 'analytics')}">الإعدادات ← الإحصاءات</a>.` : 'اطلب من مالك المنصة أو المدير ربطه من الإعدادات.';
+      return trafficEmpty('Google Analytics غير مربوط', `لعرض الزوار ومصادرهم وأجهزتهم والصفحات الأكثر زيارة. ${how}`, 'c-amber');
+    }
+    if (res.meta.error) return trafficEmpty('تعذّر جلب الزيارات', esc(res.meta.error), 'c-red');
+    renderTraffic(res.data);
+  }
+
+  async function load(days) {
+    $('#period').disabled = true;
+    try {
+      report = (await api.get('analytics', { days })).data;
+    } catch {
+      return;
+    } finally {
+      $('#period').disabled = false;
+    }
+    $('#periodNote').textContent = `المبيعات والطلاب خلال ${PERIODS[days]}، مقارنة بالفترة التي قبلها.`;
+    kpis();
+    series();
+    funnel();
+    methods();
+    products();
+    countries();
+  }
+
+  $('#period').addEventListener('change', (e) => {
+    load(Number(e.target.value));
+    loadTraffic(Number(e.target.value));
+  });
+  $('#metric').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b || !report) return;
+    metric = b.dataset.m;
+    $$('#metric button').forEach((x) => x.classList.toggle('on', x === b));
+    series();
+  });
+  $('#exportReport').addEventListener('click', () => {
+    if (!report) return;
+    App.downloadCSV(
+      `sales-${report.days}d.csv`,
+      [
+        { key: 'label', label: report.days > 90 ? 'الشهر' : 'اليوم' },
+        { key: 'revenue', label: 'الإيرادات' },
+        { key: 'students', label: 'طلاب جدد' },
+      ],
+      report.series.labels.map((label, i) => ({ label, revenue: report.series.revenue[i], students: report.series.students[i] })),
+    );
   });
 
-  const maxViews = DB.topPages[0].views;
-  $('#topPages').innerHTML = DB.topPages
-    .map(
-      (p) => `<tr>
-        <td><b style="color:var(--fg)">${esc(p.title)}</b><div class="mono muted" style="font-size:12px">${esc(p.path)}</div></td>
-        <td class="num">${num(p.views)}</td>
-        <td class="mono">${p.avg}</td>
-        <td><div class="progress"><i style="width:${(p.views / maxViews) * 100}%"></i></div></td>
-      </tr>`,
-    )
-    .join('');
-
-  const countries = [
-    ['السعودية', 31], ['الأردن', 18], ['فلسطين', 14], ['مصر', 12], ['الإمارات', 9], ['المغرب', 6], ['أخرى', 10],
-  ];
-  $('#countries').innerHTML = countries
-    .map(
-      ([c, v]) => `<div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px"><span style="color:var(--fg);font-weight:700">${c}</span><b class="num">${v}%</b></div>
-        <div class="progress"><i style="width:${v * 3}%"></i></div>
-      </div>`,
-    )
-    .join('');
-
-  $('#exportTraffic').addEventListener('click', () =>
-    App.downloadCSV(
-      'traffic.csv',
-      [{ key: 'day', label: 'اليوم' }, { key: 'visits', label: 'الزيارات' }, { key: 'signups', label: 'حسابات جديدة' }],
-      DB.traffic.labels.map((d, i) => ({ day: d, visits: DB.traffic.visits[i], signups: DB.traffic.signups[i] })),
-    ),
-  );
+  load(30);
+  loadTraffic(30);
 });
