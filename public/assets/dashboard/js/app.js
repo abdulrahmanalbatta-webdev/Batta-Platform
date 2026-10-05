@@ -994,6 +994,7 @@
   // big photos are scaled down in the browser before they're uploaded (longest side 1920px): faster, and well
   // under PHP's upload limit (2MB by default), which would otherwise reject them with "فشل رفع الصورة"
   async function shrinkImage(file, maxSide = 1920) {
+    const LIMIT = 1.8 * 1024 * 1024;
     if (!/^image\/(jpeg|png|webp)$/.test(file?.type)) return file;
     let bitmap;
     try {
@@ -1001,25 +1002,31 @@
     } catch {
       return file;
     }
-    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-    if (scale === 1 && file.size <= 1.5 * 1024 * 1024) {
+    const longest = Math.max(bitmap.width, bitmap.height);
+    if (longest <= maxSide && file.size <= 1.5 * 1024 * 1024) {
       bitmap.close();
       return file;
     }
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    bitmap.close();
     // PNG becomes WebP to keep any transparency
     const type = file.type === 'image/jpeg' ? 'image/jpeg' : 'image/webp';
-    let blob = null;
-    for (const quality of [0.85, 0.72, 0.6]) {
-      blob = await new Promise((resolve) => canvas.toBlob(resolve, type, quality));
-      if (!blob || blob.size <= 1.8 * 1024 * 1024) break;
+    const canvas = document.createElement('canvas');
+    let best = null;
+    // smaller sides and lower qualities until it fits; an already compressed photo may need more than one step
+    for (const side of [maxSide, Math.round(maxSide * 0.75), Math.round(maxSide * 0.55)]) {
+      const scale = Math.min(1, side / longest);
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      for (const quality of [0.85, 0.72, 0.6]) {
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+        if (blob && (!best || blob.size < best.size)) best = blob;
+        if (best && best.size <= LIMIT) break;
+      }
+      if (best && best.size <= LIMIT) break;
     }
-    if (!blob || blob.size >= file.size) return file;
-    return new File([blob], `${file.name.replace(/\.\w+$/, '')}.${type === 'image/jpeg' ? 'jpg' : 'webp'}`, { type });
+    bitmap.close();
+    if (!best || best.size >= file.size) return file;
+    return new File([best], `${file.name.replace(/\.\w+$/, '')}.${type === 'image/jpeg' ? 'jpg' : 'webp'}`, { type });
   }
   // what the signed-in member may do, e.g. App.can('manage_content') — the server enforces it either way
   const can = (permission) => !!USER?.permissions?.[permission];
