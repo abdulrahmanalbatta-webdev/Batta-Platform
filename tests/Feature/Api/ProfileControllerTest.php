@@ -4,7 +4,10 @@ namespace Tests\Feature\Api;
 
 use App\Enums\Role;
 use App\Models\User;
+use App\Notifications\EmailChanged;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class ProfileControllerTest extends TestCase
@@ -23,12 +26,36 @@ class ProfileControllerTest extends TestCase
             'bio' => 'نبذة قصيرة',
             'github' => 'sara-dev',
             'linkedin' => 'sara',
+            'current_password' => 'password',
         ]);
 
         $response->assertOk()
             ->assertJsonPath('data.email', 'sara@batta.dev')
             ->assertJsonPath('data.title', 'محررة المحتوى');
         $this->assertDatabaseHas('users', ['id' => $member->id, 'name' => 'سارة النجار', 'email' => 'sara@batta.dev', 'github' => 'sara-dev']);
+    }
+
+    public function test_changing_the_email_needs_the_password_and_tells_the_old_address(): void
+    {
+        Notification::fake();
+        $member = User::factory()->create(['email' => 'old@batta.dev']);
+
+        $this->actingAs($member)->putJson(route('api.profile.update'), ['name' => $member->name, 'email' => 'new@batta.dev'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['current_password' => 'حقل كلمة المرور الحالية مطلوب.']);
+        $this->actingAs($member)->putJson(route('api.profile.update'), ['name' => $member->name, 'email' => 'new@batta.dev', 'current_password' => 'wrong'])
+            ->assertJsonValidationErrors('current_password');
+
+        $this->actingAs($member)->putJson(route('api.profile.update'), ['name' => $member->name, 'email' => 'new@batta.dev', 'current_password' => 'password'])->assertOk();
+
+        Notification::assertSentOnDemand(EmailChanged::class, fn (EmailChanged $notice, array $channels, AnonymousNotifiable $notifiable): bool => $notifiable->routes['mail'] === 'old@batta.dev');
+    }
+
+    public function test_other_details_change_without_the_password(): void
+    {
+        $member = User::factory()->create();
+
+        $this->actingAs($member)->putJson(route('api.profile.update'), ['name' => 'اسم جديد', 'email' => $member->email])->assertOk();
     }
 
     public function test_cannot_change_own_role_through_profile(): void

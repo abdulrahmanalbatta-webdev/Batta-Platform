@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\User;
+use App\Support\AppUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -31,7 +32,7 @@ class TeamInvitation extends Notification
      */
     public function toMail(User $notifiable): MailMessage
     {
-        $url = route('password.reset', [
+        $url = AppUrl::route('password.reset', [
             'token' => $this->token,
             'email' => $notifiable->getEmailForPasswordReset(),
             'invite' => 1,

@@ -5,6 +5,8 @@
     $appConfig = [
         'app_name' => config('app.name'),
         'currency_symbol' => $currencySymbol,
+        // the public site (settings → عام), for links copied from the dashboard
+        'site_url' => $siteUrl,
         'assets' => asset('assets/dashboard'),
         'api' => url('dashboard/api/v1'),
         'user' => auth()->check() ? (new UserResource(auth()->user()))->resolve(request()) : null,

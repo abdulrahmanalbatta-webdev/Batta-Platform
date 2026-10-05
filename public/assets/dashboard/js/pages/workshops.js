@@ -157,14 +157,17 @@ document.addEventListener('app:ready', async () => {
       }
     } else if (act === 'remind') {
       if (!w.taken) return toast('لا يوجد مسجلون في هذه الورشة بعد', 'info');
+      btn.disabled = true;
       try {
         const res = await api.post(`workshops/${w.id}/reminders`);
         toast(`تم إرسال تذكير إلى ${res.sent} مسجلاً`);
       } catch (err) {
         showFieldErrors(err);
+      } finally {
+        btn.disabled = false;
       }
     } else if (act === 'copy') {
-      App.copy(`https://batta.dev/workshops/${w.code.toLowerCase()}`, 'تم نسخ رابط التسجيل');
+      App.copy(`${App.siteUrl}/workshops/${w.code.toLowerCase()}`, 'تم نسخ رابط التسجيل');
     } else if (act === 'attendees') {
       let people;
       try {

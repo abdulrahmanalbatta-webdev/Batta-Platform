@@ -138,11 +138,15 @@ document.addEventListener('app:ready', async () => {
     e.preventDefault();
     if (!$('#mSubject').value.trim() || !$('#mBody').value.trim()) return toast('أكمل الموضوع والرسالة', 'error');
     if (!mailTargets.length) return toast('لا يوجد مستلمون', 'error');
+    const btn = e.submitter;
+    btn.disabled = true;
     let res;
     try {
       res = await api.post('students/messages', { ids: mailTargets.map((s) => s.id), subject: $('#mSubject').value.trim(), body: $('#mBody').value.trim() });
     } catch (err) {
       return showFieldErrors(err, { subject: '#mSubject', body: '#mBody' });
+    } finally {
+      btn.disabled = false;
     }
     closeModal('mailModal');
     e.target.reset();

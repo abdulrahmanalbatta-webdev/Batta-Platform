@@ -82,7 +82,7 @@ document.addEventListener('app:ready', async () => {
         toast('تم حذف المقال');
       }
     } else if (btn.dataset.act === 'preview') {
-      toast(a.status === 'published' ? `يفتح: batta.dev/articles/${a.slug}` : 'المقال غير منشور بعد');
+      toast(a.status === 'published' ? `يفتح: ${App.siteUrl}/articles/${a.slug}` : 'المقال غير منشور بعد');
     }
   });
 

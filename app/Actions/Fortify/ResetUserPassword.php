@@ -31,5 +31,8 @@ class ResetUserPassword implements ResetsUserPasswords
             'password' => Hash::make($input['password']),
             'email_verified_at' => $user->email_verified_at ?? now(),
         ])->save();
+
+        // a stolen session must not outlive the reset (Fortify only rotates the remember token)
+        $user->endSessions();
     }
 }

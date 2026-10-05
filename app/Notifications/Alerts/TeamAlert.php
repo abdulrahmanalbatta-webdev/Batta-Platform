@@ -4,6 +4,7 @@ namespace App\Notifications\Alerts;
 
 use App\Enums\AlertType;
 use App\Models\User;
+use App\Support\AppUrl;
 use App\Support\PlatformSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -101,6 +102,6 @@ abstract class TeamAlert extends Notification implements ShouldQueue
     {
         $routes = ['orders' => 'orders.index', 'leads' => 'leads.index', 'reviews' => 'reviews.index', 'messages' => 'messages.index'];
 
-        return route($routes[$this->page()], $this->params());
+        return AppUrl::route($routes[$this->page()], $this->params());
     }
 }

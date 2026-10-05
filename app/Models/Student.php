@@ -26,6 +26,11 @@ class Student extends Model
     public const INACTIVE_AFTER_DAYS = 30;
 
     /**
+     * One paid "month" of Pro, in days: a fixed length, so a refund takes back exactly what the order gave.
+     */
+    public const PRO_PERIOD_DAYS = 30;
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

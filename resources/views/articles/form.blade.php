@@ -66,7 +66,7 @@
             <div class="field"><label for="metaTitle">عنوان SEO</label><input class="input" id="metaTitle" maxlength="60"><span class="hint"><span id="mtCount">0</span>/60</span></div>
             <div class="field"><label for="metaDesc">وصف SEO</label><textarea class="textarea" id="metaDesc" rows="3" maxlength="160" style="min-height:80px"></textarea><span class="hint"><span id="mdCount">0</span>/160</span></div>
             <div class="seo-preview" aria-label="معاينة نتيجة البحث">
-              <div class="u">batta.dev › articles › <span id="pvSlug">new-article</span></div>
+              <div class="u">{{ parse_url($siteUrl, PHP_URL_HOST) }} › articles › <span id="pvSlug">new-article</span></div>
               <div class="t" id="pvTitle">عنوان المقال سيظهر هنا</div>
               <div class="d" id="pvDesc">وصف المقال في نتائج البحث سيظهر هنا.</div>
             </div>

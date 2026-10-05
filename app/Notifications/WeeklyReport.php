@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\User;
+use App\Support\AppUrl;
 use App\Support\PlatformSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -55,7 +56,7 @@ class WeeklyReport extends Notification implements ShouldQueue
 
         return $mail
             ->line("بانتظارك: {$this->waiting['messages']} رسالة غير مقروءة، {$this->waiting['reviews']} تقييم للمراجعة، {$this->waiting['leads']} طلب مشروع جديد.")
-            ->action('فتح التحليلات', route('analytics'))
+            ->action('فتح التحليلات', AppUrl::route('analytics'))
             ->line('تقدر توقف هذا التقرير من الإعدادات ← الإشعارات.');
     }
 }

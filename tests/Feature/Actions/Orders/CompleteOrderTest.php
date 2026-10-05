@@ -50,7 +50,38 @@ class CompleteOrderTest extends TestCase
 
         app(CompleteOrder::class)->handle($order);
 
-        $this->assertEquals(now()->addDays(10)->addMonth(), $student->fresh()->pro_until);
+        $this->assertEquals(now()->addDays(10 + Student::PRO_PERIOD_DAYS), $student->fresh()->pro_until);
+    }
+
+    public function test_the_last_seat_cannot_be_sold_twice(): void
+    {
+        $workshop = Workshop::factory()->create(['seats' => 1]);
+        [$first, $second] = Student::factory()->count(2)->create()
+            ->map(fn (Student $student) => app(PlaceOrder::class)->handle($student, OrderItemType::Workshop, $workshop, PaymentMethod::BankTransfer));
+
+        app(CompleteOrder::class)->handle($first);
+
+        $this->expectException(ValidationException::class);
+        try {
+            app(CompleteOrder::class)->handle($second);
+        } finally {
+            $this->assertSame(1, $workshop->seatsTaken());
+            $this->assertSame(OrderStatus::Pending, $second->fresh()->status);
+        }
+    }
+
+    public function test_a_second_order_for_an_owned_course_is_refused(): void
+    {
+        $student = Student::factory()->create();
+        $course = Course::factory()->published()->create();
+        [$first, $second] = [
+            app(PlaceOrder::class)->handle($student, OrderItemType::Course, $course, PaymentMethod::BankTransfer),
+            app(PlaceOrder::class)->handle($student, OrderItemType::Course, $course, PaymentMethod::BankTransfer),
+        ];
+        app(CompleteOrder::class)->handle($first);
+
+        $this->expectException(ValidationException::class);
+        app(CompleteOrder::class)->handle($second);
     }
 
     public function test_only_pending_orders_can_be_completed(): void

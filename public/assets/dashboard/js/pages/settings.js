@@ -49,6 +49,7 @@ document.addEventListener('app:ready', () => {
   };
   const prefs = App.user?.email_preferences || {};
   $('#notifPrefs').innerHTML = Object.entries(prefs)
+    .filter(([key]) => ALERTS[key])
     .map(([key, on]) => `<div class="setting-row"><div><b>${ALERTS[key][0]}</b><p>${ALERTS[key][1]}</p></div><label class="switch"><input type="checkbox" data-pref="${key}" ${on ? 'checked' : ''} aria-label="${ALERTS[key][0]}"><span class="track"></span></label></div>`)
     .join('');
   $('#notifPrefs').addEventListener('change', async (e) => {
@@ -91,17 +92,20 @@ document.addEventListener('app:ready', () => {
   };
   function fill(res) {
     const data = res.data;
+    // where payments and mail go is the owner's (meta.owner_only)
+    const ownerOnly = new Set(res.meta.owner_only);
+    const editable = (key) => canEdit && (!ownerOnly.has(key) || App.can('manage_platform_data'));
     $$('[data-setting]', form).forEach((el) => {
       const v = data[el.dataset.setting];
       if (el.type === 'checkbox') el.checked = !!v;
       else el.value = v ?? '';
-      el.disabled = !canEdit;
+      el.disabled = !editable(el.dataset.setting);
     });
     $$('[data-secret]', form).forEach((el) => {
       const secret = data[el.dataset.secret];
       el.value = '';
-      el.placeholder = secret.set ? `محفوظ ${secret.hint} — اتركه فارغاً للإبقاء عليه` : 'غير محفوظ';
-      el.disabled = !canEdit;
+      el.placeholder = secret.set ? `محفوظ${secret.hint ? ` ${secret.hint}` : ''} — اتركه فارغاً للإبقاء عليه` : 'غير محفوظ';
+      el.disabled = !editable(el.dataset.secret);
     });
     Object.entries(res.meta.gateways).forEach(([gw, ready]) => {
       const enabled = data[`${gw}_enabled`];

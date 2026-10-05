@@ -63,6 +63,19 @@ class RefundOrderTest extends TestCase
         $this->assertFalse($student->fresh()->isPro());
     }
 
+    public function test_refunding_a_renewal_takes_back_exactly_its_period(): void
+    {
+        $this->travelTo(now()->setDate(2027, 1, 31)->setTime(12, 0));
+        $student = Student::factory()->create(['pro_until' => now()->addDays(5)]);
+        $before = $student->pro_until->copy();
+        $order = app(PlaceOrder::class)->handle($student, OrderItemType::ProMonth, null, PaymentMethod::Card);
+        app(CompleteOrder::class)->handle($order);
+
+        app(RefundOrder::class)->handle($order);
+
+        $this->assertEquals($before, $student->fresh()->pro_until);
+    }
+
     public function test_pending_order_cannot_be_refunded(): void
     {
         $order = app(PlaceOrder::class)->handle(Student::factory()->create(), OrderItemType::ProMonth, null, PaymentMethod::Card);

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -48,23 +49,31 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Feed the stored platform settings into config, and again before every queued job so a running
-     * worker sends mail with the latest settings. Skipped while the database isn't migrated yet.
+     * worker sends mail with the latest settings. Never stops the app from booting.
      */
     private function applyPlatformSettings(): void
     {
-        $apply = function (): void {
+        $apply = function (bool $refresh): void {
             try {
                 $settings = $this->app->make(PlatformSettings::class);
-                $settings->forget();
+                if ($refresh) {
+                    $settings->refresh();
+                }
                 $settings->apply();
             } catch (QueryException) {
                 // no settings table yet (fresh install, first migration)
+            } catch (Throwable $exception) {
+                // e.g. the cache store is down: run on the defaults from config
+                report($exception);
             }
         };
 
-        $apply();
-        Queue::before(fn () => $apply());
+        $apply(false);
+        Queue::before(fn () => $apply(true));
 
-        View::composer('*', fn ($view) => $view->with('currencySymbol', rescue(fn (): string => $this->app->make(PlatformSettings::class)->currencySymbol(), '$', false)));
+        View::composer('*', fn ($view) => $view->with([
+            'currencySymbol' => rescue(fn (): string => $this->app->make(PlatformSettings::class)->currencySymbol(), '$', false),
+            'siteUrl' => rescue(fn (): string => (string) $this->app->make(PlatformSettings::class)->get('site_url'), 'https://batta.dev', false),
+        ]));
     }
 }

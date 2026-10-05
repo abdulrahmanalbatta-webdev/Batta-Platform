@@ -125,7 +125,7 @@
       delete rest.id;
     }
     const qs = new URLSearchParams(rest).toString();
-    return `${u}${qs ? `?${qs}` : ''}${hash ? `#${hash}` : ''}`;
+    return `${u}${qs ? `?${qs}` : ''}${hash ? `#${encodeURIComponent(hash)}` : ''}`;
   }
   const asset = (p) => `${CFG.assets}/${p}`;
 
@@ -850,7 +850,9 @@
 
   // export a CSV file from rows (works when the dashboard is opened locally)
   function downloadCSV(filename, columns, rows) {
-    const line = (arr) => arr.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',');
+    // text starting with = + - @ (or a tab/CR) would run as a formula in Excel: prefix it with ' (numbers stay numbers)
+    const cell = (v) => (typeof v === 'string' && /^[=+\-@\t\r]/.test(v) ? `'${v}` : String(v ?? ''));
+    const line = (arr) => arr.map((v) => `"${cell(v).replace(/"/g, '""')}"`).join(',');
     const csv = '﻿' + [line(columns.map((c) => c.label)), ...rows.map((r) => line(columns.map((c) => r[c.key])))].join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -912,7 +914,24 @@
     419: 'انتهت صلاحية الجلسة، حدّث الصفحة وحاول مرة أخرى',
     429: 'طلبات كثيرة خلال وقت قصير، انتظر قليلاً ثم حاول',
   };
+  // a write that is already on its way (same method, path and data) isn't sent twice: a double click on
+  // "send reminder" or "add" rejects the second call quietly (err.duplicate) instead of emailing or creating twice
+  const inFlight = new Set();
   async function request(method, path, data) {
+    const key = method !== 'GET' && !(data instanceof FormData) ? `${method} ${path} ${JSON.stringify(data ?? null)}` : null;
+    if (key && inFlight.has(key)) {
+      const dup = new ApiError(0, { message: 'duplicate request' });
+      dup.duplicate = true;
+      throw dup;
+    }
+    if (key) inFlight.add(key);
+    try {
+      return await send(method, path, data);
+    } finally {
+      if (key) inFlight.delete(key);
+    }
+  }
+  async function send(method, path, data) {
     const headers = {
       Accept: 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
@@ -960,7 +979,7 @@
   };
 
   /* ---------- boot ---------- */
-  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, user: USER, can, ago, activityTone };
+  window.App = { $, $$, esc, num, money, date, debounce, icon, hydrateIcons, toast, openModal, closeModal, confirmDialog, openDrawer, closeDrawer, DataTable, badge, person, downloadCSV, initTabs, setNavCount, copy, url, asset, api, ApiError, showFieldErrors, user: USER, can, ago, activityTone, siteUrl: String(CFG.site_url || '').replace(/\/$/, '') };
 
   document.addEventListener('DOMContentLoaded', () => {
     buildLayout();

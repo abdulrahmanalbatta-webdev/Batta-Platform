@@ -21,7 +21,8 @@ class PublishScheduledArticles extends Command
 
         Article::query()->dueForPublishing()->each(function (Article $article) use (&$published): void {
             $article->status = ArticleStatus::Published;
-            $article->published_at = $article->publish_at;
+            // an article that was live before and got rescheduled keeps its first publish date (and isn't emailed again)
+            $article->published_at ??= $article->publish_at;
             $article->save();
             $published++;
         });

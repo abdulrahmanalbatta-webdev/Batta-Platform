@@ -34,16 +34,20 @@ class SalesReport
     {
         $monthly = $days > 90;
         $from = $monthly ? now()->startOfMonth()->subMonths(11) : today()->subDays($days - 1);
-        $previousFrom = $monthly ? $from->copy()->subMonths(12) : $from->copy()->subDays($days);
+        // the period before covers the same stretch: for the year, the same months up to the same day a year ago
+        $previousFrom = $monthly ? $from->copy()->subYear() : $from->copy()->subDays($days);
+        $previousTo = $monthly ? now()->subYear() : $from;
 
         $orders = Order::query()
             ->where('status', OrderStatus::Completed)
             ->where('paid_at', '>=', $previousFrom)
             ->get(['student_id', 'item_type', 'item_name', 'total', 'payment_method', 'paid_at']);
-        [$current, $previous] = $orders->partition(fn (Order $order): bool => $order->paid_at->gte($from));
+        $current = $orders->filter(fn (Order $order): bool => $order->paid_at->gte($from));
+        $previous = $orders->filter(fn (Order $order): bool => $order->paid_at->lt($previousTo));
 
         $students = Student::query()->where('created_at', '>=', $previousFrom)->get(['id', 'country', 'created_at']);
-        [$newStudents, $previousStudents] = $students->partition(fn (Student $student): bool => $student->created_at->gte($from));
+        $newStudents = $students->filter(fn (Student $student): bool => $student->created_at->gte($from));
+        $previousStudents = $students->filter(fn (Student $student): bool => $student->created_at->lt($previousTo));
 
         $buckets = $this->buckets($from, $monthly);
         $bucketOf = fn (Carbon $date): string => $date->format($monthly ? 'Y-m' : 'Y-m-d');

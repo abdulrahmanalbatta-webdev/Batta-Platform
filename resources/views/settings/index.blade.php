@@ -70,7 +70,7 @@
               <div class="field"><label for="bankInfo">تعليمات التحويل</label><textarea class="textarea" id="bankInfo" rows="5" data-setting="bank_transfer_instructions" placeholder="اسم البنك، اسم الحساب، IBAN…"></textarea></div>
             </div>
           </div>
-          <p class="muted" style="font-size:12.5px;margin:-8px 0 18px">المفاتيح السرية تُحفظ مشفّرة ولا تُعرض بعد الحفظ؛ اترك الحقل فارغاً للإبقاء على المحفوظ. ربط الدفع الفعلي بالبوابات يتم في الموقع العام.</p>
+          <p class="muted" style="font-size:12.5px;margin:-8px 0 18px">بوابات الدفع وإعدادات البريد يغيّرها المالك فقط. المفاتيح السرية تُحفظ مشفّرة ولا تُعرض بعد الحفظ؛ اترك الحقل فارغاً للإبقاء على المحفوظ. ربط الدفع الفعلي بالبوابات يتم في الموقع العام.</p>
           <div class="form-grid">
             <div class="field"><label for="currency">العملة</label><select class="select" id="currency" data-setting="currency"><option value="USD">دولار أمريكي (USD)</option><option value="SAR">ريال سعودي (SAR)</option><option value="JOD">دينار أردني (JOD)</option></select></div>
             <div class="field"><label for="vat">ضريبة القيمة المضافة % (ضمن السعر)</label><input class="input ltr" id="vat" data-setting="vat_percent" type="number" min="0" max="30" step="0.5"></div>
@@ -84,7 +84,7 @@
 
         <!-- mail -->
         <div class="tab-panel card-body" data-panel-group="settings" data-panel="mail">
-          <p class="muted" style="margin-bottom:14px">خادم SMTP لكل رسائل المنصة (الدعوات، الفواتير، الردود، التنبيهات). اترك الخادم فارغاً لاستخدام إعدادات <span class="mono ltr">MAIL_*</span> في ملف <span class="mono ltr">.env</span>.</p>
+          <p class="muted" style="margin-bottom:14px">للمالك فقط. خادم SMTP لكل رسائل المنصة (الدعوات، الفواتير، الردود، التنبيهات). اترك الخادم فارغاً لاستخدام إعدادات <span class="mono ltr">MAIL_*</span> في ملف <span class="mono ltr">.env</span>.</p>
           <div class="form-grid">
             <div class="field"><label for="mailHost">خادم SMTP</label><input class="input ltr" id="mailHost" data-setting="mail_host" placeholder="smtp.example.com"></div>
             <div class="field"><label for="mailPort">المنفذ</label><input class="input ltr" id="mailPort" data-setting="mail_port" type="number" min="1" max="65535"></div>
@@ -94,7 +94,7 @@
             <div class="field"><label for="mailFrom">بريد المرسل</label><input class="input ltr" id="mailFrom" data-setting="mail_from_address" type="email" placeholder="no-reply@batta.dev"></div>
             <div class="field"><label for="mailFromName">اسم المرسل</label><input class="input" id="mailFromName" data-setting="mail_from_name" placeholder="اسم المنصة"></div>
           </div>
-          <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap" data-requires="manage_settings">
+          <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap" data-requires="manage_platform_data">
             <button type="button" class="btn btn-ghost" id="testEmail"><i data-icon="mail" class="sm"></i>إرسال رسالة تجريبية</button>
             <small class="muted">تُرسل إلى بريدك بعد حفظ التغييرات.</small>
           </div>

@@ -29,7 +29,7 @@
             </div>
             <div class="field full">
               <label for="slug">رابط الدورة</label>
-              <div class="input-group"><span class="addon ltr">batta.dev/courses/</span><input class="input ltr" id="slug" placeholder="nextjs-production" style="text-align:left"></div>
+              <div class="input-group"><span class="addon ltr">{{ parse_url($siteUrl, PHP_URL_HOST) }}/courses/</span><input class="input ltr" id="slug" placeholder="nextjs-production" style="text-align:left"></div>
             </div>
             <div class="field full">
               <label for="short">وصف قصير</label>

@@ -44,6 +44,7 @@ document.addEventListener('app:ready', () => {
   function fillForm() {
     Object.entries(FIELDS).forEach(([key, sel]) => ($(sel).value = me[key] ?? ''));
     $$('#infoForm .invalid').forEach((i) => i.classList.remove('invalid'));
+    $('#emailPasswordField').hidden = true;
     count();
   }
   showMe();
@@ -77,7 +78,12 @@ document.addEventListener('app:ready', () => {
   });
 
   bio.addEventListener('input', count);
-  $('#infoForm').addEventListener('input', (e) => e.target.classList.remove('invalid'));
+  // changing the sign-in email needs the current password
+  const emailChanged = () => $('#fEmail').value.trim().toLowerCase() !== (me.email || '');
+  $('#infoForm').addEventListener('input', (e) => {
+    e.target.classList.remove('invalid');
+    $('#emailPasswordField').hidden = !emailChanged();
+  });
   // "تراجع" brings back the saved values (the inputs have no HTML defaults)
   $('#infoForm').addEventListener('reset', (e) => {
     e.preventDefault();
@@ -86,11 +92,14 @@ document.addEventListener('app:ready', () => {
   $('#infoForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = Object.fromEntries(Object.entries(FIELDS).map(([key, sel]) => [key, $(sel).value.trim() || null]));
+    if (emailChanged()) payload.current_password = $('#fEmailPassword').value;
     try {
       me = (await api.put('profile', payload)).data;
     } catch (err) {
-      return showFieldErrors(err, FIELDS);
+      return showFieldErrors(err, { ...FIELDS, current_password: '#fEmailPassword' });
     }
+    $('#fEmailPassword').value = '';
+    $('#emailPasswordField').hidden = true;
     showMe();
     fillForm();
     toast('تم حفظ معلوماتك');

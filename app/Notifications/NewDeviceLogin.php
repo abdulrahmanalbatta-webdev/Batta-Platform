@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\User;
+use App\Support\AppUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -41,6 +42,6 @@ class NewDeviceLogin extends Notification implements ShouldQueue
             ->line('عنوان IP: '.$this->ip)
             ->line('الوقت: '.$this->at->toDateTimeString().' (UTC)')
             ->line('إذا كان هذا أنت فلا داعي لأي إجراء. وإن لم يكن، غيّر كلمة المرور فوراً وأنهِ الجلسات الأخرى من الإعدادات ← الأمان.')
-            ->action('الأمان والأجهزة', route('settings.index').'#security');
+            ->action('الأمان والأجهزة', AppUrl::route('settings.index', hash: 'security'));
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Setting;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\Rule;
@@ -33,7 +34,22 @@ class PlatformSettings
     private ?array $values = null;
 
     /**
-     * @return array<string, array{label: string, default: mixed, rules: list<mixed>, secret?: bool, public?: bool}>
+     * The mail config from .env, put back when the SMTP settings are cleared.
+     *
+     * @var array{default: mixed, smtp: mixed, from: mixed}
+     */
+    private array $envMail;
+
+    public function __construct()
+    {
+        $this->envMail = ['default' => config('mail.default'), 'smtp' => config('mail.mailers.smtp'), 'from' => config('mail.from')];
+    }
+
+    /**
+     * owner: only the owner may change it — where the money and the mail go (an admin could otherwise route
+     * payments to their own account, or read reset links through their own mail server).
+     *
+     * @return array<string, array{label: string, default: mixed, rules: list<mixed>, secret?: bool, public?: bool, owner?: bool}>
      */
     public static function definitions(): array
     {
@@ -58,25 +74,25 @@ class PlatformSettings
             'pro_month_price' => ['label' => 'سعر شهر Pro', 'default' => (float) config('sales.pro_month_price'), 'rules' => ['required', 'numeric', 'min:1', 'max:1000'], 'public' => true],
             'invoice_note' => ['label' => 'ملاحظة الفاتورة', 'default' => 'شكراً لثقتك بـ Batta. للاستفسار: hello@batta.dev', 'rules' => $text(500)],
             'refund_guarantee' => ['label' => 'ضمان الاسترداد', 'default' => true, 'rules' => $bool, 'public' => true],
-            'stripe_enabled' => ['label' => 'Stripe', 'default' => false, 'rules' => $bool],
-            'stripe_publishable_key' => ['label' => 'المفتاح العام لـ Stripe', 'default' => null, 'rules' => ['nullable', 'string', 'starts_with:pk_', 'max:255']],
-            'stripe_secret_key' => ['label' => 'المفتاح السري لـ Stripe', 'default' => null, 'rules' => [...$secret, 'starts_with:sk_,rk_'], 'secret' => true],
-            'stripe_webhook_secret' => ['label' => 'سر الـ Webhook لـ Stripe', 'default' => null, 'rules' => [...$secret, 'starts_with:whsec_'], 'secret' => true],
-            'paypal_enabled' => ['label' => 'PayPal', 'default' => false, 'rules' => $bool],
-            'paypal_mode' => ['label' => 'وضع PayPal', 'default' => 'sandbox', 'rules' => ['required', Rule::in(['sandbox', 'live'])]],
-            'paypal_client_id' => ['label' => 'Client ID لـ PayPal', 'default' => null, 'rules' => $text(255)],
-            'paypal_secret' => ['label' => 'Secret لـ PayPal', 'default' => null, 'rules' => $secret, 'secret' => true],
-            'bank_transfer_enabled' => ['label' => 'التحويل البنكي', 'default' => false, 'rules' => $bool],
-            'bank_transfer_instructions' => ['label' => 'تعليمات التحويل البنكي', 'default' => null, 'rules' => $text(1000)],
+            'stripe_enabled' => ['label' => 'Stripe', 'default' => false, 'rules' => $bool, 'owner' => true],
+            'stripe_publishable_key' => ['label' => 'المفتاح العام لـ Stripe', 'default' => null, 'rules' => ['nullable', 'string', 'starts_with:pk_', 'max:255'], 'owner' => true],
+            'stripe_secret_key' => ['label' => 'المفتاح السري لـ Stripe', 'default' => null, 'rules' => [...$secret, 'starts_with:sk_,rk_'], 'secret' => true, 'owner' => true],
+            'stripe_webhook_secret' => ['label' => 'سر الـ Webhook لـ Stripe', 'default' => null, 'rules' => [...$secret, 'starts_with:whsec_'], 'secret' => true, 'owner' => true],
+            'paypal_enabled' => ['label' => 'PayPal', 'default' => false, 'rules' => $bool, 'owner' => true],
+            'paypal_mode' => ['label' => 'وضع PayPal', 'default' => 'sandbox', 'rules' => ['required', Rule::in(['sandbox', 'live'])], 'owner' => true],
+            'paypal_client_id' => ['label' => 'Client ID لـ PayPal', 'default' => null, 'rules' => $text(255), 'owner' => true],
+            'paypal_secret' => ['label' => 'Secret لـ PayPal', 'default' => null, 'rules' => $secret, 'secret' => true, 'owner' => true],
+            'bank_transfer_enabled' => ['label' => 'التحويل البنكي', 'default' => false, 'rules' => $bool, 'owner' => true],
+            'bank_transfer_instructions' => ['label' => 'تعليمات التحويل البنكي', 'default' => null, 'rules' => $text(1000), 'owner' => true],
 
             // outgoing email: empty host = the MAIL_* values in .env
-            'mail_host' => ['label' => 'خادم SMTP', 'default' => null, 'rules' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9.-]+$/']],
-            'mail_port' => ['label' => 'المنفذ', 'default' => 587, 'rules' => ['required', 'integer', 'between:1,65535']],
-            'mail_username' => ['label' => 'اسم المستخدم', 'default' => null, 'rules' => $text(255)],
-            'mail_password' => ['label' => 'كلمة مرور SMTP', 'default' => null, 'rules' => $secret, 'secret' => true],
-            'mail_encryption' => ['label' => 'التشفير', 'default' => 'tls', 'rules' => ['required', Rule::in(['tls', 'ssl'])]],
-            'mail_from_address' => ['label' => 'بريد المرسل', 'default' => null, 'rules' => ['nullable', 'email', 'max:255']],
-            'mail_from_name' => ['label' => 'اسم المرسل', 'default' => null, 'rules' => $text(60)],
+            'mail_host' => ['label' => 'خادم SMTP', 'default' => null, 'rules' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9.-]+$/'], 'owner' => true],
+            'mail_port' => ['label' => 'المنفذ', 'default' => 587, 'rules' => ['required', 'integer', 'between:1,65535'], 'owner' => true],
+            'mail_username' => ['label' => 'اسم المستخدم', 'default' => null, 'rules' => $text(255), 'owner' => true],
+            'mail_password' => ['label' => 'كلمة مرور SMTP', 'default' => null, 'rules' => $secret, 'secret' => true, 'owner' => true],
+            'mail_encryption' => ['label' => 'التشفير', 'default' => 'tls', 'rules' => ['required', Rule::in(['tls', 'ssl'])], 'owner' => true],
+            'mail_from_address' => ['label' => 'بريد المرسل', 'default' => null, 'rules' => ['nullable', 'email', 'max:255'], 'owner' => true],
+            'mail_from_name' => ['label' => 'اسم المرسل', 'default' => null, 'rules' => $text(60), 'owner' => true],
 
             // team notifications
             'weekly_report' => ['label' => 'التقرير الأسبوعي', 'default' => true, 'rules' => $bool],
@@ -86,6 +102,16 @@ class PlatformSettings
             'new_device_alert' => ['label' => 'تنبيه الدخول من جهاز جديد', 'default' => true, 'rules' => $bool],
             'session_lifetime' => ['label' => 'انتهاء الجلسة', 'default' => 120, 'rules' => ['required', 'integer', Rule::in(self::SESSION_LIFETIMES)]],
         ];
+    }
+
+    /**
+     * The keys only the owner may change.
+     *
+     * @return list<string>
+     */
+    public static function ownerOnlyKeys(): array
+    {
+        return array_keys(array_filter(self::definitions(), fn (array $definition): bool => $definition['owner'] ?? false));
     }
 
     /**
@@ -123,6 +149,13 @@ class PlatformSettings
     public function update(array $values): void
     {
         $definitions = self::definitions();
+        $current = $this->all();
+
+        // the stored SMTP password only ever goes to the server it was given for
+        $mailServerChanges = collect(['mail_host', 'mail_username'])->contains(fn (string $key): bool => array_key_exists($key, $values) && $values[$key] !== $current[$key]);
+        if ($mailServerChanges && blank($values['mail_password'] ?? null)) {
+            Setting::query()->whereKey('mail_password')->delete();
+        }
 
         foreach ($values as $key => $value) {
             $secret = $definitions[$key]['secret'] ?? false;
@@ -152,21 +185,29 @@ class PlatformSettings
     public function forget(): void
     {
         Cache::forget(self::CACHE_KEY);
+        $this->refresh();
+    }
+
+    /**
+     * Read the settings again from the cache (a long-running queue worker, before each job).
+     */
+    public function refresh(): void
+    {
         $this->values = null;
     }
 
     /**
-     * For the settings page: secrets become {set, hint} and never their value.
+     * For the settings page: secrets become {set, hint} and never their value; the hint (last 4 characters) only for the owner.
      *
      * @return array<string, mixed>
      */
-    public function forClient(): array
+    public function forClient(bool $withHints = false): array
     {
         $values = $this->all();
 
         foreach (self::definitions() as $key => $definition) {
             if ($definition['secret'] ?? false) {
-                $values[$key] = ['set' => filled($values[$key]), 'hint' => filled($values[$key]) ? '••••'.mb_substr((string) $values[$key], -4) : null];
+                $values[$key] = ['set' => filled($values[$key]), 'hint' => $withHints && filled($values[$key]) ? '••••'.mb_substr((string) $values[$key], -4) : null];
             }
         }
 
@@ -227,6 +268,9 @@ class PlatformSettings
     {
         $values = $this->all();
 
+        // start from .env every time, so clearing a setting really goes back to it
+        config(['mail.default' => $this->envMail['default'], 'mail.mailers.smtp' => $this->envMail['smtp'], 'mail.from' => $this->envMail['from']]);
+
         config([
             'app.name' => $values['site_name'],
             'session.lifetime' => (int) $values['session_lifetime'],
@@ -262,6 +306,17 @@ class PlatformSettings
             return null;
         }
 
-        return json_decode($secret ? Crypt::decryptString($stored) : $stored, true);
+        if (! $secret) {
+            return json_decode($stored, true);
+        }
+
+        try {
+            return json_decode(Crypt::decryptString($stored), true);
+        } catch (DecryptException $exception) {
+            // stored under an older APP_KEY: treat it as unset rather than take the app down; enter it again in the settings
+            report($exception);
+
+            return null;
+        }
     }
 }

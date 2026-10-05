@@ -31,6 +31,7 @@
             <div class="field"><label for="fName">الاسم الكامل *</label><input class="input" id="fName" autocomplete="name"></div>
             <div class="field"><label for="fTitle">المسمى</label><input class="input" id="fTitle" maxlength="100"></div>
             <div class="field"><label for="fEmail">البريد *</label><input class="input ltr" id="fEmail" type="email" autocomplete="email"></div>
+            <div class="field" id="emailPasswordField" hidden><label for="fEmailPassword">كلمة المرور الحالية</label><input class="input ltr" id="fEmailPassword" type="password" autocomplete="current-password"><span class="hint">مطلوبة لتغيير البريد.</span></div>
             <div class="field"><label for="fPhone">الهاتف</label><input class="input ltr" id="fPhone" type="tel" autocomplete="tel" placeholder="+970 59 000 0000"></div>
             <div class="field full"><label for="fBio">نبذة</label><textarea class="textarea" id="fBio" rows="4" maxlength="280"></textarea><span class="hint"><span id="bioCount">0</span> / 280</span></div>
             <div class="field"><label for="fGithub">GitHub</label><div class="input-group"><span class="addon">github.com/</span><input class="input ltr" id="fGithub"></div></div>

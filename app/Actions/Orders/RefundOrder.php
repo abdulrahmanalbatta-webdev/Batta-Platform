@@ -6,6 +6,7 @@ use App\Enums\OrderItemType;
 use App\Enums\OrderStatus;
 use App\Models\Enrollment;
 use App\Models\Order;
+use App\Models\Student;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -34,11 +35,12 @@ class RefundOrder
             $student = $order->student;
 
             if ($order->item_type === OrderItemType::Course) {
-                Enrollment::query()->where('student_id', $student->id)->where('course_id', $order->item_id)->delete();
+                // only the access this order gave: another paid order for the same course keeps its enrolment
+                Enrollment::query()->where('order_id', $order->id)->delete();
             }
 
             if ($order->item_type === OrderItemType::ProMonth && $student->pro_until !== null) {
-                $until = $student->pro_until->copy()->subMonth();
+                $until = $student->pro_until->copy()->subDays(Student::PRO_PERIOD_DAYS);
                 $student->forceFill(['pro_until' => $until->isFuture() ? $until : null])->save();
             }
 

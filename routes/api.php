@@ -167,6 +167,10 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('can:manage-settings')->group(function () {
         Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+    });
+
+    // where payments and mail go: owner only, like the settings marked 'owner' in PlatformSettings
+    Route::middleware('can:manage-platform-data')->group(function () {
         Route::delete('/settings/secrets/{key}', [SettingSecretController::class, 'destroy'])->name('settings.secrets.destroy');
         Route::post('/settings/test-email', [TestEmailController::class, 'store'])->middleware('throttle:5,1,test-email')->name('settings.test-email');
     });

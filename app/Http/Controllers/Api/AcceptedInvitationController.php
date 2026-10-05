@@ -39,8 +39,9 @@ class AcceptedInvitationController extends Controller
         );
 
         if ($status !== Password::PASSWORD_RESET) {
+            // an address that isn't invited reads like a wrong or expired link, so this can't reveal who is on the team
             throw ValidationException::withMessages([
-                'email' => __($status),
+                'email' => __($status === Password::INVALID_USER ? Password::INVALID_TOKEN : $status),
             ]);
         }
 

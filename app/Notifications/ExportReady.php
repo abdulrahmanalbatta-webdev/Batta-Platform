@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\User;
+use App\Support\AppUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -60,6 +61,6 @@ class ExportReady extends Notification implements ShouldQueue
             ->greeting('مرحباً '.$notifiable->name.'،')
             ->line('انتهى تجهيز نسخة من بيانات المنصة ('.Number::fileSize($this->bytes).').')
             ->line('نزّلها من لوحة التحكم، وتُحذف تلقائياً بعد 7 أيام.')
-            ->action('الإعدادات ← الأمان', route('settings.index').'#security');
+            ->action('الإعدادات ← الأمان', AppUrl::route('settings.index', hash: 'security'));
     }
 }
