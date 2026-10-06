@@ -23,6 +23,7 @@ class ToolResource extends JsonResource
             'name' => $this->name,
             'short' => $this->short,
             'color' => $this->color,
+            'logo_url' => $this->logo_url,
             'category_id' => $this->tool_category_id,
             'why' => $this->why,
             'since' => $this->since,

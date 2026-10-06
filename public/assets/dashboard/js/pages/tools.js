@@ -75,7 +75,7 @@ document.addEventListener('app:ready', async () => {
           return `
         <article class="tool-card ${t.is_published ? '' : 'is-draft'}">
           <div class="tool-top">
-            <span class="tool-logo" style="background:${esc(t.color)}">${esc(t.short)}</span>
+            ${logo(t.logo_url, t.color, t.short)}
             <div class="tool-title">
               <b>${esc(t.name)}</b>
               <small><i class="cat-dot" style="background:${esc(c?.color || 'var(--line-2)')}"></i>${esc(catName(t.category_id))} · منذ ${esc(t.since)}</small>
@@ -105,11 +105,20 @@ document.addEventListener('app:ready', async () => {
     if (catDrawer?.isConnected) renderCatList();
   }
 
+  // the uploaded logo, or the short letters on the tool's color
+  const logo = (src, bg, short) =>
+    src ? `<span class="tool-logo has-img"><img src="${esc(src)}" alt=""></span>` : `<span class="tool-logo" style="background:${esc(bg)}">${esc(short)}</span>`;
+
   /* ---------------- tool form ---------------- */
   $('#swatches').innerHTML = COLORS.map((c) => `<button type="button" class="swatch" data-color="${c}" style="background:${c}" aria-label="لون ${c}"></button>`).join('');
   let color = COLORS[0];
   let shortTouched = false;
   let lastCat = '';
+  // the logo picked in the form: a new file to upload, or a removal of the saved one; sent after the tool is saved
+  let logoFile = null;
+  let logoPreview = null;
+  let logoRemoved = false;
+  const formLogo = () => logoPreview || (logoRemoved ? null : editing?.logo_url) || null;
 
   function fillCatSelect(selected) {
     $('#tCategory').innerHTML =
@@ -131,13 +140,14 @@ document.addEventListener('app:ready', async () => {
     $('#preview').innerHTML = `
       <span class="muted" style="font-size:12px">معاينة كما ستظهر في الموقع</span>
       <div class="tool-top">
-        <span class="tool-logo" style="background:${color}">${esc(short)}</span>
+        ${logo(formLogo(), color, short)}
         <div class="tool-title"><b>${esc(name)}</b><small>${c ? `<i class="cat-dot" style="background:${esc(c.color)}"></i>${esc(c.name)}` : 'التصنيف'} · منذ ${esc($('#tSince').value || '—')}</small></div>
         ${$('#tAffiliate').checked ? '<span class="badge warning">رابط شراكة</span>' : ''}
       </div>
       <p>${esc($('#tWhy').value || 'لماذا تستخدم هذه الأداة؟')}</p>`;
     $$('.swatch').forEach((s) => s.classList.toggle('on', s.dataset.color === color));
     $('#whyCount').textContent = $('#tWhy').value.length;
+    $('#tLogoRemove').hidden = !formLogo();
   }
 
   function openForm(t = null) {
@@ -158,6 +168,9 @@ document.addEventListener('app:ready', async () => {
     $('#tAffiliate').checked = !!t?.is_affiliate;
     color = t?.color || COLORS[0];
     shortTouched = !!t;
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    logoFile = logoPreview = null;
+    logoRemoved = false;
     preview();
     openModal('toolModal');
     setTimeout(() => $('#tName').focus(), 50);
@@ -206,6 +219,23 @@ document.addEventListener('app:ready', async () => {
     preview();
   });
   $('#toolForm').addEventListener('change', preview);
+  $('#tLogo').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return toast('اختر صورة PNG أو JPG أو WebP', 'error');
+    logoFile = await App.shrinkImage(file, 512);
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    logoPreview = URL.createObjectURL(logoFile);
+    logoRemoved = false;
+    preview();
+  });
+  $('#tLogoRemove').addEventListener('click', () => {
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    logoFile = logoPreview = null;
+    logoRemoved = true;
+    preview();
+  });
   $('#swatches').addEventListener('click', (e) => {
     const s = e.target.closest('.swatch');
     if (!s) return;
@@ -234,6 +264,18 @@ document.addEventListener('app:ready', async () => {
       saved = editing ? (await api.patch(`tools/${editing.id}`, data)).data : (await api.post('tools', data)).data;
     } catch (err) {
       return showFieldErrors(err, fields);
+    }
+    // the logo goes up once the tool exists
+    try {
+      if (logoFile) {
+        const form = new FormData();
+        form.append('logo', logoFile);
+        saved = (await api.post(`tools/${saved.id}/logo`, form)).data;
+      } else if (logoRemoved && saved.logo_url) {
+        saved = (await api.delete(`tools/${saved.id}/logo`)).data;
+      }
+    } catch (err) {
+      showFieldErrors(err);
     }
     if (editing) {
       Object.assign(editing, saved);

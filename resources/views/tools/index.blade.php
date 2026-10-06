@@ -53,6 +53,14 @@
           <div class="field"><label for="tSince">أستخدمها منذ</label><input class="input ltr" id="tSince" type="number" min="2000" max="2030"></div>
           <div class="field full"><label for="tUrl">رابط الأداة</label><input class="input ltr" id="tUrl" type="url" placeholder="https://"></div>
           <div class="field full"><label for="tWhy">لماذا أستخدمها؟ *</label><textarea class="textarea" id="tWhy" rows="3" maxlength="120" placeholder="جملة قصيرة تظهر تحت اسم الأداة في الموقع"></textarea><span class="hint"><span id="whyCount">0</span> / 120</span></div>
+          <div class="field full">
+            <label>شعار الأداة</label>
+            <div class="logo-pick">
+              <label class="btn btn-ghost btn-sm"><i data-icon="upload" class="sm"></i>رفع شعار<input type="file" id="tLogo" accept="image/png,image/jpeg,image/webp" hidden></label>
+              <button type="button" class="btn btn-ghost btn-sm" id="tLogoRemove" hidden>إزالة الشعار</button>
+            </div>
+            <span class="hint">صورة مربعة PNG أو WebP (بخلفية شفافة أفضل). بدونها يظهر الرمز على لون الشعار.</span>
+          </div>
           <div class="field">
             <label>لون الشعار</label>
             <div class="swatches" id="swatches"></div>

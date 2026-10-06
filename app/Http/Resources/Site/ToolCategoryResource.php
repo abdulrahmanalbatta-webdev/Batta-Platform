@@ -30,6 +30,7 @@ class ToolCategoryResource extends JsonResource
                 'name' => $tool->name,
                 'short' => $tool->short,
                 'color' => $tool->color,
+                'logo_url' => $tool->logo_url,
                 'why' => $tool->why,
                 'since' => $tool->since,
                 'url' => $tool->url,

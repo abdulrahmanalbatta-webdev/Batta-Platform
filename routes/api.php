@@ -51,6 +51,7 @@ use App\Http\Controllers\Api\TeamMemberController;
 use App\Http\Controllers\Api\TestEmailController;
 use App\Http\Controllers\Api\ToolCategoryController;
 use App\Http\Controllers\Api\ToolController;
+use App\Http\Controllers\Api\ToolLogoController;
 use App\Http\Controllers\Api\TrafficController;
 use App\Http\Controllers\Api\WorkshopController;
 use App\Http\Controllers\Api\WorkshopRegistrationController;
@@ -105,6 +106,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:manage-content')->group(function () {
         Route::apiResource('tools', ToolController::class)->only(['store', 'update', 'destroy']);
         Route::post('/tools/{tool}/move', [ToolController::class, 'move'])->name('tools.move');
+        Route::post('/tools/{tool}/logo', [ToolLogoController::class, 'store'])->name('tools.logo.store');
+        Route::delete('/tools/{tool}/logo', [ToolLogoController::class, 'destroy'])->name('tools.logo.destroy');
         Route::apiResource('tool-categories', ToolCategoryController::class)->only(['store', 'update', 'destroy']);
         Route::post('/tool-categories/{tool_category}/move', [ToolCategoryController::class, 'move'])->name('tool-categories.move');
         Route::apiResource('workshops', WorkshopController::class)->only(['store', 'update', 'destroy']);
