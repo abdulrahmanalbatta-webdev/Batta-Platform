@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\Site\AccountController;
 use App\Http\Controllers\Site\AccountPasswordController;
-use App\Http\Controllers\Site\ArticleCommentController;
 use App\Http\Controllers\Site\ArticleController;
+use App\Http\Controllers\Site\CommentController;
 use App\Http\Controllers\Site\ContactMessageController;
 use App\Http\Controllers\Site\ContentController;
 use App\Http\Controllers\Site\CourseController;
@@ -39,9 +39,13 @@ Route::get('/courses', [CourseController::class, 'index'])->name('courses.index'
 Route::get('/courses/{slug}', [CourseController::class, 'show'])->name('courses.show');
 Route::get('/courses/{slug}/reviews', [CourseReviewController::class, 'index'])->name('courses.reviews');
 Route::get('/workshops', [WorkshopController::class, 'index'])->name('workshops.index');
+Route::get('/workshops/{workshop}', [WorkshopController::class, 'show'])->whereNumber('workshop')->name('workshops.show');
 Route::get('/articles', [ArticleController::class, 'index'])->name('articles.index');
 Route::get('/articles/{slug}', [ArticleController::class, 'show'])->name('articles.show');
-Route::get('/articles/{slug}/comments', [ArticleCommentController::class, 'index'])->name('articles.comments.index');
+// comments under an article, a course or a workshop (with students' replies)
+Route::get('/articles/{key}/comments', [CommentController::class, 'index'])->defaults('type', 'article')->name('articles.comments.index');
+Route::get('/courses/{key}/comments', [CommentController::class, 'index'])->defaults('type', 'course')->name('courses.comments.index');
+Route::get('/workshops/{key}/comments', [CommentController::class, 'index'])->defaults('type', 'workshop')->whereNumber('key')->name('workshops.comments.index');
 Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
 Route::post('/tools/{tool}/click', [ToolController::class, 'click'])->whereNumber('tool')->name('tools.click');
 
@@ -66,7 +70,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me/courses', [MyCourseController::class, 'index'])->name('me.courses.index');
     Route::get('/me/courses/{slug}', [MyCourseController::class, 'show'])->name('me.courses.show');
     Route::put('/me/courses/{slug}/review', [MyReviewController::class, 'update'])->name('me.courses.review');
-    Route::post('/articles/{slug}/comments', [ArticleCommentController::class, 'store'])->middleware('throttle:site-forms')->name('articles.comments.store');
+    Route::post('/articles/{key}/comments', [CommentController::class, 'store'])->defaults('type', 'article')->middleware('throttle:site-forms')->name('articles.comments.store');
+    Route::post('/courses/{key}/comments', [CommentController::class, 'store'])->defaults('type', 'course')->middleware('throttle:site-forms')->name('courses.comments.store');
+    Route::post('/workshops/{key}/comments', [CommentController::class, 'store'])->defaults('type', 'workshop')->whereNumber('key')->middleware('throttle:site-forms')->name('workshops.comments.store');
     Route::post('/me/lessons/{lesson}/completion', [LessonCompletionController::class, 'store'])->name('me.lessons.complete');
     Route::delete('/me/lessons/{lesson}/completion', [LessonCompletionController::class, 'destroy'])->name('me.lessons.uncomplete');
 });

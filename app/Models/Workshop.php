@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\OrderItemType;
 use App\Enums\OrderStatus;
 use App\Enums\WorkshopFormat;
+use App\Models\Concerns\HasComments;
 use App\Models\Concerns\LogsActivity;
 use Database\Factories\WorkshopFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Workshop extends Model
 {
     /** @use HasFactory<WorkshopFactory> */
-    use HasFactory, LogsActivity;
+    use HasComments, HasFactory, LogsActivity;
 
     /**
      * Get the attributes that should be cast.

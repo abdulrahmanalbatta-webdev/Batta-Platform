@@ -6,15 +6,17 @@ use App\Enums\LeadStage;
 use App\Enums\OrderStatus;
 use App\Enums\ReviewStatus;
 use App\Models\Article;
-use App\Models\ArticleComment;
+use App\Models\Comment;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
+use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lead;
 use App\Models\Order;
 use App\Models\Review;
 use App\Models\Student;
 use App\Models\User;
+use App\Models\Workshop;
 use App\Notifications\Alerts\ContactMessageReceived;
 use App\Notifications\Alerts\LeadReceived;
 use App\Notifications\Alerts\OrderPaid;
@@ -131,27 +133,41 @@ class CommunitySeeder extends Seeder
     }
 
     /**
-     * A few comments on the latest published articles: published ones (one with a reply) and one waiting.
+     * A few comments on the latest published articles, a course and a workshop: published ones (one with a team
+     * reply, one with a student's reply) and one waiting.
      */
     private function comments(): void
     {
         $owner = User::query()->oldest('id')->first();
         $articles = Article::query()->published()->latest('published_at')->take(2)->get();
-        $students = Student::query()->oldest('id')->take(4)->get();
-        if ($articles->isEmpty() || $students->count() < 4) {
+        $course = Course::query()->published()->latest('id')->first();
+        $workshop = Workshop::query()->orderBy('date')->first();
+        $students = Student::query()->oldest('id')->take(5)->get();
+        if ($articles->isEmpty() || $students->count() < 5) {
             return;
         }
 
+        $targets = array_values(array_filter([$articles[0], $articles[1 % $articles->count()], $course, $workshop]));
         $comments = [
-            [0, 0, 'شرح واضح جداً، طبّقت الخطوات على مشروعي واشتغلت من أول مرة.', ReviewStatus::Published, 'سعيد أنه أفادك، بالتوفيق في مشروعك!', 6],
-            [0, 1, 'هل في طريقة لعمل نفس الشيء مع Laravel بدل Node؟', ReviewStatus::Published, null, 4],
-            [1, 2, 'مقال رائع، ياريت تكتب عن النشر على سيرفر خاص.', ReviewStatus::Published, null, 2],
-            [1, 3, 'شكراً على المقال، عندي سؤال عن التسعير بالساعة مقابل المشروع.', ReviewStatus::Pending, null, 1],
+            // [target, student, body, status, team reply, days ago, replies to comment #]
+            [0, 0, 'شرح واضح جداً، طبّقت الخطوات على مشروعي واشتغلت من أول مرة.', ReviewStatus::Published, 'سعيد أنه أفادك، بالتوفيق في مشروعك!', 6, null],
+            [0, 1, 'هل في طريقة لعمل نفس الشيء مع Laravel بدل Node؟', ReviewStatus::Published, null, 4, null],
+            [0, 2, 'نعم، نفس الفكرة تماماً، جرّبتها مع Laravel وكانت أسهل.', ReviewStatus::Published, null, 3, 1],
+            [1, 2, 'مقال رائع، ياريت تكتب عن النشر على سيرفر خاص.', ReviewStatus::Published, null, 2, null],
+            [1, 3, 'شكراً على المقال، عندي سؤال عن التسعير بالساعة مقابل المشروع.', ReviewStatus::Pending, null, 1, null],
+            [2, 4, 'هل الدورة مناسبة لشخص بدأ البرمجة من شهرين؟', ReviewStatus::Published, 'أكيد، الدورة تبدأ من الأساسيات وتبني مشروعاً خطوة بخطوة.', 5, null],
+            [3, 1, 'هل الورشة ستكون مسجّلة لمن لا يستطيع الحضور؟', ReviewStatus::Published, null, 2, null],
         ];
-        foreach ($comments as [$article, $student, $body, $status, $reply, $days]) {
+        $created = [];
+        foreach ($comments as $i => [$target, $student, $body, $status, $reply, $days, $parent]) {
+            if (! isset($targets[$target])) {
+                continue;
+            }
             $date = now()->subDays($days);
-            ArticleComment::forceCreate([
-                'article_id' => $articles[$article % $articles->count()]->id,
+            $created[$i] = Comment::forceCreate([
+                'commentable_type' => $targets[$target]->getMorphClass(),
+                'commentable_id' => $targets[$target]->getKey(),
+                'parent_id' => $parent !== null ? ($created[$parent]->id ?? null) : null,
                 'student_id' => $students[$student]->id,
                 'body' => $body,
                 'status' => $status,

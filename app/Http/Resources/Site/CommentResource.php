@@ -2,17 +2,17 @@
 
 namespace App\Http\Resources\Site;
 
-use App\Models\ArticleComment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 
 /**
- * A published comment under an article. Only the student's first name is shown, never their email.
+ * A comment on the site: the student's first name only, the team's reply, and (on a top-level comment) the
+ * students' published replies.
  *
- * @mixin ArticleComment
+ * @mixin \App\Models\Comment
  */
-class ArticleCommentResource extends JsonResource
+class CommentResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -29,6 +29,7 @@ class ArticleCommentResource extends JsonResource
             'reply' => $this->reply,
             'replied_at' => $this->replied_at?->toIso8601String(),
             'date' => $this->created_at->toDateString(),
+            'replies' => self::collection($this->whenLoaded('replies')),
         ];
     }
 }

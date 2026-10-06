@@ -68,7 +68,7 @@ class PlatformSettings
             'whatsapp' => ['label' => 'رقم واتساب', 'default' => null, 'rules' => ['nullable', 'regex:/^\+?[0-9 ]{7,20}$/'], 'public' => true],
             'maintenance_mode' => ['label' => 'وضع الصيانة', 'default' => false, 'rules' => $bool, 'public' => true],
             'registration_open' => ['label' => 'السماح بالتسجيل', 'default' => true, 'rules' => $bool, 'public' => true],
-            'article_comments' => ['label' => 'التعليقات على المقالات', 'default' => true, 'rules' => $bool, 'public' => true],
+            'article_comments' => ['label' => 'التعليقات على المقالات والدورات والورش', 'default' => true, 'rules' => $bool, 'public' => true],
 
             // payments
             'currency' => ['label' => 'العملة', 'default' => 'USD', 'rules' => ['required', Rule::in(array_keys(self::CURRENCIES))], 'public' => true],

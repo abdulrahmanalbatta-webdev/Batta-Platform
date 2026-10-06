@@ -40,7 +40,7 @@
           <div style="margin-top:22px">
             <div class="setting-row"><div><b>وضع الصيانة</b><p>إخفاء الموقع مؤقتاً عن الزوار وإظهار صفحة "نعود قريباً".</p></div><label class="switch"><input type="checkbox" id="maintenance" data-setting="maintenance_mode"><span class="track"></span></label></div>
             <div class="setting-row"><div><b>السماح بالتسجيل</b><p>يمكن للزوار إنشاء حساب جديد في المنصة.</p></div><label class="switch"><input type="checkbox" data-setting="registration_open"><span class="track"></span></label></div>
-            <div class="setting-row"><div><b>التعليقات على المقالات</b><p>تفعيل التعليقات مع مراجعتها قبل النشر.</p></div><label class="switch"><input type="checkbox" data-setting="article_comments"><span class="track"></span></label></div>
+            <div class="setting-row"><div><b>التعليقات</b><p>تعليقات الطلاب وردودهم على المقالات والدورات والورش، مع مراجعتها قبل النشر.</p></div><label class="switch"><input type="checkbox" data-setting="article_comments"><span class="track"></span></label></div>
           </div>
           <p class="muted" style="font-size:12.5px;margin-top:14px">هذه الإعدادات يقرأها الموقع العام من <span class="mono ltr">/api/v1/settings</span>.</p>
         </div>

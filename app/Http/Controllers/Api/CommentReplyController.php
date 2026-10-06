@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ArticleCommentResource;
-use App\Models\ArticleComment;
+use App\Http\Resources\CommentResource;
+use App\Models\Comment;
 use Illuminate\Http\Request;
 
-class ArticleCommentReplyController extends Controller
+class CommentReplyController extends Controller
 {
     /**
      * Write or edit the public reply under a comment.
      */
-    public function update(Request $request, ArticleComment $comment): ArticleCommentResource
+    public function update(Request $request, Comment $comment): CommentResource
     {
         $validated = $request->validate(['reply' => ['required', 'string', 'max:2000']], [], ['reply' => 'الرد']);
 
@@ -22,16 +22,16 @@ class ArticleCommentReplyController extends Controller
             'replied_at' => now(),
         ])->save();
 
-        return new ArticleCommentResource($comment->load(['student:id,name', 'article:id,title,slug', 'replier:id,name']));
+        return new CommentResource($comment->load(CommentController::WITH));
     }
 
     /**
      * Remove the reply.
      */
-    public function destroy(ArticleComment $comment): ArticleCommentResource
+    public function destroy(Comment $comment): CommentResource
     {
         $comment->forceFill(['reply' => null, 'replied_by' => null, 'replied_at' => null])->save();
 
-        return new ArticleCommentResource($comment->load(['student:id,name', 'article:id,title,slug']));
+        return new CommentResource($comment->load(CommentController::WITH));
     }
 }

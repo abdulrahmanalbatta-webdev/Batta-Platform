@@ -20,7 +20,15 @@ document.addEventListener('app:ready', async () => {
 
   const color = (c) => COLORS[c.student_id % COLORS.length];
   const replace = (comment) => comments.splice(comments.findIndex((c) => c.id === comment.id), 1, comment);
-  const articleLink = (c) => (App.siteUrl ? `<a href="${esc(`${App.siteUrl}/articles/${c.article_slug}`)}" target="_blank" rel="noopener">${esc(c.article)}</a>` : esc(c.article));
+  // where it was left: the article, course or workshop page on the site
+  const PATHS = { article: 'articles', course: 'courses', workshop: 'workshops' };
+  const GROUPS = { article: 'المقالات', course: 'الدورات', workshop: 'الورش' };
+  const targetLink = (c) => {
+    const title = `${esc(c.type_label)}: ${esc(c.target ?? '—')}`;
+    return App.siteUrl && c.target ? `<a href="${esc(`${App.siteUrl}/${PATHS[c.type]}/${c.target_key}`)}" target="_blank" rel="noopener">${title}</a>` : title;
+  };
+  // the place filter: "" (all), "course" (every course) or "course:12" (one course)
+  const matchesPlace = (c, place) => !place || place === c.type || place === `${c.type}:${c.target_id}`;
 
   function renderSeg() {
     $('#statusSeg').innerHTML = statuses
@@ -40,17 +48,18 @@ document.addEventListener('app:ready', async () => {
   }
 
   function render() {
-    const article = Number($('#articleFilter').value);
-    const list = comments.filter((c) => (current === 'all' || c.status === current) && (!article || c.article_id === article));
+    const place = $('#placeFilter').value;
+    const list = comments.filter((c) => (current === 'all' || c.status === current) && matchesPlace(c, place));
     $('#commentList').innerHTML =
       list
         .map(
           (c) => `
       <div class="review" style="${c.status === 'hidden' ? 'opacity:.6' : ''}">
         <div class="review-top">
-          <div class="person"><span class="avatar" style="background:${color(c)}">${esc(c.initial)}</span><div><b>${esc(c.name)}</b><small>${articleLink(c)} · ${date(c.date)}</small></div></div>
+          <div class="person"><span class="avatar" style="background:${color(c)}">${esc(c.initial)}</span><div><b>${esc(c.name)}</b><small>${targetLink(c)} · ${date(c.date)}</small></div></div>
           ${badge(c.status_label)}
         </div>
+        ${c.parent ? `<div class="quote">${icon('reply', 'sm')}<span>ردّاً على <b>${esc(c.parent.name)}</b>: ${esc(c.parent.body)}</span></div>` : ''}
         <p style="white-space:pre-line">${esc(c.body)}</p>
         ${c.reply && replying !== c.id ? `<div class="reply"><b>${c.replied_by ? `ردّ ${esc(c.replied_by)}` : 'الرد'}</b>${esc(c.reply)}</div>` : ''}
         ${
@@ -67,7 +76,7 @@ document.addEventListener('app:ready', async () => {
         ${actions(c)}
       </div>`,
         )
-        .join('') || `<div class="empty"><div class="e-ico">${icon('chat')}</div><b>لا توجد تعليقات</b>${comments.length ? 'لا يوجد ما يطابق الفلاتر الحالية.' : 'تظهر هنا تعليقات الطلاب على المقالات عند وصولها.'}</div>`;
+        .join('') || `<div class="empty"><div class="e-ico">${icon('chat')}</div><b>لا توجد تعليقات</b>${comments.length ? 'لا يوجد ما يطابق الفلاتر الحالية.' : 'تظهر هنا تعليقات الطلاب وردودهم على المقالات والدورات والورش عند وصولها.'}</div>`;
     $('#commentList [data-reply-form] textarea')?.focus();
   }
 
@@ -108,20 +117,22 @@ document.addEventListener('app:ready', async () => {
     if (!b) return;
     const c = comments.find((x) => x.id === Number(b.dataset.id));
     const act = b.dataset.act;
-    if (act === 'publish') return setStatus(c, 'published', 'تم نشر التعليق تحت المقال');
+    if (act === 'publish') return setStatus(c, 'published', 'تم نشر التعليق في الموقع');
     if (act === 'hide') return setStatus(c, 'hidden', 'تم إخفاء التعليق');
     if (act === 'reply') {
       replying = c.id;
       return render();
     }
     if (act === 'delete') {
-      if (!(await confirmDialog({ title: 'حذف التعليق؟', text: `تعليق ${c.name} سيُحذف نهائياً.`, ok: 'حذف' }))) return;
+      const replies = comments.filter((x) => x.parent_id === c.id).length;
+      const text = `تعليق ${c.name} سيُحذف نهائياً${replies ? `، مع ${replies === 1 ? 'الرد عليه' : `${replies} ردود عليه`}` : ''}.`;
+      if (!(await confirmDialog({ title: 'حذف التعليق؟', text, ok: 'حذف' }))) return;
       try {
         await api.delete(`comments/${c.id}`);
       } catch {
         return;
       }
-      comments.splice(comments.indexOf(c), 1);
+      comments = comments.filter((x) => x.id !== c.id && x.parent_id !== c.id);
       toast('تم حذف التعليق');
       refresh();
     }
@@ -150,9 +161,18 @@ document.addEventListener('app:ready', async () => {
     renderSeg();
     render();
   });
-  const articles = new Map(comments.map((c) => [c.article_id, c.article]));
-  articles.forEach((title, id) => $('#articleFilter').insertAdjacentHTML('beforeend', `<option value="${id}">${esc(title)}</option>`));
-  $('#articleFilter').addEventListener('change', render);
+  // the place filter: every type, then each article, course and workshop that has comments
+  $('#placeFilter').insertAdjacentHTML(
+    'beforeend',
+    Object.entries(GROUPS)
+      .filter(([type]) => comments.some((c) => c.type === type))
+      .map(([type, label]) => {
+        const places = new Map(comments.filter((c) => c.type === type).map((c) => [c.target_id, c.target]));
+        return `<optgroup label="${label}"><option value="${type}">كل ${label}</option>${[...places].map(([id, title]) => `<option value="${type}:${id}">${esc(title ?? '—')}</option>`).join('')}</optgroup>`;
+      })
+      .join(''),
+  );
+  $('#placeFilter').addEventListener('change', render);
 
   refresh();
 });
