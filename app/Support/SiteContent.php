@@ -102,6 +102,7 @@ class SiteContent
                 'short' => $long('النبذة القصيرة (الرئيسية)', 600),
                 'story' => ['type' => 'strings', 'label' => 'القصة (صفحة من أنا) — فقرة لكل سطر', 'max_items' => 8, 'max' => 1000, 'long' => true],
                 'skills' => $strings('المهارات', 30, 40),
+                'cutout' => ['type' => 'image', 'label' => 'صورتك بدون خلفية (القسم الأول بالرئيسية)', 'hint' => 'PNG شفافة بدون خلفية (من remove.bg مثلاً)، من الخصر للأعلى. فارغة: تُستخدم الصورة المرفقة بالموقع.'],
             ]],
             'highlights' => ['group' => 'about', 'label' => 'ماذا أفعل', 'type' => 'list', 'max_items' => 6, 'title' => 'title', 'item' => [
                 'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],

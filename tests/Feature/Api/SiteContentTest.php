@@ -175,6 +175,19 @@ class SiteContentTest extends TestCase
         Storage::disk('public')->assertMissing($cover);
     }
 
+    public function test_the_cutout_photo_reaches_the_site_as_a_url(): void
+    {
+        Storage::fake('public');
+        $editor = User::factory()->role(Role::Editor)->create();
+        $path = $this->actingAs($editor)->postJson(route('api.site-images.store'), ['image' => $this->png('me.png', 400)])->json('data.path');
+
+        $profile = SiteContent::defaults()['profile'];
+        $profile['cutout'] = $path;
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'profile'), ['value' => $profile])->assertOk();
+
+        $this->getJson(route('site.content'))->assertJsonPath('data.profile.cutout', Storage::disk('public')->url($path));
+    }
+
     public function test_images_must_be_uploaded_ones(): void
     {
         $studies = SiteContent::defaults()['case_studies'];
