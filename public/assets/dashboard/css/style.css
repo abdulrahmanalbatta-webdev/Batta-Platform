@@ -1193,6 +1193,9 @@ button { cursor: pointer; }
 .tool-card p, .tool-preview p { font-size: 13.5px; color: var(--text); line-height: 1.8; flex: 1; }
 .tool-top { display: flex; align-items: center; gap: 12px; }
 .tool-logo { width: 44px; height: 44px; border-radius: 12px; flex: none; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 15px; direction: ltr; letter-spacing: -0.02em; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+.tool-logo.has-img { background: var(--surface-2) !important; box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+.tool-logo img { width: 72%; height: 72%; object-fit: contain; }
+.logo-pick { display: flex; gap: 8px; flex-wrap: wrap; }
 .tool-title { flex: 1; min-width: 0; }
 .tool-title b { display: block; color: var(--fg); font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tool-title small { color: var(--muted); font-size: 12.5px; }

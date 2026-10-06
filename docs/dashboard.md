@@ -263,6 +263,7 @@ try {
 | GET · POST | `tools` | الأدوات بترتيبها · إضافة في آخر القائمة |
 | PATCH · DELETE | `tools/{id}` | تعديل أي حقل (مثلاً `is_published` فقط) · حذف |
 | POST | `tools/{id}/move` | تقديم/تأخير (`direction: up/down`) |
+| POST · DELETE | `tools/{id}/logo` | رفع شعار الأداة (`logo`: JPG/PNG/WebP لحد 2MB، بيستبدل القديم) · إزالته. بدون شعار الموقع بيعرض الرمز على لون الأداة |
 | GET · POST | `tool-categories` | التصنيفات مع عدد أدواتها · إضافة |
 | PATCH · DELETE | `tool-categories/{id}` | إعادة تسمية/لون · حذف (`?move_to=` إذا فيه أدوات) |
 | POST | `tool-categories/{id}/move` | تقديم/تأخير |

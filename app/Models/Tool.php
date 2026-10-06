@@ -6,9 +6,11 @@ use App\Models\Concerns\LogsActivity;
 use Database\Factories\ToolFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 #[Fillable(['tool_category_id', 'name', 'short', 'color', 'why', 'since', 'url', 'is_affiliate', 'is_published'])]
 class Tool extends Model
@@ -27,6 +29,24 @@ class Tool extends Model
             'is_affiliate' => 'boolean',
             'is_published' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // a deleted tool takes its logo with it
+        static::deleted(function (Tool $tool): void {
+            if ($tool->logo_path) {
+                Storage::disk('public')->delete($tool->logo_path);
+            }
+        });
+    }
+
+    /**
+     * @return Attribute<string|null, never>
+     */
+    protected function logoUrl(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->logo_path ? Storage::disk('public')->url($this->logo_path) : null);
     }
 
     /**

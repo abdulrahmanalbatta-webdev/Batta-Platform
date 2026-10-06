@@ -43,6 +43,7 @@ class WipePlatformData
 
         Storage::disk('public')->deleteDirectory('courses');
         Storage::disk('public')->deleteDirectory('articles');
+        Storage::disk('public')->deleteDirectory('tools');
         Storage::disk(ConversationMessage::ATTACHMENT_DISK)->deleteDirectory('conversations');
 
         Cache::forget(DashboardSummary::CACHE_KEY);
