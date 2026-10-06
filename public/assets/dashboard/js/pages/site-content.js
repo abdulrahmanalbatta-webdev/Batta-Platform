@@ -164,6 +164,10 @@ document.addEventListener('app:ready', async () => {
 
   /* ---------- editing ---------- */
   const dirty = new Set();
+  // leaving with unsaved sections asks first
+  window.addEventListener('beforeunload', (e) => {
+    if (dirty.size) e.preventDefault();
+  });
   const panels = $('#contentPanels');
   panels.addEventListener('input', (e) => {
     const el = e.target.closest('[data-path]');
@@ -181,7 +185,7 @@ document.addEventListener('app:ready', async () => {
     dirty.add(path[0]);
   });
 
-  // content images: uploaded right away, kept in the section until "حفظ"
+  // content images: uploaded, then the section is saved right away (like the profile photo), so a picture is never left unsaved
   panels.addEventListener('change', async (e) => {
     const input = e.target.closest('[data-upload]');
     if (!input?.files.length) return;
@@ -189,6 +193,7 @@ document.addEventListener('app:ready', async () => {
     const files = [...input.files];
     const label = input.closest('.sc-upload');
     label.classList.add('busy');
+    let added = 0;
     for (const file of input.dataset.many ? files : files.slice(0, 1)) {
       if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
         toast('اختر صورة بصيغة JPG أو PNG أو WebP', 'error');
@@ -205,10 +210,13 @@ document.addEventListener('app:ready', async () => {
       }
       if (input.dataset.many) getAt(path).push(uploaded.path);
       else setAt(path, uploaded.path);
+      added++;
     }
+    label.classList.remove('busy');
+    if (!added) return;
     dirty.add(path[0]);
     redraw(path[0]);
-    toast('تم رفع الصورة، اضغط "حفظ" لتظهر في الموقع');
+    await save(path[0]);
   });
 
   panels.addEventListener('click', async (e) => {
@@ -218,7 +226,8 @@ document.addEventListener('app:ready', async () => {
       if (remove.dataset.index === undefined) setAt(path, null);
       else getAt(path).splice(Number(remove.dataset.index), 1);
       dirty.add(path[0]);
-      return redraw(path[0]);
+      redraw(path[0]);
+      return save(path[0]);
     }
     const b = e.target.closest('button');
     if (!b) return;
@@ -275,8 +284,9 @@ document.addEventListener('app:ready', async () => {
     return def;
   }
 
-  async function save(key, btn) {
-    btn.disabled = true;
+  // a section's own "حفظ" button, or a save that follows an image upload or removal
+  async function save(key, btn = $(`[data-save="${key}"]`)) {
+    if (btn) btn.disabled = true;
     try {
       state[key] = (await api.put(`site-content/${key}`, { value: state[key] })).data;
     } catch (err) {
@@ -294,7 +304,7 @@ document.addEventListener('app:ready', async () => {
       }
       return;
     } finally {
-      btn.disabled = false;
+      if (btn?.isConnected) btn.disabled = false;
     }
     dirty.delete(key);
     redraw(key);
