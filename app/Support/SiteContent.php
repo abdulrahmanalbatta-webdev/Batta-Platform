@@ -102,7 +102,7 @@ class SiteContent
                 'short' => $long('النبذة القصيرة (الرئيسية)', 600),
                 'story' => ['type' => 'strings', 'label' => 'القصة (صفحة من أنا) — فقرة لكل سطر', 'max_items' => 8, 'max' => 1000, 'long' => true],
                 'skills' => $strings('المهارات', 30, 40),
-                'cutout' => ['type' => 'image', 'label' => 'صورة البطاقة المعلّقة في الرئيسية', 'hint' => 'PNG أو WebP شفافة بدون خلفية (من remove.bg مثلاً)، من الصدر للأعلى والوجه في المنتصف، وتظهر فوق خلفية زرقاء. فارغة: تُستخدم الصورة المرفقة بالموقع.'],
+                'cutout' => ['type' => 'image', 'label' => 'صورة البطاقة المعلّقة في الرئيسية', 'hint' => 'PNG أو WebP شفافة بدون خلفية (من remove.bg مثلاً)، من الصدر للأعلى والوجه في المنتصف، وتظهر فوق خلفية زرقاء. فارغة: يظهر أول حرف من اسمك.'],
             ]],
             'highlights' => ['group' => 'about', 'label' => 'ماذا أفعل', 'type' => 'list', 'max_items' => 6, 'title' => 'title', 'item' => [
                 'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],
@@ -200,7 +200,7 @@ class SiteContent
                 'services' => $block('صفحة الخدمات', ['text' => $long('المقدمة', 300)]),
                 'packages' => $intro('الباقات', false),
                 'process' => $intro('طريقة العمل', false),
-                'contact' => $block('تواصل (نموذج عرض السعر)', [
+                'contact' => $block('صفحة التواصل (نموذج عرض السعر)', [
                     'eyebrow' => $text('العنوان الصغير', 40),
                     'title' => $text('العنوان', 120),
                     'text' => $long('المقدمة', 300),
@@ -256,6 +256,7 @@ class SiteContent
                     'services' => $text('الخدمات', 30), 'work' => $text('الأعمال', 30), 'about' => $text('من أنا', 30),
                     'courses' => $text('الدورات', 30), 'workshops' => $text('الورش', 30), 'academy' => $text('مجموعة الدورات والورش', 30),
                     'articles' => $text('المقالات', 30), 'tools' => $text('الأدوات', 30), 'resources' => $text('مجموعة المقالات والأدوات', 30),
+                    'contact' => $text('التواصل', 30),
                 ]),
                 'menu' => $block('وصف الصفحات في القائمة', [
                     'courses' => $text('الدورات', 80), 'workshops' => $text('الورش', 80), 'articles' => $text('المقالات', 80), 'tools' => $text('الأدوات', 80),
