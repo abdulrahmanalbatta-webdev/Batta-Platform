@@ -1,5 +1,5 @@
 document.addEventListener('app:ready', async () => {
-  const { $, $$, esc, icon, toast, confirmDialog, api, showFieldErrors } = App;
+  const { $, esc, icon, toast, api, showFieldErrors } = App;
   const id = Number(document.body.dataset.id) || null; // set by the edit route: /dashboard/courses/{id}/edit
   let existing = null;
   if (id) {
@@ -41,87 +41,6 @@ document.addEventListener('app:ready', async () => {
     initial.forEach(add);
     return values;
   }
-
-  /* ---------- curriculum builder ---------- */
-  // saved modules and lessons keep their ids, so the server updates them in place instead of recreating them
-  let modules = existing
-    ? existing.modules.map((m) => ({ id: m.id, title: m.title || '', lessons: m.lessons.map((l) => ({ id: l.id, title: l.title || '', dur: l.duration })) }))
-    : [{ title: '', lessons: [{ title: '', dur: '' }] }];
-
-  function renderModules() {
-    const host = $('#modules');
-    host.innerHTML = modules.length
-      ? modules
-          .map(
-            (m, mi) => `
-        <div class="module" data-m="${mi}">
-          <div class="module-head">
-            <span class="badge ink">${mi + 1}</span>
-            <input class="input" data-field="mtitle" value="${esc(m.title)}" placeholder="عنوان الوحدة" aria-label="عنوان الوحدة">
-            <button type="button" class="btn-icon" data-move="up" title="لأعلى" ${mi === 0 ? 'disabled' : ''}>${icon('arrow-up', 'sm')}</button>
-            <button type="button" class="btn-icon" data-move="down" title="لأسفل" ${mi === modules.length - 1 ? 'disabled' : ''}>${icon('arrow-down', 'sm')}</button>
-            <button type="button" class="btn-icon danger" data-del-module title="حذف الوحدة">${icon('trash', 'sm')}</button>
-          </div>
-          ${m.lessons
-            .map(
-              (l, li) => `
-            <div class="lesson" data-l="${li}">
-              <span class="muted">${icon('play', 'sm')}</span>
-              <input class="input" data-field="ltitle" value="${esc(l.title)}" placeholder="عنوان الدرس" aria-label="عنوان الدرس">
-              <input class="input dur ltr" data-field="ldur" value="${esc(l.dur)}" placeholder="00:00" aria-label="المدة" style="text-align:center">
-              <button type="button" class="btn-icon danger" data-del-lesson title="حذف الدرس">${icon('close', 'sm')}</button>
-            </div>`,
-            )
-            .join('')}
-          <div class="module-add"><button type="button" class="btn btn-ghost btn-sm" data-add-lesson>${icon('plus', 'sm')}إضافة درس</button></div>
-        </div>`,
-          )
-          .join('')
-      : `<div class="empty"><div class="e-ico">${icon('layers', 'lg')}</div><b>لا توجد وحدات بعد</b>ابدأ بإضافة أول وحدة للمنهج</div>`;
-    const lessons = modules.reduce((a, m) => a + m.lessons.length, 0);
-    $('#curriculumSummary').textContent = `${modules.length} وحدات · ${lessons} دروس`;
-  }
-
-  $('#addModule').addEventListener('click', () => {
-    modules.push({ title: '', lessons: [{ title: '', dur: '' }] });
-    renderModules();
-    $$('#modules [data-field="mtitle"]').at(-1).focus();
-  });
-  $('#modules').addEventListener('input', (e) => {
-    const mEl = e.target.closest('[data-m]');
-    if (!mEl) return;
-    const m = modules[mEl.dataset.m];
-    const f = e.target.dataset.field;
-    if (f === 'mtitle') m.title = e.target.value;
-    const lEl = e.target.closest('[data-l]');
-    if (lEl) {
-      const l = m.lessons[lEl.dataset.l];
-      if (f === 'ltitle') l.title = e.target.value;
-      if (f === 'ldur') l.dur = e.target.value;
-    }
-  });
-  $('#modules').addEventListener('click', async (e) => {
-    const mEl = e.target.closest('[data-m]');
-    if (!mEl) return;
-    const mi = Number(mEl.dataset.m);
-    if (e.target.closest('[data-add-lesson]')) {
-      modules[mi].lessons.push({ title: '', dur: '' });
-      renderModules();
-      $$(`[data-m="${mi}"] [data-field="ltitle"]`).at(-1).focus();
-    } else if (e.target.closest('[data-del-lesson]')) {
-      modules[mi].lessons.splice(Number(e.target.closest('[data-l]').dataset.l), 1);
-      renderModules();
-    } else if (e.target.closest('[data-del-module]')) {
-      if (await confirmDialog({ title: 'حذف الوحدة؟', text: 'سيتم حذف الوحدة وكل دروسها.', ok: 'حذف' })) {
-        modules.splice(mi, 1);
-        renderModules();
-      }
-    } else if (e.target.closest('[data-move]')) {
-      const to = e.target.closest('[data-move]').dataset.move === 'up' ? mi - 1 : mi + 1;
-      [modules[mi], modules[to]] = [modules[to], modules[mi]];
-      renderModules();
-    }
-  });
 
   /* ---------- cover image preview (drag & drop or pick) ---------- */
   const cover = $('#cover');
@@ -191,12 +110,9 @@ document.addEventListener('app:ready', async () => {
     outcomes = tagsInput($('#outcomes'));
     tags = tagsInput($('#tags'));
   }
-  renderModules();
-
   // warn before leaving with unsaved edits
   let dirty = false;
   $('#courseForm').addEventListener('input', () => (dirty = true));
-  $('#modules').addEventListener('click', (e) => e.target.closest('button') && (dirty = true));
   window.addEventListener('beforeunload', (e) => dirty && e.preventDefault());
 
   /* ---------- save ---------- */
@@ -211,14 +127,6 @@ document.addEventListener('app:ready', async () => {
         $('#title').focus();
         toast('أكمل الحقول المطلوبة', 'error');
         return;
-      }
-      // lesson durations must look like 12:40 (minutes:seconds)
-      const durInputs = $$('#modules [data-field="ldur"]');
-      const badDur = durInputs.filter((i) => i.value.trim() && !/^\d{1,3}:[0-5]\d$/.test(i.value.trim()));
-      durInputs.forEach((i) => i.classList.toggle('invalid', badDur.includes(i)));
-      if (badDur.length) {
-        badDur[0].focus();
-        return toast('مدة الدرس بصيغة دقائق:ثوانٍ، مثل 12:40', 'error');
       }
       const chosen = $('#status').value;
       const status = btn.dataset.save === 'publish' ? 'published' : chosen === 'published' ? 'draft' : chosen;
@@ -239,7 +147,6 @@ document.addEventListener('app:ready', async () => {
         is_included_in_pro: $('#pro').checked,
         has_certificate: $('#certificate').checked,
         allows_questions: $('#comments').checked,
-        modules: modules.map((m) => ({ id: m.id ?? null, title: m.title.trim() || null, lessons: m.lessons.map((l) => ({ id: l.id ?? null, title: l.title.trim() || null, duration: l.dur.trim() || null })) })),
       };
       const fields = { title: '#title', slug: '#slug', short_description: '#short', description: '#desc', price: '#price', old_price: '#oldPrice', publish_at: '#publishAt' };
       saving = true;

@@ -5,10 +5,8 @@ namespace Tests\Feature\Site;
 use App\Enums\LeadStage;
 use App\Models\Article;
 use App\Models\Course;
-use App\Models\CourseModule;
 use App\Models\Enrollment;
 use App\Models\Lead;
-use App\Models\Lesson;
 use App\Models\Review;
 use App\Models\Student;
 use App\Models\Tool;
@@ -56,7 +54,6 @@ class SiteContentTest extends TestCase
     public function test_courses_list_only_published_ones_with_their_numbers(): void
     {
         $course = Course::factory()->published()->create(['title' => 'Laravel من الصفر', 'price' => 49, 'outcomes' => ['مشروع منشور']]);
-        Lesson::factory()->count(2)->for(CourseModule::factory()->for($course), 'module')->create(['duration_seconds' => 1800]);
         Enrollment::factory()->for($course)->create();
         Review::factory()->published()->for($course)->create(['rating' => 4]);
         Review::factory()->for($course)->create(['rating' => 1]);
@@ -67,28 +64,24 @@ class SiteContentTest extends TestCase
         $response->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.title', 'Laravel من الصفر')
-            ->assertJsonPath('data.0.lessons', 2)
-            ->assertJsonPath('data.0.hours', 1)
             ->assertJsonPath('data.0.students', 1)
             ->assertJsonPath('data.0.rating', 4)
             ->assertJsonPath('data.0.reviews', 1)
             ->assertJsonPath('data.0.outcomes', ['مشروع منشور'])
+            ->assertJsonMissingPath('data.0.lessons')
             ->assertJsonMissingPath('data.0.revenue')
             ->assertJsonMissingPath('data.0.status');
     }
 
-    public function test_a_course_page_shows_the_curriculum_but_not_drafts(): void
+    public function test_a_course_page_shows_the_description_but_not_drafts(): void
     {
-        $course = Course::factory()->published()->create(['slug' => 'laravel']);
-        $module = CourseModule::factory()->for($course)->create(['title' => 'البداية']);
-        Lesson::factory()->for($module, 'module')->create(['title' => 'التثبيت', 'duration_seconds' => 600]);
+        Course::factory()->published()->create(['slug' => 'laravel', 'description' => 'دورة عملية']);
         Course::factory()->create(['slug' => 'draft-course']);
 
         $this->getJson(route('site.courses.show', 'laravel'))
             ->assertOk()
-            ->assertJsonPath('data.modules.0.title', 'البداية')
-            ->assertJsonPath('data.modules.0.lessons.0.title', 'التثبيت')
-            ->assertJsonPath('data.modules.0.lessons.0.duration_seconds', 600);
+            ->assertJsonPath('data.description', 'دورة عملية')
+            ->assertJsonMissingPath('data.modules');
 
         $this->getJson(route('site.courses.show', 'draft-course'))->assertNotFound();
     }

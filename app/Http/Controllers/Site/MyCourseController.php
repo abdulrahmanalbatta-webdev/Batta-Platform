@@ -7,7 +7,6 @@ use App\Http\Resources\Site\CourseResource;
 use App\Http\Resources\Site\OwnReviewResource;
 use App\Models\Course;
 use App\Models\Student;
-use App\Support\CourseProgress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,9 +14,9 @@ class MyCourseController extends Controller
 {
     /**
      * The courses the student can study: the ones they bought (even if since unpublished), plus the published
-     * Pro courses while their membership runs. Each with its progress; the most recently bought first.
+     * Pro courses while their membership runs; the most recently bought first.
      */
-    public function index(Request $request, CourseProgress $progress): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         /** @var Student $student */
         $student = $request->user();
@@ -32,18 +31,16 @@ class MyCourseController extends Controller
             ->sortBy(fn (Course $course): int => ($position = $enrolledIds->search($course->id)) === false ? PHP_INT_MAX : $position)
             ->values();
 
-        $perCourse = $progress->forStudent($student->id, $courses->pluck('id'));
-
         return response()->json(['data' => $courses->map(fn (Course $course): array => [
-            ...(new CourseResource($course))->withProgress($perCourse[$course->id])->resolve($request),
+            ...(new CourseResource($course))->resolve($request),
             'access' => $enrolledIds->contains($course->id) ? 'purchased' : 'pro',
         ])->all()]);
     }
 
     /**
-     * One course the student can study: the curriculum with the lessons they finished, and their review.
+     * One course the student can study, with their review.
      */
-    public function show(Request $request, string $slug, CourseProgress $progress): JsonResponse
+    public function show(Request $request, string $slug): JsonResponse
     {
         /** @var Student $student */
         $student = $request->user();
@@ -54,7 +51,7 @@ class MyCourseController extends Controller
         $review = $student->reviews()->where('course_id', $course->id)->first();
 
         return response()->json(['data' => [
-            ...(new CourseResource($course))->withContent()->withProgress($progress->forStudent($student->id, [$course->id])[$course->id])->resolve($request),
+            ...(new CourseResource($course))->withContent()->resolve($request),
             'my_review' => $review ? (new OwnReviewResource($review))->resolve($request) : null,
         ]]);
     }

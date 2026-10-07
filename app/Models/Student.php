@@ -103,14 +103,6 @@ class Student extends Authenticatable
     }
 
     /**
-     * @return HasMany<LessonCompletion, $this>
-     */
-    public function completions(): HasMany
-    {
-        return $this->hasMany(LessonCompletion::class);
-    }
-
-    /**
      * A wa.me link to message the student on WhatsApp (digits only), when they gave a phone.
      */
     public function whatsappUrl(): ?string

@@ -4,9 +4,6 @@ namespace App\Http\Resources;
 
 use App\Enums\ReviewStatus;
 use App\Models\Course;
-use App\Models\CourseModule;
-use App\Models\Lesson;
-use App\Support\Duration;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,7 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class CourseResource extends JsonResource
 {
     /**
-     * The list leaves out descriptions and the curriculum; the course form (show, store, update) gets everything.
+     * The list leaves out descriptions; the course form (show, store, update) gets everything.
      */
     public bool $withContent = false;
 
@@ -48,8 +45,6 @@ class CourseResource extends JsonResource
             'status_label' => $this->status->label(),
             'price' => (float) $this->price,
             'old_price' => $this->old_price === null ? null : (float) $this->old_price,
-            'lessons' => (int) ($this->lessons_count ?? $this->lessons()->count()),
-            'hours' => round((int) ($this->lessons_sum_duration_seconds ?? $this->lessons()->sum('duration_seconds')) / 3600, 1),
             'students' => (int) ($this->enrollments_count ?? $this->enrollments()->count()),
             'revenue' => (float) ($this->sales_sum_total ?? $this->sales()->sum('total')),
             // average of the published reviews, 0 while there are none
@@ -66,15 +61,6 @@ class CourseResource extends JsonResource
                 'is_included_in_pro' => $this->is_included_in_pro,
                 'has_certificate' => $this->has_certificate,
                 'allows_questions' => $this->allows_questions,
-                'modules' => $this->modules()->with('lessons')->get()->map(fn (CourseModule $module): array => [
-                    'id' => $module->id,
-                    'title' => $module->title,
-                    'lessons' => $module->lessons->map(fn (Lesson $lesson): array => [
-                        'id' => $lesson->id,
-                        'title' => $lesson->title,
-                        'duration' => Duration::format($lesson->duration_seconds),
-                    ])->all(),
-                ])->all(),
             ]),
         ];
     }

@@ -13,8 +13,6 @@ use App\Enums\OrderItemType;
 use App\Enums\PaymentMethod;
 use App\Models\Coupon;
 use App\Models\Course;
-use App\Models\Enrollment;
-use App\Models\LessonCompletion;
 use App\Models\Student;
 use App\Models\Workshop;
 use Illuminate\Database\Seeder;
@@ -101,8 +99,6 @@ class SalesSeeder extends Seeder
                 'refunded_at' => $order->refunded_at ? $at->copy()->addDays(3) : null,
             ])->save();
         }
-
-        $this->progress();
     }
 
     private function coupons(?Course $course): void
@@ -122,22 +118,5 @@ class SalesSeeder extends Seeder
                 'usage_limit' => $limit, 'expires_on' => now()->addDays($days)->toDateString(), 'is_active' => $active,
             ]);
         }
-    }
-
-    /**
-     * Mark a random share of each enrolled course's lessons as finished.
-     */
-    private function progress(): void
-    {
-        Enrollment::query()->with('course.lessons')->each(function (Enrollment $enrollment): void {
-            $lessons = $enrollment->course->lessons;
-            $done = $lessons->take((int) round($lessons->count() * mt_rand(0, 100) / 100));
-
-            $done->each(fn ($lesson) => LessonCompletion::forceCreate([
-                'student_id' => $enrollment->student_id,
-                'lesson_id' => $lesson->id,
-                'completed_at' => now()->subDays(mt_rand(0, 30)),
-            ]));
-        });
     }
 }

@@ -17,7 +17,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
@@ -50,22 +49,6 @@ class Course extends Model
             'has_certificate' => 'boolean',
             'allows_questions' => 'boolean',
         ];
-    }
-
-    /**
-     * @return HasMany<CourseModule, $this>
-     */
-    public function modules(): HasMany
-    {
-        return $this->hasMany(CourseModule::class)->orderBy('position');
-    }
-
-    /**
-     * @return HasManyThrough<Lesson, CourseModule, $this>
-     */
-    public function lessons(): HasManyThrough
-    {
-        return $this->hasManyThrough(Lesson::class, CourseModule::class);
     }
 
     /**
@@ -140,7 +123,7 @@ class Course extends Model
     }
 
     /**
-     * The numbers a course card shows: lessons, length, enrolments, and the count and average of published reviews.
+     * The numbers a course card shows: enrolments, and the count and average of published reviews.
      *
      * @param  Builder<Course>  $query
      */
@@ -148,8 +131,7 @@ class Course extends Model
     {
         $published = fn ($reviews) => $reviews->where('status', ReviewStatus::Published);
 
-        $query->withCount(['lessons', 'enrollments', 'reviews' => $published])
-            ->withSum('lessons', 'duration_seconds')
+        $query->withCount(['enrollments', 'reviews' => $published])
             ->withAvg(['reviews' => $published], 'rating');
     }
 }

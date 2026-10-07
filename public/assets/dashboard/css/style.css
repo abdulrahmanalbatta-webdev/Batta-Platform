@@ -1069,17 +1069,6 @@ button { cursor: pointer; }
 .seo-preview .t { color: #1a0dab; font-size: 17px; font-weight: 600; line-height: 1.5; }
 .seo-preview .d { font-size: 13px; color: var(--muted); }
 
-/* curriculum builder */
-.module { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-.module + .module { margin-top: 12px; }
-.module-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
-.module-head .input { height: 38px; font-weight: 700; }
-.lesson { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
-.lesson:last-of-type { border-bottom: 0; }
-.lesson .input { height: 36px; }
-.lesson .dur { width: 90px; flex: none; }
-.module-add { padding: 8px 12px; }
-
 /* profile */
 .profile-cover { height: 150px; border-radius: var(--r) var(--r) 0 0; background: radial-gradient(60% 120% at 80% 0%, rgba(0, 102, 255, 0.5), transparent 70%), linear-gradient(135deg, #0b0d12, #1b2433); }
 .profile-head { display: flex; align-items: flex-end; gap: 18px; padding: 14px 24px 20px; flex-wrap: wrap; }

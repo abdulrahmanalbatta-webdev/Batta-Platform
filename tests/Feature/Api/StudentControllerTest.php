@@ -5,10 +5,7 @@ namespace Tests\Feature\Api;
 use App\Enums\OrderStatus;
 use App\Enums\Role;
 use App\Models\Course;
-use App\Models\CourseModule;
 use App\Models\Enrollment;
-use App\Models\Lesson;
-use App\Models\LessonCompletion;
 use App\Models\Order;
 use App\Models\Student;
 use App\Models\User;
@@ -19,33 +16,10 @@ class StudentControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * A course with the given number of lessons.
-     */
-    private function courseWithLessons(int $lessons): Course
-    {
-        $course = Course::factory()->published()->create();
-        Lesson::factory()->count($lessons)->for(CourseModule::factory()->for($course), 'module')->create();
-
-        return $course;
-    }
-
-    private function complete(Student $student, Course $course, int $lessons): void
-    {
-        $course->lessons()->limit($lessons)->get()->each(
-            fn (Lesson $lesson) => LessonCompletion::factory()->for($student)->for($lesson)->create(),
-        );
-    }
-
-    public function test_lists_students_with_courses_progress_spent_and_state(): void
+    public function test_lists_students_with_courses_spent_and_state(): void
     {
         $student = Student::factory()->pro()->create(['name' => 'ليان سالم']);
-        $half = $this->courseWithLessons(4);
-        $done = $this->courseWithLessons(2);
-        Enrollment::factory()->for($student)->for($half)->create();
-        Enrollment::factory()->for($student)->for($done)->create();
-        $this->complete($student, $half, 2);
-        $this->complete($student, $done, 2);
+        Enrollment::factory()->count(2)->for($student)->create();
         Order::factory()->for($student)->create(['total' => 79]);
         Order::factory()->for($student)->create(['total' => 40, 'status' => OrderStatus::Refunded]);
         Student::factory()->suspended()->create();
@@ -53,8 +27,9 @@ class StudentControllerTest extends TestCase
         $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->getJson(route('api.students.index'));
 
         $row = collect($response->assertOk()->json('data'))->firstWhere('id', $student->id);
-        $this->assertEquals(['courses' => 2, 'progress' => 75, 'spent' => 79, 'is_pro' => true, 'state' => 'active', 'state_label' => 'نشط'],
-            array_intersect_key($row, array_flip(['courses', 'progress', 'spent', 'is_pro', 'state', 'state_label'])));
+        $this->assertEquals(['courses' => 2, 'spent' => 79, 'is_pro' => true, 'state' => 'active', 'state_label' => 'نشط'],
+            array_intersect_key($row, array_flip(['courses', 'spent', 'is_pro', 'state', 'state_label'])));
+        $this->assertArrayNotHasKey('progress', $row);
         $this->assertContains('موقوف', collect($response->json('data'))->pluck('state_label'));
     }
 
@@ -67,19 +42,18 @@ class StudentControllerTest extends TestCase
         $response->assertJsonPath('data.0.state', 'inactive');
     }
 
-    public function test_profile_lists_courses_with_progress_and_latest_orders(): void
+    public function test_profile_lists_courses_and_latest_orders(): void
     {
         $student = Student::factory()->create();
-        $course = $this->courseWithLessons(4);
+        $course = Course::factory()->published()->create();
         Enrollment::factory()->for($student)->for($course)->create();
-        $this->complete($student, $course, 1);
         $order = Order::factory()->for($student)->create(['item_name' => 'Next.js']);
 
         $response = $this->actingAs(User::factory()->create())->getJson(route('api.students.show', $student));
 
         $response->assertOk()
             ->assertJsonPath('data.enrollments.0.title', $course->title)
-            ->assertJsonPath('data.enrollments.0.progress', 25)
+            ->assertJsonPath('data.courses', 1)
             ->assertJsonPath('data.orders.0.number', '#'.(1000 + $order->id))
             ->assertJsonPath('data.orders.0.status_label', 'مكتمل');
     }

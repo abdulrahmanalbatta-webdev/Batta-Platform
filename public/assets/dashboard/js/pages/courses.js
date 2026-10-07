@@ -25,7 +25,7 @@ document.addEventListener('app:ready', async () => {
   }
 
   const columns = [
-    { key: 'title', label: 'الدورة', sortable: true, render: (c) => `<div class="person"><span class="thumb">${esc(c.glyph)}</span><div><b>${esc(c.title)}</b><small>${esc(c.code)} · ${c.lessons} درساً · ${c.hours} ساعة</small></div></div>` },
+    { key: 'title', label: 'الدورة', sortable: true, render: (c) => `<div class="person"><span class="thumb">${esc(c.glyph)}</span><div><b>${esc(c.title)}</b><small>${esc(c.code)} · ${esc(c.level_label)}</small></div></div>` },
     { key: 'level_label', label: 'المستوى', sortable: true, render: (c) => `<span class="badge">${esc(c.level_label)}</span>` },
     { key: 'price', label: 'السعر', sortable: true, className: 'num', render: (c) => (c.price ? money(c.price) : '<span class="badge success">مجانية</span>') },
     { key: 'students', label: 'الطلاب', sortable: true, className: 'num', render: (c) => num(c.students) },
@@ -95,7 +95,7 @@ document.addEventListener('app:ready', async () => {
           <div class="c-cover">${c.cover_url ? `<img src="${esc(c.cover_url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">` : esc(c.glyph)}${badge(c.status_label)}</div>
           <div class="c-body">
             <h4>${esc(c.title)}</h4>
-            <div class="c-meta"><span>${icon('play', 'sm')}${c.lessons} درساً</span><span>${icon('users', 'sm')}${num(c.students)}</span><span>${icon('star', 'sm')}${c.rating || '—'}</span></div>
+            <div class="c-meta"><span>${icon('award', 'sm')}${esc(c.level_label)}</span><span>${icon('users', 'sm')}${num(c.students)}</span><span>${icon('star', 'sm')}${c.rating || '—'}</span></div>
           </div>
           <div class="c-foot"><b class="num">${c.price ? money(c.price) : 'مجانية'}</b>${canEdit ? `<a class="btn btn-ghost btn-sm" href="${App.url('course-edit', { id: c.id })}">${icon('edit', 'sm')}تعديل</a>` : ''}</div>
         </div>`,

@@ -48,14 +48,6 @@
         </div>
 
         <div class="card">
-          <div class="card-head">
-            <div><h3>المنهج</h3><p id="curriculumSummary">0 وحدات · 0 دروس</p></div>
-            <button type="button" class="btn btn-soft btn-sm" id="addModule"><i data-icon="plus" class="sm"></i>وحدة جديدة</button>
-          </div>
-          <div class="card-body" id="modules"></div>
-        </div>
-
-        <div class="card">
           <div class="card-head"><h3>التسعير</h3></div>
           <div class="card-body form-grid">
             <div class="field">

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Actions\SyncCurriculum;
 use App\Enums\ArticleCategory;
 use App\Enums\ArticleStatus;
 use App\Enums\CourseCategory;
@@ -21,12 +20,12 @@ use Illuminate\Database\Seeder;
  */
 class ContentSeeder extends Seeder
 {
-    public function run(SyncCurriculum $curriculum): void
+    public function run(): void
     {
         $this->tools();
         $this->workshops();
         $this->articles();
-        $this->courses($curriculum);
+        $this->courses();
     }
 
     private function tools(): void
@@ -116,7 +115,7 @@ class ContentSeeder extends Seeder
         }
     }
 
-    private function courses(SyncCurriculum $curriculum): void
+    private function courses(): void
     {
         $courses = [
             ['Next.js من الصفر إلى الإنتاج', 'nextjs-production', CourseLevel::Intermediate, CourseCategory::Frontend, CourseStatus::Published, 79],
@@ -129,15 +128,10 @@ class ContentSeeder extends Seeder
         ];
 
         foreach ($courses as [$title, $slug, $level, $category, $status, $price]) {
-            $course = Course::forceCreate([
+            Course::forceCreate([
                 'title' => $title, 'slug' => $slug, 'short_description' => 'دورة عملية تنتهي بمشروع حقيقي منشور.',
                 'outcomes' => ['بناء مشروع كامل', 'نشر المشروع على الإنترنت'], 'tags' => ['مشروع عملي'],
                 'level' => $level, 'category' => $category, 'status' => $status, 'price' => $price,
-            ]);
-
-            $curriculum->handle($course, [
-                ['title' => 'البداية والتجهيز', 'lessons' => [['title' => 'مقدمة الدورة', 'duration' => '05:20'], ['title' => 'تجهيز بيئة العمل', 'duration' => '12:40']]],
-                ['title' => 'المشروع الأول', 'lessons' => [['title' => 'هيكلة المشروع', 'duration' => '18:05'], ['title' => 'النشر', 'duration' => '09:30']]],
             ]);
         }
     }

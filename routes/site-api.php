@@ -8,7 +8,6 @@ use App\Http\Controllers\Site\ContactMessageController;
 use App\Http\Controllers\Site\ContentController;
 use App\Http\Controllers\Site\CourseController;
 use App\Http\Controllers\Site\CourseReviewController;
-use App\Http\Controllers\Site\LessonCompletionController;
 use App\Http\Controllers\Site\MyCourseController;
 use App\Http\Controllers\Site\MyReviewController;
 use App\Http\Controllers\Site\NewsletterController;
@@ -73,6 +72,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/articles/{key}/comments', [CommentController::class, 'store'])->defaults('type', 'article')->middleware('throttle:site-forms')->name('articles.comments.store');
     Route::post('/courses/{key}/comments', [CommentController::class, 'store'])->defaults('type', 'course')->middleware('throttle:site-forms')->name('courses.comments.store');
     Route::post('/workshops/{key}/comments', [CommentController::class, 'store'])->defaults('type', 'workshop')->whereNumber('key')->middleware('throttle:site-forms')->name('workshops.comments.store');
-    Route::post('/me/lessons/{lesson}/completion', [LessonCompletionController::class, 'store'])->name('me.lessons.complete');
-    Route::delete('/me/lessons/{lesson}/completion', [LessonCompletionController::class, 'destroy'])->name('me.lessons.uncomplete');
 });
