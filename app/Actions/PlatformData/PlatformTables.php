@@ -12,6 +12,7 @@ final class PlatformTables
         'lesson_completions',
         'enrollments',
         'reviews',
+        'comments',
         'conversation_messages',
         'conversations',
         'orders',

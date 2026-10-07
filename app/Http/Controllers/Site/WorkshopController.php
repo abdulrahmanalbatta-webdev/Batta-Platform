@@ -22,4 +22,12 @@ class WorkshopController extends Controller
                 ->get(),
         );
     }
+
+    /**
+     * One workshop's page (past ones too, so their comments stay readable).
+     */
+    public function show(Workshop $workshop): WorkshopResource
+    {
+        return new WorkshopResource($workshop->loadCount('registrations'));
+    }
 }

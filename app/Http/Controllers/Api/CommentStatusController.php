@@ -4,17 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\ReviewStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ArticleCommentResource;
-use App\Models\ArticleComment;
+use App\Http\Resources\CommentResource;
+use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-class ArticleCommentStatusController extends Controller
+class CommentStatusController extends Controller
 {
     /**
-     * Publish a comment under its article or hide it.
+     * Publish a comment where it was left or hide it.
      */
-    public function update(Request $request, ArticleComment $comment): ArticleCommentResource
+    public function update(Request $request, Comment $comment): CommentResource
     {
         $validated = $request->validate([
             'status' => ['required', Rule::enum(ReviewStatus::class)->only([ReviewStatus::Published, ReviewStatus::Hidden])],
@@ -22,6 +22,6 @@ class ArticleCommentStatusController extends Controller
 
         $comment->update($validated);
 
-        return new ArticleCommentResource($comment->load(['student:id,name', 'article:id,title,slug', 'replier:id,name']));
+        return new CommentResource($comment->load(CommentController::WITH));
     }
 }

@@ -1054,6 +1054,8 @@ button { cursor: pointer; }
 .review p { color: var(--text); }
 .reply { margin-inline-start: 48px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); font-size: 13.5px; }
 .reply b { color: var(--primary-600); font-size: 12.5px; display: block; }
+.quote { display: flex; gap: 8px; align-items: flex-start; padding: 8px 12px; border-inline-start: 3px solid var(--line-2); background: var(--surface-2); border-radius: 8px; color: var(--muted); font-size: 12.5px; }
+.quote b { color: var(--text); }
 
 /* editor */
 .editor-toolbar { display: flex; flex-wrap: wrap; gap: 2px; padding: 8px; border: 1px solid var(--line); border-bottom: 0; border-radius: 11px 11px 0 0; background: var(--surface-2); }

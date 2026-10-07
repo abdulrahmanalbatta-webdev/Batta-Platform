@@ -7,8 +7,8 @@
     <div class="page-head">
       <div>
         <div class="crumbs"><a href="{{ route('dashboard') }}">الرئيسية</a><span class="sep">/</span><span>التعليقات</span></div>
-        <h1>تعليقات المقالات</h1>
-        <p>راجع تعليقات الطلاب قبل ظهورها تحت المقالات، وردّ عليها.</p>
+        <h1>التعليقات</h1>
+        <p>راجع تعليقات الطلاب وردودهم على المقالات والدورات والورش قبل ظهورها، وردّ عليها.</p>
       </div>
     </div>
 
@@ -16,7 +16,7 @@
       <div class="toolbar">
         <div class="seg" id="statusSeg"></div>
         <span class="grow"></span>
-        <select class="select" style="width:auto;height:40px" id="articleFilter" aria-label="المقال"><option value="">كل المقالات</option></select>
+        <select class="select" style="width:auto;height:40px" id="placeFilter" aria-label="المكان"><option value="">كل الصفحات</option></select>
       </div>
       <div id="commentList"></div>
     </div>

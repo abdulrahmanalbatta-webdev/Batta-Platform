@@ -3,11 +3,11 @@
 namespace App\Notifications\Alerts;
 
 use App\Enums\AlertType;
-use App\Models\ArticleComment;
+use App\Models\Comment;
 
 class CommentSubmitted extends TeamAlert
 {
-    public function __construct(public ArticleComment $comment) {}
+    public function __construct(public Comment $comment) {}
 
     public function type(): AlertType
     {
@@ -16,12 +16,12 @@ class CommentSubmitted extends TeamAlert
 
     protected function title(): string
     {
-        return 'تعليق جديد بانتظار المراجعة';
+        return $this->comment->parent_id ? 'رد جديد بانتظار المراجعة' : 'تعليق جديد بانتظار المراجعة';
     }
 
     protected function meta(): string
     {
-        return $this->comment->student->name.' · '.$this->comment->article->title;
+        return $this->comment->student->name.' · '.$this->comment->commentable?->title;
     }
 
     protected function page(): string

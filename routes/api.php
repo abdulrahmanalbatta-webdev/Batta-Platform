@@ -4,12 +4,12 @@ use App\Http\Controllers\Api\AcceptedInvitationController;
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AnalyticsConnectionController;
 use App\Http\Controllers\Api\AnalyticsController;
-use App\Http\Controllers\Api\ArticleCommentController;
-use App\Http\Controllers\Api\ArticleCommentReplyController;
-use App\Http\Controllers\Api\ArticleCommentStatusController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ArticleCoverController;
 use App\Http\Controllers\Api\AvatarController;
+use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\CommentReplyController;
+use App\Http\Controllers\Api\CommentStatusController;
 use App\Http\Controllers\Api\ConversationAttachmentController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\ConversationMessageController;
@@ -161,7 +161,7 @@ Route::middleware('auth')->group(function () {
 
     // reviews: every member reads; owner, admin, editor and support moderate (Role::canModerateReviews)
     Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
-    Route::get('/comments', [ArticleCommentController::class, 'index'])->name('comments.index');
+    Route::get('/comments', [CommentController::class, 'index'])->name('comments.index');
 
     Route::middleware('can:moderate-reviews')->group(function () {
         Route::put('/reviews/{review}/status', [ReviewStatusController::class, 'update'])->name('reviews.status.update');
@@ -169,11 +169,11 @@ Route::middleware('auth')->group(function () {
         Route::delete('/reviews/{review}/reply', [ReviewReplyController::class, 'destroy'])->name('reviews.reply.destroy');
         Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 
-        // article comments: moderated by the same roles as reviews
-        Route::put('/comments/{comment}/status', [ArticleCommentStatusController::class, 'update'])->name('comments.status.update');
-        Route::put('/comments/{comment}/reply', [ArticleCommentReplyController::class, 'update'])->name('comments.reply.update');
-        Route::delete('/comments/{comment}/reply', [ArticleCommentReplyController::class, 'destroy'])->name('comments.reply.destroy');
-        Route::delete('/comments/{comment}', [ArticleCommentController::class, 'destroy'])->name('comments.destroy');
+        // comments on articles, courses and workshops: moderated by the same roles as reviews
+        Route::put('/comments/{comment}/status', [CommentStatusController::class, 'update'])->name('comments.status.update');
+        Route::put('/comments/{comment}/reply', [CommentReplyController::class, 'update'])->name('comments.reply.update');
+        Route::delete('/comments/{comment}/reply', [CommentReplyController::class, 'destroy'])->name('comments.reply.destroy');
+        Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     });
 
     // project requests: every member reads; owner and admin manage the board (Role::canManageLeads)

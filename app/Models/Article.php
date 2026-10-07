@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ArticleCategory;
 use App\Enums\ArticleStatus;
+use App\Models\Concerns\HasComments;
 use App\Models\Concerns\LogsActivity;
 use App\Observers\ArticleObserver;
 use Database\Factories\ArticleFactory;
@@ -14,7 +15,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 #[ObservedBy(ArticleObserver::class)]
@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Storage;
 class Article extends Model
 {
     /** @use HasFactory<ArticleFactory> */
-    use HasFactory, LogsActivity;
+    use HasComments, HasFactory, LogsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -57,14 +57,6 @@ class Article extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
-    }
-
-    /**
-     * @return HasMany<ArticleComment, $this>
-     */
-    public function comments(): HasMany
-    {
-        return $this->hasMany(ArticleComment::class);
     }
 
     /**
