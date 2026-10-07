@@ -3,6 +3,7 @@
 namespace Tests\Feature\Site;
 
 use App\Models\Conversation;
+use App\Models\ConversationMessage;
 use App\Models\Lead;
 use App\Models\Student;
 use App\Models\User;
@@ -45,6 +46,22 @@ class SiteFormsTest extends TestCase
         $this->assertSame($student->id, $conversation->student_id);
         $this->assertSame('sara@example.com', $conversation->email);
         $this->assertSame(2, $conversation->messages()->count());
+    }
+
+    public function test_a_student_message_is_headed_by_its_topic_and_what_it_is_about(): void
+    {
+        $this->postJson(route('site.contact'), ['name' => 'سارة', 'email' => 'sara@example.com', 'message' => 'متى تبدأ الدورة؟', 'topic' => 'course', 'about' => 'Next.js من الصفر'])
+            ->assertCreated();
+        $this->postJson(route('site.contact'), ['name' => 'سارة', 'email' => 'sara@example.com', 'message' => 'لا أستطيع الدخول لحسابي', 'topic' => 'account'])
+            ->assertCreated();
+
+        $this->assertSame(
+            ["[سؤال عن دورة: Next.js من الصفر]\n\nمتى تبدأ الدورة؟", "[مشكلة في الحساب]\n\nلا أستطيع الدخول لحسابي"],
+            ConversationMessage::query()->oldest('id')->pluck('body')->all(),
+        );
+
+        $this->postJson(route('site.contact'), ['name' => 'سارة', 'email' => 'sara@example.com', 'message' => 'رسالة بموضوع غير معروف', 'topic' => 'refund'])
+            ->assertJsonValidationErrors('topic');
     }
 
     public function test_a_project_request_becomes_a_new_lead(): void
