@@ -438,7 +438,7 @@ if (id) {
 | GET | `workshops/{id}` | صفحة الورشة (حتى لو انتهت، عشان تضل تعليقاتها) |
 | GET | `tools` | الأدوات المنشورة مجمّعة حسب التصنيف |
 | POST | `tools/{id}/click` | بيعدّ نقرة على رابط الأداة (عمود النقرات باللوحة) |
-| POST | `contact` | `name`, `email`, `message` ← بتوصل للرسائل باللوحة وبتنبّه الفريق. لو معه token بتنضاف لمحادثة الطالب نفسه |
+| POST | `contact` | `name`, `email`, `message` (+ `topic`: `course`/`workshop`/`account`/`suggestion`/`other`، و`about` اسم الدورة أو الورشة) ← بتوصل للرسائل باللوحة وبتنبّه الفريق، والموضوع بيظهر فوق الرسالة. لو معه token بتنضاف لمحادثة الطالب نفسه |
 | POST | `newsletter` | `email` ← اشتراك بالنشرة (بيظهر بصفحة "النشرة البريدية" باللوحة). الاشتراك من جديد بعد الإلغاء بيرجّعه. فيه نفس الحقل المخفي `website` |
 | POST | `project-requests` | `name`, `email`, `service`, `details` (+ `company`, `phone`, `budget`) ← عميل جديد بمرحلة "جديد" وتنبيه |
 | POST | `auth/register` | `name`, `email`, `phone` (واتساب مع مقدّمة الدولة)، `password` + `password_confirmation` (+ `country`, `device_name`). بينبّه الفريق ← `{token, data}`. بيرجع 403 لو التسجيل مسكّر من الإعدادات |

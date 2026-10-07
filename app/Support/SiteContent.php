@@ -181,10 +181,13 @@ class SiteContent
                 'services' => $block('صفحة الخدمات', ['text' => $long('المقدمة', 300)]),
                 'packages' => $intro('الباقات', false),
                 'process' => $intro('طريقة العمل', false),
-                'contact' => $block('صفحة التواصل (نموذج عرض السعر)', [
-                    'eyebrow' => $text('العنوان الصغير', 40),
-                    'title' => $text('العنوان', 120),
+                'contact' => $block('صفحة التواصل', [
                     'text' => $long('المقدمة', 300),
+                    'eyebrow' => $text('نموذج المشروع: العنوان الصغير', 40),
+                    'title' => $text('نموذج المشروع: العنوان', 120),
+                    'student_title' => $text('نموذج الطالب: العنوان', 120),
+                    'student_text' => $text('نموذج الطالب: الوصف', 200),
+                    'general_title' => $text('الاستفسار العام: العنوان', 120),
                     'points' => ['type' => 'list', 'label' => 'النقاط بجانب النموذج', 'max_items' => 4, 'title' => 'title', 'item' => [
                         'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],
                         'title' => $text('العنوان', 60),
