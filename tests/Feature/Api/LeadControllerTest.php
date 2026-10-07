@@ -20,7 +20,7 @@ class LeadControllerTest extends TestCase
         Lead::factory()->create(['created_at' => now()->subDay()]);
         $latest = Lead::factory()->stage(LeadStage::Proposal)->create(['service' => 'ecommerce']);
 
-        $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->getJson(route('api.leads.index'));
+        $response = $this->actingAs(User::factory()->role(Role::Support)->create())->getJson(route('api.leads.index'));
 
         $response->assertOk()
             ->assertJsonCount(2, 'data')

@@ -2,16 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Enums\OrderStatus;
-use App\Enums\PaymentMethod;
 use App\Enums\Role;
 use App\Models\Article;
-use App\Models\Order;
+use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\Student;
 use App\Models\User;
 use App\Notifications\NewArticle;
 use App\Notifications\NewDeviceLogin;
-use App\Notifications\OrderInvoice;
 use App\Notifications\WeeklyReport;
 use App\Support\PlatformSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,27 +29,9 @@ class SettingsEffectsTest extends TestCase
     {
         $this->settings(['currency' => 'SAR']);
 
-        $this->actingAs(User::factory()->create())->get(route('courses.create'))
+        $this->actingAs(User::factory()->create())->get(route('leads.index'))
             ->assertSee('"currency_symbol":'.json_encode(' ر.س'), escape: false)
-            ->assertSee('<span class="addon">ر.س</span>', escape: false);
-    }
-
-    public function test_invoice_shows_vat_note_currency_and_bank_details(): void
-    {
-        $this->settings([
-            'currency' => 'JOD',
-            'vat_percent' => 16,
-            'invoice_note' => 'شكراً لك من فريق البطة.',
-            'payment_instructions' => 'IBAN JO00 1234',
-        ]);
-        $order = Order::factory()->create(['total' => 116, 'subtotal' => 116, 'status' => OrderStatus::Pending, 'paid_at' => null, 'payment_method' => PaymentMethod::BankTransfer]);
-
-        $lines = (new OrderInvoice($order))->toMail($order->student)->introLines;
-
-        $this->assertContains('الإجمالي: 116 د.أ', $lines);
-        $this->assertContains('منها ضريبة القيمة المضافة (16%): 16 د.أ', $lines);
-        $this->assertContains('IBAN JO00 1234', $lines);
-        $this->assertSame('شكراً لك من فريق البطة.', end($lines));
+            ->assertSee('الميزانية (ر.س)', escape: false);
     }
 
     public function test_weekly_report_goes_to_owner_and_admins_unless_switched_off(): void
@@ -60,11 +40,19 @@ class SettingsEffectsTest extends TestCase
         $owner = User::factory()->owner()->create();
         $admin = User::factory()->admin()->create();
         $editor = User::factory()->role(Role::Editor)->create();
-        Order::factory()->create(['total' => 79]);
+        Enrollment::factory()->for(Course::factory()->create(['title' => 'Next.js']))->create();
 
         $this->artisan('reports:weekly')->assertSuccessful();
 
-        Notification::assertSentTo([$owner, $admin], WeeklyReport::class, fn (WeeklyReport $report): bool => $report->report['kpis']['revenue']['value'] === 79.0);
+        Notification::assertSentTo([$owner, $admin], WeeklyReport::class, function (WeeklyReport $report) use ($owner): bool {
+            $lines = $report->toMail($owner)->introLines;
+
+            return $report->report['kpis']['enrollments']['value'] === 1.0
+                && in_array('التسجيلات في الدورات: 1', $lines, true)
+                && in_array('التسجيلات في الورش: 0', $lines, true)
+                && in_array('طلاب جدد: 1', $lines, true)
+                && in_array('الأكثر تسجيلاً: Next.js (1 تسجيل)', $lines, true);
+        });
         Notification::assertNotSentTo($editor, WeeklyReport::class);
 
         $this->settings(['weekly_report' => false]);

@@ -24,7 +24,7 @@
         <span class="grow"></span>
         <label class="search"><i data-icon="search" class="sm"></i><input id="q" type="search" placeholder="ابحث بالاسم أو البريد…" aria-label="بحث"></label>
         <select class="select" style="width:auto;height:40px" id="countryFilter" aria-label="الدولة"><option value="">كل الدول</option></select>
-        <select class="select" style="width:auto;height:40px" id="planFilter" aria-label="العضوية"><option value="">كل العضويات</option><option value="pro">Pro</option><option value="free">مجانية</option></select>
+        <select class="select" style="width:auto;height:40px" id="planFilter" aria-label="التسجيل"><option value="">الكل</option><option value="registered">مسجّلون في دورة أو ورشة</option><option value="none">غير مسجّلين</option></select>
       </div>
       <div class="bulkbar" id="bulk" hidden>
         <b id="bulkCount"></b>

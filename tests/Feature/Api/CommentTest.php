@@ -22,7 +22,7 @@ class CommentTest extends TestCase
         Comment::factory()->create(['created_at' => now()->subDay()]);
         $comment = Comment::factory()->published()->create(['reply' => 'شكراً', 'replied_by' => $owner->id]);
 
-        $this->actingAs(User::factory()->role(Role::Accountant)->create())->getJson(route('api.comments.index'))
+        $this->actingAs(User::factory()->role(Role::Editor)->create())->getJson(route('api.comments.index'))
             ->assertOk()
             ->assertJsonCount(2, 'data')
             ->assertJsonPath('data.0.name', $comment->student->name)
@@ -51,15 +51,6 @@ class CommentTest extends TestCase
 
         $this->actingAs($support)->deleteJson(route('api.comments.destroy', $comment))->assertNoContent();
         $this->assertModelMissing($comment);
-    }
-
-    public function test_accountant_cannot_moderate(): void
-    {
-        $comment = Comment::factory()->create();
-        $accountant = User::factory()->role(Role::Accountant)->create();
-
-        $this->actingAs($accountant)->putJson(route('api.comments.status.update', $comment), ['status' => 'published'])->assertForbidden();
-        $this->actingAs($accountant)->deleteJson(route('api.comments.destroy', $comment))->assertForbidden();
     }
 
     public function test_the_articles_list_counts_published_comments_and_the_sidebar_pending_ones(): void

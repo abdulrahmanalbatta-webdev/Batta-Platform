@@ -24,7 +24,7 @@ class ConversationControllerTest extends TestCase
         ConversationMessage::factory()->for($recent)->create(['body' => 'أول رسالة', 'created_at' => now()->subMinute()]);
         ConversationMessage::factory()->for($recent)->create(['body' => 'آخر رسالة']);
 
-        $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->getJson(route('api.conversations.index'));
+        $response = $this->actingAs(User::factory()->role(Role::Editor)->create())->getJson(route('api.conversations.index'));
 
         $response->assertOk()
             ->assertJsonPath('data.0.id', $recent->id)
@@ -105,19 +105,16 @@ class ConversationControllerTest extends TestCase
         Storage::disk('local')->assertMissing('conversations/1/file.pdf');
     }
 
-    public function test_editor_and_accountant_only_read(): void
+    public function test_editor_only_reads(): void
     {
         $conversation = Conversation::factory()->create();
         $lead = Lead::factory()->create();
+        $editor = User::factory()->role(Role::Editor)->create();
 
-        foreach ([Role::Editor, Role::Accountant] as $role) {
-            $member = User::factory()->role($role)->create();
-
-            $this->actingAs($member)->getJson(route('api.conversations.show', $conversation))->assertOk();
-            $this->actingAs($member)->postJson(route('api.conversations.store'), ['lead_id' => $lead->id])->assertForbidden();
-            $this->actingAs($member)->postJson(route('api.conversations.read.store', $conversation))->assertForbidden();
-            $this->actingAs($member)->postJson(route('api.conversations.messages.store', $conversation), ['body' => 'x'])->assertForbidden();
-            $this->actingAs($member)->deleteJson(route('api.conversations.destroy', $conversation))->assertForbidden();
-        }
+        $this->actingAs($editor)->getJson(route('api.conversations.show', $conversation))->assertOk();
+        $this->actingAs($editor)->postJson(route('api.conversations.store'), ['lead_id' => $lead->id])->assertForbidden();
+        $this->actingAs($editor)->postJson(route('api.conversations.read.store', $conversation))->assertForbidden();
+        $this->actingAs($editor)->postJson(route('api.conversations.messages.store', $conversation), ['body' => 'x'])->assertForbidden();
+        $this->actingAs($editor)->deleteJson(route('api.conversations.destroy', $conversation))->assertForbidden();
     }
 }

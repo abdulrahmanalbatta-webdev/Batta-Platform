@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\Api;
 
-use App\Enums\OrderStatus;
 use App\Enums\Role;
 use App\Models\Course;
 use App\Models\Enrollment;
-use App\Models\Order;
 use App\Models\Student;
 use App\Models\User;
+use App\Models\Workshop;
+use App\Models\WorkshopRegistration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,20 +16,21 @@ class StudentControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_lists_students_with_courses_spent_and_state(): void
+    public function test_lists_students_with_courses_workshops_and_state(): void
     {
-        $student = Student::factory()->pro()->create(['name' => 'ليان سالم']);
+        $student = Student::factory()->create(['name' => 'ليان سالم']);
         Enrollment::factory()->count(2)->for($student)->create();
-        Order::factory()->for($student)->create(['total' => 79]);
-        Order::factory()->for($student)->create(['total' => 40, 'status' => OrderStatus::Refunded]);
+        WorkshopRegistration::factory()->for($student)->create();
         Student::factory()->suspended()->create();
 
-        $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->getJson(route('api.students.index'));
+        $response = $this->actingAs(User::factory()->role(Role::Editor)->create())->getJson(route('api.students.index'));
 
         $row = collect($response->assertOk()->json('data'))->firstWhere('id', $student->id);
-        $this->assertEquals(['courses' => 2, 'spent' => 79, 'is_pro' => true, 'state' => 'active', 'state_label' => 'نشط'],
-            array_intersect_key($row, array_flip(['courses', 'spent', 'is_pro', 'state', 'state_label'])));
+        $this->assertEquals(['courses' => 2, 'workshops' => 1, 'state' => 'active', 'state_label' => 'نشط'],
+            array_intersect_key($row, array_flip(['courses', 'workshops', 'state', 'state_label'])));
         $this->assertArrayNotHasKey('progress', $row);
+        $this->assertArrayNotHasKey('spent', $row);
+        $this->assertArrayNotHasKey('is_pro', $row);
         $this->assertContains('موقوف', collect($response->json('data'))->pluck('state_label'));
     }
 
@@ -42,20 +43,25 @@ class StudentControllerTest extends TestCase
         $response->assertJsonPath('data.0.state', 'inactive');
     }
 
-    public function test_profile_lists_courses_and_latest_orders(): void
+    public function test_profile_lists_courses_and_workshops(): void
     {
         $student = Student::factory()->create();
         $course = Course::factory()->published()->create();
+        $workshop = Workshop::factory()->create();
         Enrollment::factory()->for($student)->for($course)->create();
-        $order = Order::factory()->for($student)->create(['item_name' => 'Next.js']);
+        WorkshopRegistration::factory()->for($student)->for($workshop)->create();
 
         $response = $this->actingAs(User::factory()->create())->getJson(route('api.students.show', $student));
 
         $response->assertOk()
-            ->assertJsonPath('data.enrollments.0.title', $course->title)
             ->assertJsonPath('data.courses', 1)
-            ->assertJsonPath('data.orders.0.number', '#'.(1000 + $order->id))
-            ->assertJsonPath('data.orders.0.status_label', 'مكتمل');
+            ->assertJsonPath('data.workshops', 1)
+            ->assertJsonPath('data.enrollments.0.course_id', $course->id)
+            ->assertJsonPath('data.enrollments.0.title', $course->title)
+            ->assertJsonPath('data.workshop_registrations.0.workshop_id', $workshop->id)
+            ->assertJsonPath('data.workshop_registrations.0.title', $workshop->title)
+            ->assertJsonPath('data.workshop_registrations.0.workshop_date', $workshop->date->toDateString())
+            ->assertJsonMissingPath('data.orders');
     }
 
     public function test_support_suspends_and_reactivates_students(): void
@@ -72,11 +78,11 @@ class StudentControllerTest extends TestCase
         $this->assertTrue($students[1]->fresh()->isSuspended());
     }
 
-    public function test_accountant_cannot_suspend_and_gets_403(): void
+    public function test_editor_cannot_suspend_and_gets_403(): void
     {
         $student = Student::factory()->create();
 
-        $this->actingAs(User::factory()->role(Role::Accountant)->create())
+        $this->actingAs(User::factory()->role(Role::Editor)->create())
             ->putJson(route('api.students.status.update'), ['ids' => [$student->id], 'status' => 'suspended'])
             ->assertForbidden();
 

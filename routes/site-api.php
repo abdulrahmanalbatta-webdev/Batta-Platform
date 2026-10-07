@@ -10,6 +10,7 @@ use App\Http\Controllers\Site\CourseController;
 use App\Http\Controllers\Site\CourseReviewController;
 use App\Http\Controllers\Site\MyCourseController;
 use App\Http\Controllers\Site\MyReviewController;
+use App\Http\Controllers\Site\MyWorkshopController;
 use App\Http\Controllers\Site\NewsletterController;
 use App\Http\Controllers\Site\ProjectRequestController;
 use App\Http\Controllers\Site\RegisteredStudentController;
@@ -68,6 +69,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/me/courses', [MyCourseController::class, 'index'])->name('me.courses.index');
     Route::get('/me/courses/{slug}', [MyCourseController::class, 'show'])->name('me.courses.show');
+    Route::post('/me/courses/{slug}', [MyCourseController::class, 'store'])->middleware('throttle:site-forms')->name('me.courses.store');
+    Route::delete('/me/courses/{slug}', [MyCourseController::class, 'destroy'])->name('me.courses.destroy');
+    Route::get('/me/workshops', [MyWorkshopController::class, 'index'])->name('me.workshops.index');
+    Route::post('/me/workshops/{workshop}', [MyWorkshopController::class, 'store'])->whereNumber('workshop')->middleware('throttle:site-forms')->name('me.workshops.store');
+    Route::delete('/me/workshops/{workshop}', [MyWorkshopController::class, 'destroy'])->whereNumber('workshop')->name('me.workshops.destroy');
     Route::put('/me/courses/{slug}/review', [MyReviewController::class, 'update'])->name('me.courses.review');
     Route::post('/articles/{key}/comments', [CommentController::class, 'store'])->defaults('type', 'article')->middleware('throttle:site-forms')->name('articles.comments.store');
     Route::post('/courses/{key}/comments', [CommentController::class, 'store'])->defaults('type', 'course')->middleware('throttle:site-forms')->name('courses.comments.store');

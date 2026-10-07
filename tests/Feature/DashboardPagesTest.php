@@ -32,8 +32,6 @@ class DashboardPagesTest extends TestCase
             'articles' => ['articles.index', []],
             'article create' => ['articles.create', []],
             'tools' => ['tools.index', []],
-            'orders' => ['orders.index', []],
-            'coupons' => ['coupons.index', []],
             'leads' => ['leads.index', []],
             'students' => ['students.index', []],
             'messages' => ['messages.index', []],

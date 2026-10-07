@@ -18,9 +18,14 @@
     <!-- KPIs: this month so far against the same days of last month -->
     <div class="grid g4" id="kpis">
       <div class="card kpi dark">
-        <div class="kpi-top"><span class="kpi-label" id="kpiRevenueLabel">إيرادات الشهر</span><span class="kpi-ico c-glass"><i data-icon="dollar"></i></span></div>
-        <div class="kpi-value" id="kpiRevenue">—</div>
-        <div class="kpi-bottom"><span class="kpi-note" id="kpiRevenueNote"></span><span data-spark="revenue" data-color="#5c9dff"></span></div>
+        <div class="kpi-top"><span class="kpi-label" id="kpiEnrollmentsLabel">تسجيلات الدورات</span><span class="kpi-ico c-glass"><i data-icon="award"></i></span></div>
+        <div class="kpi-value" id="kpiEnrollments">—</div>
+        <div class="kpi-bottom"><span class="kpi-note" id="kpiEnrollmentsNote"></span><span data-spark="enrollments" data-color="#5c9dff"></span></div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi-top"><span class="kpi-label">تسجيلات الورش</span><span class="kpi-ico c-green"><i data-icon="calendar"></i></span></div>
+        <div class="kpi-value" id="kpiWorkshops">—</div>
+        <div class="kpi-bottom"><span class="kpi-note" id="kpiWorkshopsNote"></span><span data-spark="workshop_registrations" data-color="#0e9f6e"></span></div>
       </div>
       <div class="card kpi">
         <div class="kpi-top"><span class="kpi-label">طلاب جدد</span><span class="kpi-ico c-blue"><i data-icon="users"></i></span></div>
@@ -28,23 +33,18 @@
         <div class="kpi-bottom"><span class="kpi-note" id="kpiStudentsNote"></span><span data-spark="students" data-color="#0066ff"></span></div>
       </div>
       <div class="card kpi">
-        <div class="kpi-top"><span class="kpi-label">الطلبات المكتملة</span><span class="kpi-ico c-green"><i data-icon="cart"></i></span></div>
-        <div class="kpi-value" id="kpiOrders">—</div>
-        <div class="kpi-bottom"><span class="kpi-note" id="kpiOrdersNote"></span><span data-spark="orders" data-color="#0e9f6e"></span></div>
-      </div>
-      <div class="card kpi">
-        <div class="kpi-top"><span class="kpi-label">تسجيلات الدورات</span><span class="kpi-ico c-amber"><i data-icon="award"></i></span></div>
-        <div class="kpi-value" id="kpiEnrollments">—</div>
-        <div class="kpi-bottom"><span class="kpi-note" id="kpiEnrollmentsNote"></span><span data-spark="enrollments" data-color="#c27803"></span></div>
+        <div class="kpi-top"><span class="kpi-label">طلبات مشاريع</span><span class="kpi-ico c-amber"><i data-icon="briefcase"></i></span></div>
+        <div class="kpi-value" id="kpiLeads">—</div>
+        <div class="kpi-bottom"><span class="kpi-note" id="kpiLeadsNote"></span><span data-spark="leads" data-color="#c27803"></span></div>
       </div>
     </div>
 
-    <!-- revenue + sources -->
+    <!-- registrations + mix -->
     <div class="grid g-main">
       <div class="card">
         <div class="card-head">
-          <div><h3>الإيرادات</h3><p>الدورات مقابل الخدمات</p></div>
-          <div class="seg" id="revRange">
+          <div><h3>التسجيلات</h3><p>الدورات والورش شهرياً</p></div>
+          <div class="seg" id="regRange">
             <button class="on" data-range="12">12 شهراً</button>
             <button data-range="6">6 أشهر</button>
             <button data-range="3">3 أشهر</button>
@@ -52,20 +52,20 @@
         </div>
         <div class="card-body">
           <div class="legend" style="margin-bottom:10px">
-            <span><i style="background:#0066ff"></i>الدورات والورش</span>
-            <span><i style="background:#0b0d12"></i>خدمات التطوير</span>
+            <span><i style="background:#0066ff"></i>الدورات</span>
+            <span><i style="background:#0891b2"></i>الورش</span>
           </div>
-          <div id="revenueChart"></div>
+          <div id="registrationsChart"></div>
         </div>
         <div class="stat-row">
-          <div class="mini-stat"><b id="revTotal">—</b><small>إجمالي الفترة</small></div>
-          <div class="mini-stat"><b id="revCourses">—</b><small>من الدورات</small></div>
-          <div class="mini-stat"><b id="revServices">—</b><small>من الخدمات</small></div>
+          <div class="mini-stat"><b id="regTotal">—</b><small>إجمالي الفترة</small></div>
+          <div class="mini-stat"><b id="regCourses">—</b><small>في الدورات</small></div>
+          <div class="mini-stat"><b id="regWorkshops">—</b><small>في الورش</small></div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-head"><div><h3>مصادر الإيرادات</h3><p>آخر 30 يوماً</p></div><a class="link" href="{{ route('analytics') }}">التفاصيل</a></div>
+        <div class="card-head"><div><h3>توزيع التسجيلات</h3><p>آخر 30 يوماً</p></div><a class="link" href="{{ route('analytics') }}">التفاصيل</a></div>
         <div class="card-body">
           <div id="mixChart"></div>
           <div class="list" id="mixList" style="margin-top:16px"></div>
@@ -73,14 +73,14 @@
       </div>
     </div>
 
-    <!-- orders + activity -->
+    <!-- registrations + activity -->
     <div class="grid g-main">
       <div class="card">
-        <div class="card-head"><div><h3>أحدث الطلبات</h3><p>آخر عمليات الشراء على المنصة</p></div><a class="btn btn-ghost btn-sm" href="{{ route('orders.index') }}">كل الطلبات <i data-icon="arrow" class="sm"></i></a></div>
+        <div class="card-head"><div><h3>أحدث التسجيلات</h3><p>آخر من سجّل في دورة أو ورشة</p></div><a class="btn btn-ghost btn-sm" href="{{ route('students.index') }}">كل الطلاب <i data-icon="arrow" class="sm"></i></a></div>
         <div class="table-wrap">
           <table class="table">
-            <thead><tr><th>الطلب</th><th>العميل</th><th>المنتج</th><th>المبلغ</th><th>الحالة</th></tr></thead>
-            <tbody id="recentOrders"></tbody>
+            <thead><tr><th>الطالب</th><th>سجّل في</th><th>النوع</th><th>التاريخ</th></tr></thead>
+            <tbody id="recentRegistrations"></tbody>
           </table>
         </div>
       </div>
@@ -96,7 +96,7 @@
     <!-- bottom widgets -->
     <div class="grid g3">
       <div class="card">
-        <div class="card-head"><div><h3>الدورات الأعلى دخلاً</h3></div><a class="link" href="{{ route('courses.index') }}">الكل</a></div>
+        <div class="card-head"><div><h3>الدورات الأكثر تسجيلاً</h3></div><a class="link" href="{{ route('courses.index') }}">الكل</a></div>
         <div class="list" id="topCourses"></div>
       </div>
       <div class="card">

@@ -12,7 +12,7 @@
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = (n) => Number(n).toLocaleString('en-US');
-  // amounts in the platform currency (settings → الدفع), e.g. "1,200$" or "49 ر.س"
+  // amounts in the platform currency (settings → عام), for project budgets, e.g. "1,200$" or "49 ر.س"
   const money = (n) => `${num(n)}${CFG.currency_symbol ?? '$'}`;
   const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   const date = (iso) => {
@@ -152,9 +152,7 @@
       { page: 'tools', href: url('tools'), icon: 'code', label: 'الأدوات' },
       { page: 'site-content', href: url('site-content'), icon: 'globe', label: 'محتوى الموقع' },
     ] },
-    { label: 'المبيعات', items: [
-      { page: 'orders', href: url('orders'), icon: 'cart', label: 'الطلبات' },
-      { page: 'coupons', href: url('coupons'), icon: 'tag', label: 'الكوبونات' },
+    { label: 'الأعمال', items: [
       { page: 'leads', href: url('leads'), icon: 'briefcase', label: 'طلبات المشاريع', count: newLeads },
     ] },
     { label: 'المجتمع', items: [
@@ -309,7 +307,7 @@
         <span class="tb-sep" aria-hidden="true"></span>
         <label class="tb-search">
           ${icon('search', 'sm')}
-          <input type="search" id="globalSearch" placeholder="ابحث عن طالب، طلب، دورة…" aria-label="بحث عام">
+          <input type="search" id="globalSearch" placeholder="ابحث عن طالب، دورة، مقال…" aria-label="بحث عام">
           <kbd>/</kbd>
         </label>
         <div class="tb-actions">
@@ -320,7 +318,6 @@
               <a href="${url('article-create')}">${icon('article', 'sm')}مقال جديد</a>
               <a href="${url('workshops', {}, 'new')}">${icon('calendar', 'sm')}ورشة جديدة</a>
               <a href="${url('tools', {}, 'new')}">${icon('code', 'sm')}أداة جديدة</a>
-              <a href="${url('coupons', {}, 'new')}">${icon('tag', 'sm')}كوبون خصم</a>
             </div>
           </div>
           <a class="tb-btn hide-sm" href="${esc(CFG.site_url || '#')}" target="_blank" rel="noopener" data-tip="عرض الموقع" data-tip-pos="bottom" aria-label="عرض الموقع">${icon('external')}</a>
@@ -470,7 +467,8 @@
 
   /* ---------- bell: the member's notifications from /notifications ---------- */
   const ALERT_STYLE = {
-    orders: ['cart', 'c-green'],
+    registrations: ['award', 'c-green'],
+    students: ['users', 'c-blue'],
     leads: ['briefcase', 'c-blue'],
     reviews: ['star', 'c-amber'],
     comments: ['chat', 'c-amber'],

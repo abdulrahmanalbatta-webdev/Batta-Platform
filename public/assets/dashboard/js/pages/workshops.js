@@ -1,5 +1,5 @@
 document.addEventListener('app:ready', async () => {
-  const { $, $$, esc, num, money, date, badge, icon, toast, confirmDialog, openModal, closeModal, openDrawer, person, api, showFieldErrors } = App;
+  const { $, $$, esc, num, date, badge, icon, toast, confirmDialog, openModal, closeModal, openDrawer, person, api, showFieldErrors } = App;
   const COLORS = ['#0066ff', '#0b0d12', '#334155', '#5c9dff', '#0e9f6e', '#7c3aed', '#c27803'];
   const canEdit = App.can('manage_content');
   let list = [];
@@ -11,12 +11,11 @@ document.addEventListener('app:ready', async () => {
     const open = list.filter((w) => !ended(w));
     const seats = open.reduce((a, w) => a + w.seats, 0);
     const taken = open.reduce((a, w) => a + w.taken, 0);
-    const revenue = list.reduce((a, w) => a + w.price * w.taken, 0);
     $('#wsStats').innerHTML = [
       ['calendar', 'c-blue', 'ورش قادمة', open.length],
       ['users', 'c-violet', 'مقاعد محجوزة', `${num(taken)} / ${num(seats)}`],
       ['trend', 'c-green', 'نسبة الإشغال', `${Math.round((taken / (seats || 1)) * 100)}%`],
-      ['dollar', 'c-amber', 'إيرادات الورش', money(revenue)],
+      ['award', 'c-amber', 'إجمالي المسجّلين', num(list.reduce((a, w) => a + w.taken, 0))],
     ]
       .map(([ic, tone, l, v]) => `<div class="card kpi"><div class="kpi-top"><span class="kpi-label">${l}</span><span class="kpi-ico ${tone}">${icon(ic)}</span></div><div class="kpi-value">${v}</div></div>`)
       .join('');
@@ -51,7 +50,7 @@ document.addEventListener('app:ready', async () => {
             <div style="flex:1;min-width:0">
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">${badge(w.state_label)}<span class="badge">${icon(w.format === 'online' ? 'monitor' : 'pin', 'sm')}${esc(w.format_label)} · ${esc(w.place)}</span></div>
               <h3 style="font-size:16px">${esc(w.title)}</h3>
-              <small class="muted">${icon('clock', 'sm')} ${esc(w.time)} · ${w.price ? money(w.price) : 'مجانية'}</small>
+              <small class="muted">${icon('clock', 'sm')} ${esc(w.time)}</small>
             </div>
             <div class="dropdown">
               <button class="btn-icon" data-dropdown aria-label="المزيد">${icon('more', 'sm')}</button>
@@ -89,7 +88,6 @@ document.addEventListener('app:ready', async () => {
     $('#wTime').value = w?.time ?? '19:00';
     $('#wFormat').value = w?.format ?? 'online';
     $('#wPlace').value = w?.place ?? 'Zoom';
-    $('#wPrice').value = w?.price ?? 0;
     $('#wSeats').value = w?.seats ?? 40;
     $('#wDesc').value = w?.description ?? '';
   }
@@ -116,10 +114,9 @@ document.addEventListener('app:ready', async () => {
       time: $('#wTime').value,
       format: $('#wFormat').value,
       place: $('#wPlace').value.trim() || null,
-      price: Number($('#wPrice').value),
       seats: Number($('#wSeats').value),
     };
-    const fields = { title: '#wTitle', description: '#wDesc', date: '#wDate', time: '#wTime', format: '#wFormat', place: '#wPlace', price: '#wPrice', seats: '#wSeats' };
+    const fields = { title: '#wTitle', description: '#wDesc', date: '#wDate', time: '#wTime', format: '#wFormat', place: '#wPlace', seats: '#wSeats' };
     const wasEditing = !!editing;
     try {
       const saved = (await (editing ? api.put(`workshops/${editing.id}`, data) : api.post('workshops', data))).data;
@@ -144,7 +141,7 @@ document.addEventListener('app:ready', async () => {
       fillForm(w);
       openModal('workshopModal');
     } else if (act === 'delete') {
-      if (await confirmDialog({ title: 'حذف الورشة؟', text: w.taken ? `سيتم إلغاء "${w.title}" وإشعار ${w.taken} مسجلاً.` : `سيتم حذف "${w.title}" نهائياً.`, ok: 'حذف' })) {
+      if (await confirmDialog({ title: 'حذف الورشة؟', text: `سيتم حذف "${w.title}" نهائياً.`, ok: 'حذف' })) {
         try {
           await api.delete(`workshops/${w.id}`);
         } catch (err) {
@@ -179,7 +176,7 @@ document.addEventListener('app:ready', async () => {
         <div class="drawer-head"><div><h3 style="font-size:17px">المسجلون (${people.length})</h3><small class="muted">${esc(w.title)}</small></div><button class="btn-icon" data-close-drawer aria-label="إغلاق"><i data-icon="close"></i></button></div>
         <div class="drawer-body" style="gap:0;padding:0">${
           people.length
-            ? people.map((p) => `<div class="list-item">${person({ name: p.name, initial: p.initial, color: COLORS[p.student_id % COLORS.length], sub: p.email })}<span class="grow"></span><span class="badge success">${esc(p.order_number)}</span></div>`).join('')
+            ? people.map((p) => `<div class="list-item">${person({ name: p.name, initial: p.initial, color: COLORS[p.student_id % COLORS.length], sub: p.email })}<span class="grow"></span><small class="muted">سجّل ${date(p.registered_at)}</small></div>`).join('')
             : `<div class="empty"><div class="e-ico">${icon('users')}</div><b>لا يوجد مسجلون بعد</b>سيظهر هنا كل من يحجز مقعداً في الورشة.</div>`
         }</div>`);
     }

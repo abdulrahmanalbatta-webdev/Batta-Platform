@@ -8,7 +8,6 @@ enum Role: string
     case Admin = 'admin';
     case Editor = 'editor';
     case Support = 'support';
-    case Accountant = 'accountant';
 
     /**
      * The Arabic name shown in the dashboard.
@@ -20,7 +19,6 @@ enum Role: string
             self::Admin => 'مدير',
             self::Editor => 'محرر محتوى',
             self::Support => 'دعم فني',
-            self::Accountant => 'محاسب',
         };
     }
 
@@ -30,7 +28,7 @@ enum Role: string
     }
 
     /**
-     * Courses, workshops, articles and tools: support and accountants only read them.
+     * Courses, workshops, articles and tools: support only reads them.
      */
     public function canManageContent(): bool
     {
@@ -43,14 +41,6 @@ enum Role: string
     public function canManageStudents(): bool
     {
         return in_array($this, [self::Owner, self::Admin, self::Support], true);
-    }
-
-    /**
-     * Confirming payments, refunds and coupons.
-     */
-    public function canManageSales(): bool
-    {
-        return in_array($this, [self::Owner, self::Admin, self::Accountant], true);
     }
 
     /**
@@ -78,7 +68,7 @@ enum Role: string
     }
 
     /**
-     * The platform settings: general, payments, email and security.
+     * The platform settings: general, email and security.
      */
     public function canManageSettings(): bool
     {
@@ -101,8 +91,8 @@ enum Role: string
     public function assignableRoles(): array
     {
         return match ($this) {
-            self::Owner => [self::Admin, self::Editor, self::Support, self::Accountant],
-            self::Admin => [self::Editor, self::Support, self::Accountant],
+            self::Owner => [self::Admin, self::Editor, self::Support],
+            self::Admin => [self::Editor, self::Support],
             default => [],
         };
     }

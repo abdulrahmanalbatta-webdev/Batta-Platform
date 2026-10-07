@@ -30,22 +30,21 @@ class StudentLearningTest extends TestCase
         return ['Authorization' => 'Bearer '.$student->createToken('web')->plainTextToken];
     }
 
-    public function test_my_courses_are_the_bought_ones_and_pro_ones(): void
+    public function test_my_courses_are_the_ones_i_registered_in_newest_first(): void
     {
-        $student = Student::factory()->pro()->create();
-        Enrollment::factory()->for($student)->for($this->course(['title' => 'مشتراة']))->create();
-        $this->course(['title' => 'ضمن Pro', 'is_included_in_pro' => true]);
-        $this->course(['title' => 'ليست لي', 'is_included_in_pro' => false]);
+        $student = Student::factory()->create();
+        Enrollment::factory()->for($student)->for($this->course(['title' => 'الأولى']))->create(['created_at' => now()->subDay()]);
+        Enrollment::factory()->for($student)->for($this->course(['title' => 'الأحدث']))->create();
+        $this->course(['title' => 'ليست لي']);
 
         $response = $this->getJson(route('site.me.courses.index'), $this->signIn($student));
 
         $response->assertOk()
             ->assertJsonCount(2, 'data')
-            ->assertJsonPath('data.0.title', 'مشتراة')
-            ->assertJsonPath('data.0.access', 'purchased')
-            ->assertJsonMissingPath('data.0.progress')
-            ->assertJsonPath('data.1.title', 'ضمن Pro')
-            ->assertJsonPath('data.1.access', 'pro');
+            ->assertJsonPath('data.0.title', 'الأحدث')
+            ->assertJsonPath('data.1.title', 'الأولى')
+            ->assertJsonMissingPath('data.0.access')
+            ->assertJsonMissingPath('data.0.progress');
     }
 
     public function test_a_course_without_access_is_refused(): void
@@ -53,7 +52,7 @@ class StudentLearningTest extends TestCase
         $this->getJson(route('site.me.courses.index'))->assertUnauthorized();
 
         $student = Student::factory()->create();
-        $this->course(['slug' => 'laravel', 'is_included_in_pro' => true]);
+        $this->course(['slug' => 'laravel']);
         $headers = $this->signIn($student);
 
         $this->getJson(route('site.me.courses.show', 'laravel'), $headers)->assertForbidden();
@@ -69,14 +68,6 @@ class StudentLearningTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.slug', 'laravel')
             ->assertJsonPath('data.my_review', null);
-    }
-
-    public function test_pro_access_ends_with_the_membership(): void
-    {
-        $student = Student::factory()->create(['pro_until' => now()->subDay()]);
-        $this->course(['slug' => 'laravel', 'is_included_in_pro' => true]);
-
-        $this->getJson(route('site.me.courses.show', 'laravel'), $this->signIn($student))->assertForbidden();
     }
 
     public function test_a_review_waits_for_moderation_and_a_rewrite_waits_again(): void

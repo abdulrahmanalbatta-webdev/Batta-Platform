@@ -32,7 +32,6 @@ class WorkshopResource extends JsonResource
             'format' => $this->format->value,
             'format_label' => $this->format->label(),
             'place' => $this->place,
-            'price' => (float) $this->price,
             'seats' => $this->seats,
             'taken' => $this->seatsTaken(),
             'state' => $state,

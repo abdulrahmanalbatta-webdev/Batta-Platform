@@ -2,18 +2,18 @@
 
 namespace App\Support;
 
-use App\Enums\OrderStatus;
-use App\Models\Order;
+use App\Models\Enrollment;
 use App\Models\Student;
+use App\Models\WorkshopRegistration;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * The analytics page: sales and students over a period, compared with the period before it.
- * Up to 90 days are shown day by day; a year month by month.
+ * The analytics page: registrations in courses and workshops and new students over a period, compared with the
+ * period before it. Up to 90 days are shown day by day; a year month by month.
  */
-class SalesReport
+class RegistrationsReport
 {
     public const PERIODS = [7, 30, 90, 365];
 
@@ -38,12 +38,9 @@ class SalesReport
         $previousFrom = $monthly ? $from->copy()->subYear() : $from->copy()->subDays($days);
         $previousTo = $monthly ? now()->subYear() : $from;
 
-        $orders = Order::query()
-            ->where('status', OrderStatus::Completed)
-            ->where('paid_at', '>=', $previousFrom)
-            ->get(['student_id', 'item_type', 'item_name', 'total', 'payment_method', 'paid_at']);
-        $current = $orders->filter(fn (Order $order): bool => $order->paid_at->gte($from));
-        $previous = $orders->filter(fn (Order $order): bool => $order->paid_at->lt($previousTo));
+        $registrations = $this->registrations($previousFrom);
+        $current = $registrations->filter(fn (array $registration): bool => $registration['at']->gte($from));
+        $previous = $registrations->filter(fn (array $registration): bool => $registration['at']->lt($previousTo));
 
         $students = Student::query()->where('created_at', '>=', $previousFrom)->get(['id', 'country', 'created_at']);
         $newStudents = $students->filter(fn (Student $student): bool => $student->created_at->gte($from));
@@ -51,36 +48,51 @@ class SalesReport
 
         $buckets = $this->buckets($from, $monthly);
         $bucketOf = fn (Carbon $date): string => $date->format($monthly ? 'Y-m' : 'Y-m-d');
+        $courses = $current->where('type', 'course');
+        $workshops = $current->where('type', 'workshop');
 
         return [
             'days' => $days,
             'kpis' => [
-                'revenue' => $this->kpi((float) $current->sum('total'), (float) $previous->sum('total')),
-                'orders' => $this->kpi($current->count(), $previous->count()),
+                'registrations' => $this->kpi($current->count(), $previous->count()),
+                'enrollments' => $this->kpi($courses->count(), $previous->where('type', 'course')->count()),
+                'workshop_registrations' => $this->kpi($workshops->count(), $previous->where('type', 'workshop')->count()),
                 'students' => $this->kpi($newStudents->count(), $previousStudents->count()),
-                'average_order' => $this->kpi(
-                    $current->isEmpty() ? 0 : (float) $current->avg('total'),
-                    $previous->isEmpty() ? 0 : (float) $previous->avg('total'),
-                ),
             ],
             'series' => [
                 'labels' => $buckets->map(fn (Carbon $bucket): string => $bucket->locale('ar')->translatedFormat($monthly ? 'F' : 'j F'))->values()->all(),
-                'revenue' => $buckets->keys()->map(fn (string $key): float => round((float) $current->filter(fn (Order $order): bool => $bucketOf($order->paid_at) === $key)->sum('total'), 2))->all(),
+                'registrations' => $buckets->keys()->map(fn (string $key): int => $current->filter(fn (array $registration): bool => $bucketOf($registration['at']) === $key)->count())->all(),
                 'students' => $buckets->keys()->map(fn (string $key): int => $newStudents->filter(fn (Student $student): bool => $bucketOf($student->created_at) === $key)->count())->all(),
             ],
-            'funnel' => $this->funnel($newStudents->modelKeys(), $from),
-            'payment_methods' => $current->countBy(fn (Order $order): string => $order->payment_method->label())->sortDesc()
-                ->map(fn (int $count, string $label): array => ['label' => $label, 'value' => $count])->values()->all(),
-            'top_products' => $current->groupBy(fn (Order $order): string => $order->item_type->value.'|'.$order->item_name)
-                ->map(fn (Collection $orders): array => [
-                    'name' => $orders->first()->item_name,
-                    'type_label' => $orders->first()->item_type->label(),
-                    'orders' => $orders->count(),
-                    'revenue' => round((float) $orders->sum('total'), 2),
+            'funnel' => $this->funnel($newStudents->modelKeys(), $current),
+            'split' => [
+                ['label' => 'الدورات', 'value' => $courses->count()],
+                ['label' => 'الورش', 'value' => $workshops->count()],
+            ],
+            'top_items' => $current->groupBy(fn (array $registration): string => $registration['type'].'|'.$registration['name'])
+                ->map(fn (Collection $group): array => [
+                    'name' => $group->first()['name'],
+                    'type_label' => $group->first()['type'] === 'course' ? 'دورة' : 'ورشة',
+                    'registrations' => $group->count(),
                 ])
-                ->sortByDesc('revenue')->take(6)->values()->all(),
+                ->sortByDesc('registrations')->take(6)->values()->all(),
             'countries' => $this->countries($current->pluck('student_id')->unique()),
         ];
+    }
+
+    /**
+     * Course enrollments and workshop seats taken since $from, oldest first.
+     *
+     * @return Collection<int, array{type: string, name: string, student_id: int, at: Carbon}>
+     */
+    private function registrations(Carbon $from): Collection
+    {
+        $enrollments = Enrollment::query()->with('course:id,title')->where('created_at', '>=', $from)->get(['course_id', 'student_id', 'created_at'])
+            ->map(fn (Enrollment $enrollment): array => ['type' => 'course', 'name' => (string) $enrollment->course?->title, 'student_id' => $enrollment->student_id, 'at' => $enrollment->created_at]);
+        $seats = WorkshopRegistration::query()->with('workshop:id,title')->where('created_at', '>=', $from)->get(['workshop_id', 'student_id', 'created_at'])
+            ->map(fn (WorkshopRegistration $seat): array => ['type' => 'workshop', 'name' => (string) $seat->workshop?->title, 'student_id' => $seat->student_id, 'at' => $seat->created_at]);
+
+        return $enrollments->concat($seats)->sortBy('at')->values();
     }
 
     /**
@@ -115,23 +127,22 @@ class SalesReport
      * What the students who joined in the period went on to do.
      *
      * @param  array<int, int>  $studentIds
+     * @param  Collection<int, array{type: string, name: string, student_id: int, at: Carbon}>  $registrations
      * @return list<array{label: string, value: int}>
      */
-    private function funnel(array $studentIds, Carbon $from): array
+    private function funnel(array $studentIds, Collection $registrations): array
     {
-        $orders = Order::query()->whereIn('student_id', $studentIds)->where('created_at', '>=', $from)->get(['student_id', 'status']);
-        $paid = $orders->where('status', OrderStatus::Completed)->countBy('student_id');
+        $perStudent = $registrations->whereIn('student_id', $studentIds)->countBy('student_id');
 
         return [
             ['label' => 'حسابات جديدة', 'value' => count($studentIds)],
-            ['label' => 'بدأوا طلب شراء', 'value' => $orders->unique('student_id')->count()],
-            ['label' => 'أتمّوا الشراء', 'value' => $paid->count()],
-            ['label' => 'اشتروا أكثر من مرة', 'value' => $paid->filter(fn (int $count): bool => $count > 1)->count()],
+            ['label' => 'سجّلوا في دورة أو ورشة', 'value' => $perStudent->count()],
+            ['label' => 'سجّلوا في أكثر من واحدة', 'value' => $perStudent->filter(fn (int $count): bool => $count > 1)->count()],
         ];
     }
 
     /**
-     * Where the paying students of the period live, as shares of them (the 6 biggest, then the rest).
+     * Where the students who registered in the period live, as shares of them (the 6 biggest, then the rest).
      *
      * @param  Collection<int, int>  $studentIds
      * @return list<array{label: string, value: int}>

@@ -42,7 +42,6 @@ class UserResource extends JsonResource
                 'manage_team' => $this->role->canManageTeam(),
                 'manage_content' => $this->role->canManageContent(),
                 'manage_students' => $this->role->canManageStudents(),
-                'manage_sales' => $this->role->canManageSales(),
                 'answer_messages' => $this->role->canAnswerMessages(),
                 'moderate_reviews' => $this->role->canModerateReviews(),
                 'manage_leads' => $this->role->canManageLeads(),

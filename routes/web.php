@@ -42,9 +42,6 @@ Route::middleware('auth')->prefix('dashboard')->group(function () {
     Route::view('/tools', 'tools.index')->name('tools.index');
     Route::view('/site-content', 'site-content.index')->name('site-content.index');
 
-    // sales
-    Route::view('/orders', 'orders.index')->name('orders.index');
-    Route::view('/coupons', 'coupons.index')->name('coupons.index');
     Route::view('/leads', 'leads.index')->name('leads.index');
 
     // community

@@ -23,16 +23,14 @@ class UserPolicyTest extends TestCase
             'owner manages admin' => [Role::Owner, Role::Admin, true],
             'owner manages editor' => [Role::Owner, Role::Editor, true],
             'owner manages support' => [Role::Owner, Role::Support, true],
-            'owner manages accountant' => [Role::Owner, Role::Accountant, true],
             'owner cannot manage another owner' => [Role::Owner, Role::Owner, false],
             'admin manages editor' => [Role::Admin, Role::Editor, true],
             'admin manages support' => [Role::Admin, Role::Support, true],
-            'admin manages accountant' => [Role::Admin, Role::Accountant, true],
             'admin cannot manage another admin' => [Role::Admin, Role::Admin, false],
             'admin cannot manage owner' => [Role::Admin, Role::Owner, false],
             'editor cannot manage editor' => [Role::Editor, Role::Editor, false],
-            'support cannot manage accountant' => [Role::Support, Role::Accountant, false],
-            'accountant cannot manage support' => [Role::Accountant, Role::Support, false],
+            'support cannot manage editor' => [Role::Support, Role::Editor, false],
+            'editor cannot manage support' => [Role::Editor, Role::Support, false],
         ];
     }
 

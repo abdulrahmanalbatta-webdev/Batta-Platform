@@ -5,22 +5,20 @@ namespace App\Support;
 use App\Enums\ArticleStatus;
 use App\Enums\CourseStatus;
 use App\Enums\LeadStage;
-use App\Enums\OrderItemType;
-use App\Enums\OrderStatus;
 use App\Models\Article;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lead;
-use App\Models\Order;
 use App\Models\Student;
 use App\Models\Workshop;
+use App\Models\WorkshopRegistration;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * The numbers on the dashboard home page. Revenue is what customers paid for completed orders (refunded ones
- * drop out) by the day they paid, plus the budget of project requests won, by the day they were won.
+ * The numbers on the dashboard home page: new students, registrations in courses and workshops, and project
+ * requests, month by month.
  *
  * The aggregates are cached for a few minutes; the lists at the bottom are always fresh.
  */
@@ -37,6 +35,7 @@ class DashboardSummary
     {
         return [
             ...Cache::remember(self::CACHE_KEY, self::CACHE_SECONDS, fn (): array => $this->aggregates()),
+            'recent_registrations' => $this->recentRegistrations(),
             'upcoming_workshops' => $this->upcomingWorkshops(),
             'pipeline' => $this->pipeline(),
         ];
@@ -50,60 +49,56 @@ class DashboardSummary
         $months = collect(range(11, 0))->map(fn (int $back): Carbon => now()->startOfMonth()->subMonths($back));
         $first = $months->first();
 
-        $orders = Order::query()->where('status', OrderStatus::Completed)->where('paid_at', '>=', $first)->get(['item_type', 'total', 'paid_at']);
-        $won = Lead::query()->where('stage', LeadStage::Won)->where('decided_at', '>=', $first)->get(['budget', 'decided_at']);
         $students = Student::query()->where('created_at', '>=', $first)->pluck('created_at');
         $enrollments = Enrollment::query()->where('created_at', '>=', $first)->pluck('created_at');
+        $seats = WorkshopRegistration::query()->where('created_at', '>=', $first)->pluck('created_at');
+        $leads = Lead::query()->where('created_at', '>=', $first)->pluck('created_at');
 
-        $perMonth = fn (Collection $dates, ?Collection $amounts = null): array => $months
-            ->map(fn (Carbon $month): float => (float) $dates
-                ->keys()
-                ->filter(fn (int $i): bool => $dates[$i]->isSameMonth($month))
-                ->sum(fn (int $i): float => $amounts === null ? 1 : (float) $amounts[$i]))
+        $perMonth = fn (Collection $dates): array => $months
+            ->map(fn (Carbon $month): float => (float) $dates->filter(fn (Carbon $date): bool => $date->isSameMonth($month))->count())
             ->all();
-
-        $courseRevenue = $perMonth($orders->pluck('paid_at'), $orders->pluck('total'));
-        $serviceRevenue = $perMonth($won->pluck('decided_at'), $won->pluck('budget'));
 
         // this month so far against the same stretch of last month
         [$from, $previousFrom, $previousTo] = [now()->startOfMonth(), now()->startOfMonth()->subMonthNoOverflow(), now()->subMonthNoOverflow()];
-        $inMonth = fn (Collection $dates, ?Collection $amounts = null): array => [
-            $this->sumBetween($dates, $amounts, $from, now()),
-            $this->sumBetween($dates, $amounts, $previousFrom, $previousTo),
+        $inMonth = fn (Collection $dates): array => [
+            (float) $dates->filter(fn (Carbon $date): bool => $date->between($from, now()))->count(),
+            (float) $dates->filter(fn (Carbon $date): bool => $date->between($previousFrom, $previousTo))->count(),
         ];
 
-        $revenueDates = $orders->pluck('paid_at')->concat($won->pluck('decided_at'))->values();
-        $revenueAmounts = $orders->pluck('total')->concat($won->pluck('budget'))->values();
+        $since = now()->subDays(30);
 
         return [
             'month' => now()->locale('ar')->translatedFormat('F'),
             'previous_month' => now()->subMonthNoOverflow()->locale('ar')->translatedFormat('F'),
             'kpis' => [
-                'revenue' => $this->kpi($inMonth($revenueDates, $revenueAmounts), array_map(fn (float $a, float $b): float => $a + $b, $courseRevenue, $serviceRevenue)),
                 'students' => $this->kpi($inMonth($students), $perMonth($students)),
-                'orders' => $this->kpi($inMonth($orders->pluck('paid_at')), $perMonth($orders->pluck('paid_at'))),
                 'enrollments' => $this->kpi($inMonth($enrollments), $perMonth($enrollments)),
+                'workshop_registrations' => $this->kpi($inMonth($seats), $perMonth($seats)),
+                'leads' => $this->kpi($inMonth($leads), $perMonth($leads)),
             ],
-            'revenue' => [
+            'registrations' => [
                 'labels' => $months->map(fn (Carbon $month): string => $month->locale('ar')->translatedFormat('F'))->all(),
-                'courses' => $courseRevenue,
-                'services' => $serviceRevenue,
+                'courses' => $perMonth($enrollments),
+                'workshops' => $perMonth($seats),
             ],
-            'sales_mix' => $this->salesMix(),
+            'registrations_mix' => [
+                ['key' => 'courses', 'label' => 'الدورات', 'value' => $enrollments->filter(fn (Carbon $date): bool => $date->gte($since))->count()],
+                ['key' => 'workshops', 'label' => 'الورش', 'value' => $seats->filter(fn (Carbon $date): bool => $date->gte($since))->count()],
+            ],
             'top_courses' => Course::query()
-                ->withSum('sales', 'total')
-                ->orderByDesc('sales_sum_total')
+                ->withCount('enrollments')
+                ->orderByDesc('enrollments_count')
                 ->limit(4)
                 ->get()
-                ->filter(fn (Course $course): bool => (float) $course->sales_sum_total > 0)
-                ->map(fn (Course $course): array => ['id' => $course->id, 'title' => $course->title, 'glyph' => $course->glyph(), 'revenue' => (float) $course->sales_sum_total])
+                ->filter(fn (Course $course): bool => $course->enrollments_count > 0)
+                ->map(fn (Course $course): array => ['id' => $course->id, 'title' => $course->title, 'glyph' => $course->glyph(), 'students' => $course->enrollments_count])
                 ->values()
                 ->all(),
             'totals' => [
                 'students' => Student::query()->count(),
                 'published_courses' => Course::query()->where('status', CourseStatus::Published)->count(),
                 'published_articles' => Article::query()->where('status', ArticleStatus::Published)->count(),
-                'course_revenue' => round((float) Order::query()->where('status', OrderStatus::Completed)->sum('total'), 2),
+                'enrollments' => Enrollment::query()->count(),
             ],
             'generated_at' => now()->toIso8601String(),
         ];
@@ -128,37 +123,20 @@ class DashboardSummary
     }
 
     /**
-     * @param  Collection<int, Carbon>  $dates
-     * @param  Collection<int, mixed>|null  $amounts  null to count
-     */
-    private function sumBetween(Collection $dates, ?Collection $amounts, Carbon $from, Carbon $to): float
-    {
-        return (float) $dates->keys()
-            ->filter(fn (int $i): bool => $dates[$i]->between($from, $to))
-            ->sum(fn (int $i): float => $amounts === null ? 1 : (float) $amounts[$i]);
-    }
-
-    /**
-     * What the last 30 days' revenue came from.
+     * The latest registrations in courses and workshops, newest first.
      *
-     * @return list<array{key: string, label: string, value: float}>
+     * @return list<array{type: string, type_label: string, title: string, student: array{id: int, name: string, initial: string, email: string}, at: string}>
      */
-    private function salesMix(): array
+    private function recentRegistrations(): array
     {
-        $since = now()->subDays(30);
-        $byType = Order::query()
-            ->where('status', OrderStatus::Completed)
-            ->where('paid_at', '>=', $since)
-            ->get(['item_type', 'total'])
-            ->groupBy(fn (Order $order): string => $order->item_type->value)
-            ->map(fn (Collection $orders): float => round((float) $orders->sum('total'), 2));
+        $student = fn (Student $student): array => ['id' => $student->id, 'name' => $student->name, 'initial' => $student->initial, 'email' => $student->email];
 
-        return [
-            ['key' => 'courses', 'label' => 'الدورات', 'value' => $byType[OrderItemType::Course->value] ?? 0.0],
-            ['key' => 'workshops', 'label' => 'الورش', 'value' => $byType[OrderItemType::Workshop->value] ?? 0.0],
-            ['key' => 'pro', 'label' => 'اشتراك Pro', 'value' => $byType[OrderItemType::ProMonth->value] ?? 0.0],
-            ['key' => 'services', 'label' => 'خدمات التطوير', 'value' => (float) Lead::query()->where('stage', LeadStage::Won)->where('decided_at', '>=', $since)->sum('budget')],
-        ];
+        $enrollments = Enrollment::query()->with(['student', 'course:id,title'])->latest()->latest('id')->limit(6)->get()
+            ->map(fn (Enrollment $enrollment): array => ['type' => 'course', 'type_label' => 'دورة', 'title' => (string) $enrollment->course?->title, 'student' => $student($enrollment->student), 'at' => $enrollment->created_at->toIso8601String()]);
+        $seats = WorkshopRegistration::query()->with(['student', 'workshop:id,title'])->latest()->latest('id')->limit(6)->get()
+            ->map(fn (WorkshopRegistration $seat): array => ['type' => 'workshop', 'type_label' => 'ورشة', 'title' => (string) $seat->workshop?->title, 'student' => $student($seat->student), 'at' => $seat->created_at->toIso8601String()]);
+
+        return $enrollments->concat($seats)->sortByDesc('at')->take(6)->values()->all();
     }
 
     /**

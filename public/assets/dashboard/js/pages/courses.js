@@ -1,5 +1,5 @@
 document.addEventListener('app:ready', async () => {
-  const { $, esc, num, money, badge, icon, toast, confirmDialog, DataTable, api, showFieldErrors } = App;
+  const { $, esc, num, badge, icon, toast, confirmDialog, DataTable, api, showFieldErrors } = App;
   const canEdit = App.can('manage_content');
   let rows;
   try {
@@ -11,13 +11,12 @@ document.addEventListener('app:ready', async () => {
   function stats() {
     const pub = rows.filter((c) => c.status === 'published');
     const students = rows.reduce((a, c) => a + c.students, 0);
-    const revenue = rows.reduce((a, c) => a + c.revenue, 0);
     const rated = pub.filter((c) => c.rating);
     const avg = rated.reduce((a, c) => a + c.rating, 0) / (rated.length || 1);
     $('#courseStats').innerHTML = [
       ['play', 'c-blue', 'الدورات المنشورة', `${pub.length} / ${rows.length}`],
       ['users', 'c-violet', 'إجمالي المسجلين', num(students)],
-      ['dollar', 'c-green', 'إجمالي الإيرادات', money(revenue)],
+      ['award', 'c-green', 'متوسط الطلاب لكل دورة', num(Math.round(students / (rows.length || 1)))],
       ['star', 'c-amber', 'متوسط التقييم', avg.toFixed(1)],
     ]
       .map(([ic, tone, label, value]) => `<div class="card kpi"><div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-ico ${tone}">${icon(ic)}</span></div><div class="kpi-value">${value}</div></div>`)
@@ -27,10 +26,8 @@ document.addEventListener('app:ready', async () => {
   const columns = [
     { key: 'title', label: 'الدورة', sortable: true, render: (c) => `<div class="person"><span class="thumb">${esc(c.glyph)}</span><div><b>${esc(c.title)}</b><small>${esc(c.code)} · ${esc(c.level_label)}</small></div></div>` },
     { key: 'level_label', label: 'المستوى', sortable: true, render: (c) => `<span class="badge">${esc(c.level_label)}</span>` },
-    { key: 'price', label: 'السعر', sortable: true, className: 'num', render: (c) => (c.price ? money(c.price) : '<span class="badge success">مجانية</span>') },
     { key: 'students', label: 'الطلاب', sortable: true, className: 'num', render: (c) => num(c.students) },
     { key: 'rating', label: 'التقييم', sortable: true, render: (c) => (c.rating ? `<span class="stars">${icon('star', 'sm fill')}</span> <b class="num">${c.rating}</b>` : '<span class="muted">—</span>') },
-    { key: 'revenue', label: 'الإيرادات', sortable: true, className: 'num', render: (c) => money(c.revenue) },
     { key: 'status_label', label: 'الحالة', sortable: true, render: (c) => badge(c.status_label) },
     {
       key: '',
@@ -97,7 +94,7 @@ document.addEventListener('app:ready', async () => {
             <h4>${esc(c.title)}</h4>
             <div class="c-meta"><span>${icon('award', 'sm')}${esc(c.level_label)}</span><span>${icon('users', 'sm')}${num(c.students)}</span><span>${icon('star', 'sm')}${c.rating || '—'}</span></div>
           </div>
-          <div class="c-foot"><b class="num">${c.price ? money(c.price) : 'مجانية'}</b>${canEdit ? `<a class="btn btn-ghost btn-sm" href="${App.url('course-edit', { id: c.id })}">${icon('edit', 'sm')}تعديل</a>` : ''}</div>
+          <div class="c-foot"><b class="num">${num(c.students)} طالب</b>${canEdit ? `<a class="btn btn-ghost btn-sm" href="${App.url('course-edit', { id: c.id })}">${icon('edit', 'sm')}تعديل</a>` : ''}</div>
         </div>`,
         )
         .join('') || '<div class="empty" style="grid-column:1/-1">لا توجد دورات مطابقة</div>';
@@ -190,7 +187,7 @@ document.addEventListener('app:ready', async () => {
   $('#exportCourses').addEventListener('click', () =>
     App.downloadCSV('courses.csv', [
       { key: 'code', label: 'الرقم' }, { key: 'title', label: 'الدورة' }, { key: 'level_label', label: 'المستوى' },
-      { key: 'price', label: 'السعر' }, { key: 'students', label: 'الطلاب' }, { key: 'revenue', label: 'الإيرادات' }, { key: 'status_label', label: 'الحالة' },
+      { key: 'students', label: 'الطلاب' }, { key: 'status_label', label: 'الحالة' },
     ], table.view),
   );
 

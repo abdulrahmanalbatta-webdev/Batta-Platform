@@ -1,5 +1,5 @@
 document.addEventListener('app:ready', () => {
-  const { $, $$, esc, num, money, toast, api, showFieldErrors } = App;
+  const { $, $$, esc, num, toast, api, showFieldErrors } = App;
 
   // platform totals (cached with the dashboard numbers) and what I did lately
   api
@@ -10,7 +10,7 @@ document.addEventListener('app:ready', () => {
         [num(t.students), 'طالب'],
         [num(t.published_courses), 'دورة منشورة'],
         [num(t.published_articles), 'مقالة منشورة'],
-        [money(t.course_revenue), 'إيرادات المنصة'],
+        [num(t.enrollments), 'تسجيل في الدورات'],
       ]
         .map(([v, l]) => `<div class="mini-stat"><b>${v}</b><small>${l}</small></div>`)
         .join('');

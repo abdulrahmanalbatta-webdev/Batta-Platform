@@ -14,7 +14,6 @@ use App\Http\Controllers\Api\ConversationAttachmentController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\ConversationMessageController;
 use App\Http\Controllers\Api\ConversationReadController;
-use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\CourseCopyController;
 use App\Http\Controllers\Api\CourseCoverController;
@@ -26,11 +25,6 @@ use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\NotificationReadController;
-use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\OrderFailureController;
-use App\Http\Controllers\Api\OrderInvoiceController;
-use App\Http\Controllers\Api\OrderPaymentController;
-use App\Http\Controllers\Api\OrderRefundController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\ReviewReplyController;
@@ -129,19 +123,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/subscribers/{subscriber}', [SubscriberController::class, 'destroy'])->name('subscribers.destroy');
         Route::put('/students/status', [StudentStatusController::class, 'update'])->name('students.status.update');
         Route::post('/students/messages', [StudentMessageController::class, 'store'])->name('students.messages.store');
-    });
-
-    // sales: every member reads; owner, admin and accountant confirm, refund and manage coupons (Role::canManageSales)
-    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-    Route::get('/coupons', [CouponController::class, 'index'])->name('coupons.index');
-
-    Route::middleware('can:manage-sales')->group(function () {
-        Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
-        Route::post('/orders/{order}/payment', [OrderPaymentController::class, 'store'])->name('orders.payment.store');
-        Route::post('/orders/{order}/refund', [OrderRefundController::class, 'store'])->name('orders.refund.store');
-        Route::post('/orders/{order}/failure', [OrderFailureController::class, 'store'])->name('orders.failure.store');
-        Route::post('/orders/{order}/invoice', [OrderInvoiceController::class, 'store'])->name('orders.invoice.store');
-        Route::apiResource('coupons', CouponController::class)->only(['store', 'update', 'destroy']);
     });
 
     // messages: every member reads; owner, admin and support reply, mark read and delete (Role::canAnswerMessages)

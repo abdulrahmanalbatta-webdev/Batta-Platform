@@ -71,11 +71,11 @@ class SecurityFixesTest extends TestCase
         $this->assertSame($known, $unknown);
     }
 
-    public function test_admin_cannot_change_where_payments_and_mail_go(): void
+    public function test_admin_cannot_change_where_mail_goes(): void
     {
         $admin = User::factory()->admin()->create();
 
-        foreach (['mail_host' => 'smtp.attacker.test', 'mail_password' => 'attacker', 'payment_instructions' => 'IBAN XX00 (attacker)'] as $key => $value) {
+        foreach (['mail_host' => 'smtp.attacker.test', 'mail_password' => 'attacker', 'mail_from_address' => 'attacker@attacker.test'] as $key => $value) {
             $this->actingAs($admin)->putJson(route('api.settings.update'), [$key => $value])->assertForbidden();
         }
         $this->actingAs($admin)->postJson(route('api.settings.test-email'))->assertForbidden();

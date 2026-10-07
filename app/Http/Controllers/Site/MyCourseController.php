@@ -7,14 +7,16 @@ use App\Http\Resources\Site\CourseResource;
 use App\Http\Resources\Site\OwnReviewResource;
 use App\Models\Course;
 use App\Models\Student;
+use App\Notifications\Alerts\RegistrationReceived;
+use App\Support\TeamAlerts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class MyCourseController extends Controller
 {
     /**
-     * The courses the student can study: the ones they bought (even if since unpublished), plus the published
-     * Pro courses while their membership runs; the most recently bought first.
+     * The courses the student registered in (even if since unpublished), the most recent first.
      */
     public function index(Request $request): JsonResponse
     {
@@ -24,21 +26,16 @@ class MyCourseController extends Controller
         $enrolledIds = $student->enrollments()->latest()->latest('id')->pluck('course_id');
 
         $courses = Course::query()->withCardNumbers()
-            ->where(fn ($query) => $query
-                ->whereIn('id', $enrolledIds)
-                ->when($student->isPro(), fn ($query) => $query->orWhere(fn ($query) => $query->published()->where('is_included_in_pro', true))))
+            ->whereIn('id', $enrolledIds)
             ->get()
-            ->sortBy(fn (Course $course): int => ($position = $enrolledIds->search($course->id)) === false ? PHP_INT_MAX : $position)
+            ->sortBy(fn (Course $course): int => $enrolledIds->search($course->id))
             ->values();
 
-        return response()->json(['data' => $courses->map(fn (Course $course): array => [
-            ...(new CourseResource($course))->resolve($request),
-            'access' => $enrolledIds->contains($course->id) ? 'purchased' : 'pro',
-        ])->all()]);
+        return response()->json(['data' => CourseResource::collection($courses)->resolve($request)]);
     }
 
     /**
-     * One course the student can study, with their review.
+     * One course the student registered in, with their review.
      */
     public function show(Request $request, string $slug): JsonResponse
     {
@@ -54,5 +51,40 @@ class MyCourseController extends Controller
             ...(new CourseResource($course))->withContent()->resolve($request),
             'my_review' => $review ? (new OwnReviewResource($review))->resolve($request) : null,
         ]]);
+    }
+
+    /**
+     * Register the student in a published course (free; registering twice changes nothing).
+     */
+    public function store(Request $request, string $slug): JsonResponse
+    {
+        /** @var Student $student */
+        $student = $request->user();
+
+        $course = Course::query()->published()->where('slug', $slug)->firstOrFail();
+        $enrollment = $student->enrollments()->firstOrCreate(['course_id' => $course->id]);
+
+        if ($enrollment->wasRecentlyCreated) {
+            TeamAlerts::send(new RegistrationReceived($student, $course));
+        }
+
+        return response()->json([
+            'message' => 'تم تسجيلك في الدورة.',
+            'data' => (new CourseResource($course->loadCount('enrollments')))->resolve($request),
+        ], $enrollment->wasRecentlyCreated ? 201 : 200);
+    }
+
+    /**
+     * Cancel the student's registration in a course.
+     */
+    public function destroy(Request $request, string $slug): Response
+    {
+        /** @var Student $student */
+        $student = $request->user();
+
+        $course = Course::query()->where('slug', $slug)->firstOrFail();
+        $student->enrollments()->where('course_id', $course->id)->delete();
+
+        return response()->noContent();
     }
 }

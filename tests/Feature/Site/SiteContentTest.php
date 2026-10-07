@@ -22,20 +22,17 @@ class SiteContentTest extends TestCase
 
     public function test_settings_never_include_secrets_and_list_the_project_services(): void
     {
-        app(PlatformSettings::class)->update([
-            'payment_instructions' => 'IBAN PS00 0000 ثم أرسل الإيصال على واتساب',
-            'mail_password' => 'very-secret',
-        ]);
+        app(PlatformSettings::class)->update(['mail_password' => 'very-secret']);
 
         $response = $this->getJson(route('site.settings'));
 
         $response->assertOk()
             ->assertJsonPath('data.site_name', 'Batta')
             ->assertJsonPath('data.currency_symbol', '$')
-            ->assertJsonPath('data.payment_instructions', 'IBAN PS00 0000 ثم أرسل الإيصال على واتساب')
-            ->assertJsonPath('data.payment_methods.0', ['value' => 'bank-transfer', 'label' => 'تحويل بنكي'])
             ->assertJsonPath('data.project_services.0.value', 'websites')
-            ->assertJsonMissingPath('data.invoice_note')
+            ->assertJsonMissingPath('data.payment_instructions')
+            ->assertJsonMissingPath('data.payment_methods')
+            ->assertJsonMissingPath('data.mail_password')
             ->assertDontSee('very-secret')
             ->assertCookieMissing(config('session.cookie'));
     }
@@ -53,7 +50,7 @@ class SiteContentTest extends TestCase
 
     public function test_courses_list_only_published_ones_with_their_numbers(): void
     {
-        $course = Course::factory()->published()->create(['title' => 'Laravel من الصفر', 'price' => 49, 'outcomes' => ['مشروع منشور']]);
+        $course = Course::factory()->published()->create(['title' => 'Laravel من الصفر', 'outcomes' => ['مشروع منشور']]);
         Enrollment::factory()->for($course)->create();
         Review::factory()->published()->for($course)->create(['rating' => 4]);
         Review::factory()->for($course)->create(['rating' => 1]);
@@ -70,6 +67,7 @@ class SiteContentTest extends TestCase
             ->assertJsonPath('data.0.outcomes', ['مشروع منشور'])
             ->assertJsonMissingPath('data.0.lessons')
             ->assertJsonMissingPath('data.0.revenue')
+            ->assertJsonMissingPath('data.0.price')
             ->assertJsonMissingPath('data.0.status');
     }
 

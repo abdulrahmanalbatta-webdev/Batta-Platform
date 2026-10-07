@@ -27,8 +27,6 @@ class AccountResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'country' => $this->country,
-            'is_pro' => $this->isPro(),
-            'pro_until' => $this->pro_until?->toIso8601String(),
             'joined' => $this->created_at->toDateString(),
         ];
     }

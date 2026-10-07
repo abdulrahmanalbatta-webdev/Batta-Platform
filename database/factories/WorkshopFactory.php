@@ -25,7 +25,6 @@ class WorkshopFactory extends Factory
             'start_time' => '19:00',
             'format' => WorkshopFormat::Online,
             'place' => 'Zoom',
-            'price' => 0,
             'seats' => 40,
         ];
     }

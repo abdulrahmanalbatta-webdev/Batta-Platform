@@ -11,8 +11,8 @@ class SettingsController extends Controller
 {
     /**
      * What the public site needs before it renders: name, contact details, maintenance and sign-up switches,
-     * currency and tax, the payment methods that are ready with their public keys, and the services offered
-     * on the project request form. Never any secret.
+     * the comments switch, the currency of project budgets and the services offered on the project request form.
+     * Never any secret.
      */
     public function __invoke(PlatformSettings $settings, ProjectServices $services): JsonResponse
     {

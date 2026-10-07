@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\CourseStatus;
-use App\Enums\OrderStatus;
 use App\Models\Concerns\LogsActivity;
 use App\Notifications\StudentPasswordReset;
 use Database\Factories\StudentFactory;
@@ -34,11 +32,6 @@ class Student extends Authenticatable
     public const INACTIVE_AFTER_DAYS = 30;
 
     /**
-     * One paid "month" of Pro, in days: a fixed length, so a refund takes back exactly what the order gave.
-     */
-    public const PRO_PERIOD_DAYS = 30;
-
-    /**
      * A phone with its country code, digits and spaces (e.g. +970 59 000 0000).
      */
     public const PHONE_PATTERN = '/^\+?[0-9 ]{7,20}$/';
@@ -51,7 +44,6 @@ class Student extends Authenticatable
     protected function casts(): array
     {
         return [
-            'pro_until' => 'datetime',
             'suspended_at' => 'datetime',
             'last_active_at' => 'datetime',
             'password' => 'hashed',
@@ -71,14 +63,6 @@ class Student extends Authenticatable
     }
 
     /**
-     * @return HasMany<Order, $this>
-     */
-    public function orders(): HasMany
-    {
-        return $this->hasMany(Order::class);
-    }
-
-    /**
      * @return HasMany<Enrollment, $this>
      */
     public function enrollments(): HasMany
@@ -92,6 +76,14 @@ class Student extends Authenticatable
     public function courses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class, 'enrollments')->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<WorkshopRegistration, $this>
+     */
+    public function workshopRegistrations(): HasMany
+    {
+        return $this->hasMany(WorkshopRegistration::class);
     }
 
     /**
@@ -112,26 +104,17 @@ class Student extends Authenticatable
         return $digits === '' ? null : 'https://wa.me/'.$digits;
     }
 
-    public function isPro(): bool
-    {
-        return $this->pro_until !== null && $this->pro_until->isFuture();
-    }
-
     public function isSuspended(): bool
     {
         return $this->suspended_at !== null;
     }
 
     /**
-     * Bought (enrolled), or a published course included in Pro while the membership runs.
+     * Registered in the course.
      */
     public function canAccess(Course $course): bool
     {
-        if ($this->enrollments()->where('course_id', $course->id)->exists()) {
-            return true;
-        }
-
-        return $this->isPro() && $course->is_included_in_pro && $course->status === CourseStatus::Published;
+        return $this->enrollments()->where('course_id', $course->id)->exists();
     }
 
     /**
@@ -154,14 +137,6 @@ class Student extends Authenticatable
             $this->last_active_at === null || $this->last_active_at->lt(now()->subDays(self::INACTIVE_AFTER_DAYS)) => 'inactive',
             default => 'active',
         };
-    }
-
-    /**
-     * What the student has paid for, net of refunds (uses withSum when loaded).
-     */
-    public function totalSpent(): float
-    {
-        return (float) ($this->orders_sum_total ?? $this->orders()->where('status', OrderStatus::Completed)->sum('total'));
     }
 
     /**
@@ -192,6 +167,6 @@ class Student extends Authenticatable
      */
     protected function activityIgnoredAttributes(): array
     {
-        return ['pro_until', 'password', 'remember_token'];
+        return ['password', 'remember_token'];
     }
 }

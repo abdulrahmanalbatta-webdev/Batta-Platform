@@ -8,7 +8,7 @@
       <div>
         <div class="crumbs"><a href="{{ route('dashboard') }}">الرئيسية</a><span class="sep">/</span><span>التحليلات</span></div>
         <h1>التحليلات</h1>
-        <p id="periodNote">المبيعات والطلاب خلال الفترة، مقارنة بالفترة التي قبلها.</p>
+        <p id="periodNote">التسجيلات والطلاب خلال الفترة، مقارنة بالفترة التي قبلها.</p>
       </div>
       <div class="page-actions">
         <select class="select" style="width:auto" id="period" aria-label="الفترة">
@@ -25,9 +25,9 @@
 
     <div class="card">
       <div class="card-head">
-        <div><h3 id="seriesTitle">الإيرادات</h3><p id="seriesNote"></p></div>
+        <div><h3 id="seriesTitle">التسجيلات</h3><p id="seriesNote"></p></div>
         <div class="seg" id="metric">
-          <button class="on" data-m="revenue">الإيرادات</button>
+          <button class="on" data-m="registrations">التسجيلات</button>
           <button data-m="students">الطلاب الجدد</button>
         </div>
       </div>
@@ -36,30 +36,30 @@
 
     <div class="grid g-main">
       <div class="card">
-        <div class="card-head"><div><h3>رحلة الطلاب الجدد</h3><p>من التسجيل خلال الفترة حتى الشراء</p></div></div>
+        <div class="card-head"><div><h3>رحلة الطلاب الجدد</h3><p>من إنشاء الحساب خلال الفترة حتى التسجيل</p></div></div>
         <div class="card-body" id="funnel"></div>
       </div>
       <div class="card">
-        <div class="card-head"><div><h3>طرق الدفع</h3><p>نسبة الطلبات المكتملة</p></div></div>
+        <div class="card-head"><div><h3>الدورات والورش</h3><p>نسبة التسجيلات</p></div></div>
         <div class="card-body">
-          <div id="methodsChart"></div>
-          <div class="legend" id="methodsLegend" style="justify-content:center;margin-top:14px;flex-wrap:wrap"></div>
+          <div id="splitChart"></div>
+          <div class="legend" id="splitLegend" style="justify-content:center;margin-top:14px;flex-wrap:wrap"></div>
         </div>
       </div>
     </div>
 
     <div class="grid g-main">
       <div class="card">
-        <div class="card-head"><div><h3>الأكثر مبيعاً</h3><p>حسب الإيرادات</p></div></div>
+        <div class="card-head"><div><h3>الأكثر تسجيلاً</h3><p>الدورات والورش خلال الفترة</p></div></div>
         <div class="table-wrap">
-          <table class="table" style="min-width:560px">
-            <thead><tr><th>المنتج</th><th>الطلبات</th><th>الإيرادات</th><th style="width:30%">النسبة</th></tr></thead>
-            <tbody id="topProducts"></tbody>
+          <table class="table" style="min-width:480px">
+            <thead><tr><th>الدورة أو الورشة</th><th>التسجيلات</th><th style="width:35%">النسبة</th></tr></thead>
+            <tbody id="topItems"></tbody>
           </table>
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><div><h3>دول المشترين</h3><p>من دفعوا خلال الفترة</p></div></div>
+        <div class="card-head"><div><h3>دول المسجّلين</h3><p>من سجّلوا خلال الفترة</p></div></div>
         <div class="card-body" id="countries"></div>
       </div>
     </div>

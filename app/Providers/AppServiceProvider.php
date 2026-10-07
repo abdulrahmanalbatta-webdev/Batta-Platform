@@ -41,7 +41,6 @@ class AppServiceProvider extends ServiceProvider
         // writing courses, workshops, articles and tools; every member may read them
         Gate::define('manage-content', fn (User $user): bool => $user->role->canManageContent());
         Gate::define('manage-students', fn (User $user): bool => $user->role->canManageStudents());
-        Gate::define('manage-sales', fn (User $user): bool => $user->role->canManageSales());
         Gate::define('answer-messages', fn (User $user): bool => $user->role->canAnswerMessages());
         Gate::define('moderate-reviews', fn (User $user): bool => $user->role->canModerateReviews());
         Gate::define('manage-leads', fn (User $user): bool => $user->role->canManageLeads());

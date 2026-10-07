@@ -33,12 +33,10 @@ class StudentResource extends JsonResource
             // signed up on the site themselves (rather than added by the team)
             'has_account' => $this->password !== null,
             'country' => $this->country,
-            'is_pro' => $this->isPro(),
-            'pro_until' => $this->pro_until?->toDateString(),
             'state' => $state,
             'state_label' => self::STATE_LABELS[$state],
             'courses' => (int) ($this->enrollments_count ?? $this->enrollments()->count()),
-            'spent' => $this->totalSpent(),
+            'workshops' => (int) ($this->workshop_registrations_count ?? $this->workshopRegistrations()->count()),
             'joined' => $this->created_at->toDateString(),
             'last_active_at' => $this->last_active_at?->toIso8601String(),
         ];

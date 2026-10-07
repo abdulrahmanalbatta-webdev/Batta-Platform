@@ -5,8 +5,6 @@ namespace App\Models;
 use App\Enums\CourseCategory;
 use App\Enums\CourseLevel;
 use App\Enums\CourseStatus;
-use App\Enums\OrderItemType;
-use App\Enums\OrderStatus;
 use App\Enums\ReviewStatus;
 use App\Models\Concerns\HasComments;
 use App\Models\Concerns\LogsActivity;
@@ -21,7 +19,7 @@ use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
     'title', 'slug', 'short_description', 'description', 'outcomes', 'tags', 'level', 'category', 'status', 'publish_at',
-    'price', 'old_price', 'has_regional_pricing', 'is_included_in_pro', 'has_certificate', 'allows_questions',
+    'has_certificate', 'allows_questions',
 ])]
 class Course extends Model
 {
@@ -42,10 +40,6 @@ class Course extends Model
             'category' => CourseCategory::class,
             'status' => CourseStatus::class,
             'publish_at' => 'date',
-            'price' => 'decimal:2',
-            'old_price' => 'decimal:2',
-            'has_regional_pricing' => 'boolean',
-            'is_included_in_pro' => 'boolean',
             'has_certificate' => 'boolean',
             'allows_questions' => 'boolean',
         ];
@@ -75,18 +69,6 @@ class Course extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
-    }
-
-    /**
-     * Paid orders for this course (refunded and failed ones excluded).
-     *
-     * @return HasMany<Order, $this>
-     */
-    public function sales(): HasMany
-    {
-        return $this->hasMany(Order::class, 'item_id')
-            ->where('item_type', OrderItemType::Course)
-            ->where('status', OrderStatus::Completed);
     }
 
     /**

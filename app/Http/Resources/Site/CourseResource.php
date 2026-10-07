@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * A published course as the public site shows it: no revenue, status or internal codes.
+ * A published course as the public site shows it: no status or internal codes.
  *
  * @mixin Course
  */
@@ -42,9 +42,6 @@ class CourseResource extends JsonResource
             'level_label' => $this->level->label(),
             'category' => $this->category->value,
             'category_label' => $this->category->label(),
-            'price' => (float) $this->price,
-            'old_price' => $this->old_price === null ? null : (float) $this->old_price,
-            'is_included_in_pro' => $this->is_included_in_pro,
             'has_certificate' => $this->has_certificate,
             'students' => (int) ($this->enrollments_count ?? $this->enrollments()->count()),
             'rating' => round((float) ($this->reviews_avg_rating ?? 0), 1),
@@ -54,7 +51,6 @@ class CourseResource extends JsonResource
             'tags' => $this->tags ?? [],
             $this->mergeWhen($this->withContent, fn (): array => [
                 'description' => $this->description,
-                'has_regional_pricing' => $this->has_regional_pricing,
                 'allows_questions' => $this->allows_questions,
             ]),
         ];

@@ -29,7 +29,6 @@ class WorkshopResource extends JsonResource
             'format' => $this->format->value,
             'format_label' => $this->format->label(),
             'place' => $this->place,
-            'price' => (float) $this->price,
             'seats' => $this->seats,
             'seats_left' => max(0, $this->seats - $this->seatsTaken()),
             'is_full' => $this->state() === 'full',

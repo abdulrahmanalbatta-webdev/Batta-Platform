@@ -30,10 +30,6 @@ class CourseRequest extends FormRequest
             'category' => ['required', Rule::enum(CourseCategory::class)],
             'status' => ['required', Rule::enum(CourseStatus::class)],
             'publish_at' => ['nullable', 'date_format:Y-m-d'],
-            'price' => ['required', 'numeric', 'min:0', 'max:100000'],
-            'old_price' => ['nullable', 'numeric', 'gt:price', 'max:100000'],
-            'has_regional_pricing' => ['boolean'],
-            'is_included_in_pro' => ['boolean'],
             'has_certificate' => ['boolean'],
             'allows_questions' => ['boolean'],
         ];
@@ -57,8 +53,6 @@ class CourseRequest extends FormRequest
             'category' => 'التصنيف',
             'status' => 'الحالة',
             'publish_at' => 'تاريخ النشر',
-            'price' => 'السعر',
-            'old_price' => 'السعر قبل الخصم',
         ];
     }
 
@@ -71,7 +65,6 @@ class CourseRequest extends FormRequest
     {
         return [
             'slug.regex' => 'الرابط: حروف إنجليزية صغيرة وأرقام وشرطات فقط.',
-            'old_price.gt' => 'السعر قبل الخصم يجب أن يكون أعلى من السعر الحالي.',
         ];
     }
 

@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Enums\PaymentMethod;
 use App\Models\Setting;
 use App\Rules\GoogleServiceAccountKey;
 use Illuminate\Contracts\Encryption\DecryptException;
@@ -11,10 +10,10 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\Rule;
 
 /**
- * The platform settings (settings page → عام، الدفع، البريد، الإشعارات، الأمان): every key with its default and rules.
+ * The platform settings (settings page → عام، البريد، الإشعارات، الأمان): every key with its default and rules.
  *
  * Secrets are encrypted in the database and never leave the server: the API only says whether one is set.
- * apply() feeds the settings that change Laravel's behaviour into config (app name, mail, session, Pro price).
+ * apply() feeds the settings that change Laravel's behaviour into config (app name, mail, session).
  */
 class PlatformSettings
 {
@@ -48,8 +47,8 @@ class PlatformSettings
     }
 
     /**
-     * owner: only the owner may change it — where the money and the mail go (an admin could otherwise route
-     * payments to their own account, or read reset links through their own mail server).
+     * owner: only the owner may change it — where the mail goes (an admin could otherwise read reset links
+     * through their own mail server).
      *
      * @return array<string, array{label: string, default: mixed, rules: list<mixed>, secret?: bool, public?: bool, owner?: bool}>
      */
@@ -70,14 +69,8 @@ class PlatformSettings
             'registration_open' => ['label' => 'السماح بالتسجيل', 'default' => true, 'rules' => $bool, 'public' => true],
             'article_comments' => ['label' => 'التعليقات على المقالات والدورات والورش', 'default' => true, 'rules' => $bool, 'public' => true],
 
-            // payments
+            // project budgets on the contact page and in the project requests
             'currency' => ['label' => 'العملة', 'default' => 'USD', 'rules' => ['required', Rule::in(array_keys(self::CURRENCIES))], 'public' => true],
-            'vat_percent' => ['label' => 'ضريبة القيمة المضافة', 'default' => 0, 'rules' => ['required', 'numeric', 'min:0', 'max:30'], 'public' => true],
-            'pro_month_price' => ['label' => 'سعر شهر Pro', 'default' => (float) config('sales.pro_month_price'), 'rules' => ['required', 'numeric', 'min:1', 'max:1000'], 'public' => true],
-            'invoice_note' => ['label' => 'ملاحظة الفاتورة', 'default' => 'شكراً لثقتك بـ Batta. للاستفسار: hello@batta.dev', 'rules' => $text(500)],
-            'refund_guarantee' => ['label' => 'ضمان الاسترداد', 'default' => true, 'rules' => $bool, 'public' => true],
-            // payments are taken by hand (bank transfer, wallet, cash); the site shows the student how to pay
-            'payment_instructions' => ['label' => 'تعليمات الدفع', 'default' => null, 'rules' => $text(1000), 'public' => true, 'owner' => true],
 
             // outgoing email: empty host = the MAIL_* values in .env
             'mail_host' => ['label' => 'خادم SMTP', 'default' => null, 'rules' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9.-]+$/'], 'owner' => true],
@@ -227,7 +220,7 @@ class PlatformSettings
     }
 
     /**
-     * What the public site needs: the public settings and the ways customers can pay.
+     * What the public site needs: the public settings and the currency symbol.
      *
      * @return array<string, mixed>
      */
@@ -238,7 +231,6 @@ class PlatformSettings
         return [
             ...collect(self::definitions())->filter(fn (array $definition): bool => $definition['public'] ?? false)->map(fn (array $definition, string $key): mixed => $values[$key])->all(),
             'currency_symbol' => $this->currencySymbol(),
-            'payment_methods' => collect(PaymentMethod::cases())->map(fn (PaymentMethod $method): array => ['value' => $method->value, 'label' => $method->label()])->all(),
         ];
     }
 
@@ -268,7 +260,6 @@ class PlatformSettings
         config([
             'app.name' => $values['site_name'],
             'session.lifetime' => (int) $values['session_lifetime'],
-            'sales.pro_month_price' => (float) $values['pro_month_price'],
             'mail.from.name' => $values['mail_from_name'] ?: $values['site_name'],
         ]);
 

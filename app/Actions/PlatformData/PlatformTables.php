@@ -10,12 +10,11 @@ final class PlatformTables
 {
     public const BUSINESS = [
         'enrollments',
+        'workshop_registrations',
         'reviews',
         'comments',
         'conversation_messages',
         'conversations',
-        'orders',
-        'coupons',
         'students',
         'subscribers',
         'leads',

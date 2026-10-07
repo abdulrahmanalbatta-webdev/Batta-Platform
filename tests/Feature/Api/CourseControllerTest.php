@@ -5,11 +5,9 @@ namespace Tests\Feature\Api;
 use App\Enums\CourseCategory;
 use App\Enums\CourseLevel;
 use App\Enums\CourseStatus;
-use App\Enums\OrderStatus;
 use App\Enums\Role;
 use App\Models\Course;
 use App\Models\Enrollment;
-use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -39,10 +37,6 @@ class CourseControllerTest extends TestCase
             'category' => CourseCategory::Frontend->value,
             'status' => CourseStatus::Draft->value,
             'publish_at' => null,
-            'price' => 79,
-            'old_price' => 99,
-            'has_regional_pricing' => true,
-            'is_included_in_pro' => false,
             'has_certificate' => true,
             'allows_questions' => true,
             ...$overrides,
@@ -78,16 +72,12 @@ class CourseControllerTest extends TestCase
             ->assertCreated()->assertJsonPath('data.status', 'published');
     }
 
-    public function test_invalid_slug_and_old_price_return_422(): void
+    public function test_invalid_slug_returns_422(): void
     {
-        $response = $this->actingAs($this->editor())->postJson(route('api.courses.store'), $this->payload([
-            'slug' => 'Bad Slug',
-            'old_price' => 50,
-        ]));
+        $response = $this->actingAs($this->editor())->postJson(route('api.courses.store'), $this->payload(['slug' => 'Bad Slug']));
 
         $response->assertUnprocessable()->assertJsonValidationErrors([
             'slug' => 'الرابط: حروف إنجليزية صغيرة وأرقام وشرطات فقط.',
-            'old_price' => 'السعر قبل الخصم يجب أن يكون أعلى من السعر الحالي.',
         ]);
     }
 
@@ -130,23 +120,23 @@ class CourseControllerTest extends TestCase
         $this->assertModelMissing($course);
     }
 
-    public function test_accountant_cannot_change_status_and_gets_403(): void
+    public function test_support_cannot_change_status_and_gets_403(): void
     {
         $course = Course::factory()->create();
 
-        $this->actingAs(User::factory()->role(Role::Accountant)->create())->putJson(route('api.courses.status.update', $course), ['status' => 'draft'])->assertForbidden();
+        $this->actingAs(User::factory()->role(Role::Support)->create())->putJson(route('api.courses.status.update', $course), ['status' => 'draft'])->assertForbidden();
     }
 
-    public function test_list_counts_students_and_paid_revenue(): void
+    public function test_list_counts_enrolled_students(): void
     {
         $course = Course::factory()->published()->create();
         Enrollment::factory()->count(2)->for($course)->create();
-        Order::factory()->create(['item_id' => $course->id, 'total' => 79]);
-        Order::factory()->create(['item_id' => $course->id, 'total' => 50, 'status' => OrderStatus::Refunded]);
 
         $response = $this->actingAs($this->editor())->getJson(route('api.courses.index'));
 
-        $response->assertJsonPath('data.0.students', 2)->assertJsonPath('data.0.revenue', 79);
+        $response->assertJsonPath('data.0.students', 2)
+            ->assertJsonMissingPath('data.0.revenue')
+            ->assertJsonMissingPath('data.0.price');
     }
 
     public function test_course_with_students_cannot_be_deleted(): void

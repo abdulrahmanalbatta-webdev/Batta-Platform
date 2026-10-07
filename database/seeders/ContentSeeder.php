@@ -70,17 +70,17 @@ class ContentSeeder extends Seeder
     private function workshops(): void
     {
         $workshops = [
-            ['ابنِ ملف أعمالك في ساعتين', 11, '19:00', WorkshopFormat::Online, 'Zoom', 0, 100],
-            ['Server Actions في Next.js عملياً', 25, '19:00', WorkshopFormat::Online, 'Zoom', 19, 40],
-            ['يوم كامل: من الفكرة إلى منتج منشور', 37, '10:00', WorkshopFormat::InPerson, 'عمّان', 49, 25],
-            ['ورشة خاصة: فريق حاضنة الأعمال', 46, '10:00', WorkshopFormat::InPerson, 'رام الله', 1200, 18],
-            ['مقدمة في Git للطلاب', -17, '18:00', WorkshopFormat::Online, 'Zoom', 0, 120],
+            ['ابنِ ملف أعمالك في ساعتين', 11, '19:00', WorkshopFormat::Online, 'Zoom', 100],
+            ['Server Actions في Next.js عملياً', 25, '19:00', WorkshopFormat::Online, 'Zoom', 40],
+            ['يوم كامل: من الفكرة إلى منتج منشور', 37, '10:00', WorkshopFormat::InPerson, 'عمّان', 25],
+            ['ورشة خاصة: فريق حاضنة الأعمال', 46, '10:00', WorkshopFormat::InPerson, 'رام الله', 18],
+            ['مقدمة في Git للطلاب', -17, '18:00', WorkshopFormat::Online, 'Zoom', 120],
         ];
 
-        foreach ($workshops as [$title, $inDays, $time, $format, $place, $price, $seats]) {
+        foreach ($workshops as [$title, $inDays, $time, $format, $place, $seats]) {
             Workshop::create([
                 'title' => $title, 'date' => now()->addDays($inDays)->toDateString(), 'start_time' => $time,
-                'format' => $format, 'place' => $place, 'price' => $price, 'seats' => $seats,
+                'format' => $format, 'place' => $place, 'seats' => $seats,
             ]);
         }
     }
@@ -118,20 +118,20 @@ class ContentSeeder extends Seeder
     private function courses(): void
     {
         $courses = [
-            ['Next.js من الصفر إلى الإنتاج', 'nextjs-production', CourseLevel::Intermediate, CourseCategory::Frontend, CourseStatus::Published, 79],
-            ['أساسيات الويب الحديث', 'modern-web-basics', CourseLevel::Beginner, CourseCategory::Frontend, CourseStatus::Published, 39],
-            ['برنامج المطوّر المستقل', 'freelance-developer', CourseLevel::Advanced, CourseCategory::Freelancing, CourseStatus::Published, 249],
-            ['Git و GitHub للفرق', 'git-github-teams', CourseLevel::Beginner, CourseCategory::FullStack, CourseStatus::Published, 0],
-            ['APIs باستخدام Node و PostgreSQL', 'node-postgres-apis', CourseLevel::Intermediate, CourseCategory::Backend, CourseStatus::Published, 69],
-            ['Vue 3 عملياً: من المكونات إلى المتجر', 'vue-3-in-practice', CourseLevel::Intermediate, CourseCategory::Frontend, CourseStatus::Draft, 59],
-            ['TypeScript للمطورين', 'typescript-for-developers', CourseLevel::Intermediate, CourseCategory::FullStack, CourseStatus::Review, 49],
+            ['Next.js من الصفر إلى الإنتاج', 'nextjs-production', CourseLevel::Intermediate, CourseCategory::Frontend, CourseStatus::Published],
+            ['أساسيات الويب الحديث', 'modern-web-basics', CourseLevel::Beginner, CourseCategory::Frontend, CourseStatus::Published],
+            ['برنامج المطوّر المستقل', 'freelance-developer', CourseLevel::Advanced, CourseCategory::Freelancing, CourseStatus::Published],
+            ['Git و GitHub للفرق', 'git-github-teams', CourseLevel::Beginner, CourseCategory::FullStack, CourseStatus::Published],
+            ['APIs باستخدام Node و PostgreSQL', 'node-postgres-apis', CourseLevel::Intermediate, CourseCategory::Backend, CourseStatus::Published],
+            ['Vue 3 عملياً: من المكونات إلى المتجر', 'vue-3-in-practice', CourseLevel::Intermediate, CourseCategory::Frontend, CourseStatus::Draft],
+            ['TypeScript للمطورين', 'typescript-for-developers', CourseLevel::Intermediate, CourseCategory::FullStack, CourseStatus::Review],
         ];
 
-        foreach ($courses as [$title, $slug, $level, $category, $status, $price]) {
+        foreach ($courses as [$title, $slug, $level, $category, $status]) {
             Course::forceCreate([
                 'title' => $title, 'slug' => $slug, 'short_description' => 'دورة عملية تنتهي بمشروع حقيقي منشور.',
                 'outcomes' => ['بناء مشروع كامل', 'نشر المشروع على الإنترنت'], 'tags' => ['مشروع عملي'],
-                'level' => $level, 'category' => $category, 'status' => $status, 'price' => $price,
+                'level' => $level, 'category' => $category, 'status' => $status,
             ]);
         }
     }

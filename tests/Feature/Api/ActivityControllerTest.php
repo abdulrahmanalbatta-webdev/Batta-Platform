@@ -3,9 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Activity;
-use App\Models\Coupon;
 use App\Models\Course;
-use App\Models\Order;
 use App\Models\Student;
 use App\Models\Tool;
 use App\Models\User;
@@ -22,7 +20,7 @@ class ActivityControllerTest extends TestCase
         $this->actingAs($member);
 
         $course = Course::factory()->create(['title' => 'Next.js']);
-        $course->update(['price' => 99]);
+        $course->update(['short_description' => 'وصف جديد']);
         $course->update(['status' => 'published']);
         $course->delete();
 
@@ -48,22 +46,11 @@ class ActivityControllerTest extends TestCase
     public function test_bookkeeping_changes_make_no_entry(): void
     {
         $tool = Tool::factory()->create();
-        $coupon = Coupon::factory()->create();
         $this->actingAs(User::factory()->create());
 
         $tool->forceFill(['position' => 9])->save();
-        $coupon->increment('times_used');
 
         $this->assertSame(0, Activity::count());
-    }
-
-    public function test_order_payment_is_logged_with_its_number_and_new_state(): void
-    {
-        $order = Order::factory()->pending()->create();
-
-        $this->actingAs(User::factory()->owner()->create())->postJson(route('api.orders.payment.store', $order))->assertOk();
-
-        $this->assertSame('غيّر حالة الطلب «'.$order->number().'» إلى «مكتمل»', $this->getJson(route('api.activity.index'))->json('data.0.description'));
     }
 
     public function test_suspending_several_students_logs_each_one(): void

@@ -23,7 +23,6 @@ class CourseController extends Controller
         return CourseResource::collection(
             Course::query()
                 ->withCount('enrollments')
-                ->withSum('sales', 'total')
                 ->withAvg(['reviews' => fn ($query) => $query->where('status', ReviewStatus::Published)], 'rating')
                 ->latest()->latest('id')
                 ->get(),

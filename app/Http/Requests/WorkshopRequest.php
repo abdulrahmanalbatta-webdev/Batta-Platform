@@ -27,7 +27,6 @@ class WorkshopRequest extends FormRequest
             'time' => ['required', 'date_format:H:i'],
             'format' => ['required', Rule::enum(WorkshopFormat::class)],
             'place' => ['nullable', 'string', 'max:100'],
-            'price' => ['required', 'numeric', 'min:0', 'max:100000'],
             'seats' => ['required', 'integer', 'min:'.max(1, $workshop?->seatsTaken() ?? 0), 'max:10000'],
         ];
     }
@@ -46,7 +45,6 @@ class WorkshopRequest extends FormRequest
             'time' => 'الوقت',
             'format' => 'النوع',
             'place' => 'المكان',
-            'price' => 'السعر',
             'seats' => 'عدد المقاعد',
         ];
     }
