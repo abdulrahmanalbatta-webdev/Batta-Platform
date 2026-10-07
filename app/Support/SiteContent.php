@@ -91,7 +91,7 @@ class SiteContent
             'hero' => ['group' => 'home', 'label' => 'العنوان الرئيسي', 'hint' => 'الكلمات التي تتبدّل في عنوان الصفحة الرئيسية.', 'type' => 'object', 'fields' => [
                 'words' => $strings('الكلمات المتبدّلة', 8, 30),
             ]],
-            'technologies' => ['group' => 'home', 'label' => 'شريط التقنيات', 'type' => 'tags', 'options' => self::TECHNOLOGIES, 'max_items' => 30],
+            'technologies' => ['group' => 'about', 'label' => 'شريط الأدوات (صفحة من أنا)', 'type' => 'tags', 'options' => self::TECHNOLOGIES, 'max_items' => 30],
             'reasons' => ['group' => 'home', 'label' => 'لماذا تعمل معي', 'type' => 'strings', 'max_items' => 12, 'max' => 160],
 
             // عنك
@@ -101,7 +101,6 @@ class SiteContent
                 'available' => $text('حالة التوفّر', 60, false, 'مثل: متاح لمشاريع جديدة. اتركه فارغاً لإخفائه'),
                 'short' => $long('النبذة القصيرة (الرئيسية)', 600),
                 'story' => ['type' => 'strings', 'label' => 'القصة (صفحة من أنا) — فقرة لكل سطر', 'max_items' => 8, 'max' => 1000, 'long' => true],
-                'skills' => $strings('المهارات', 30, 40),
                 'cutout' => ['type' => 'image', 'label' => 'صورة البطاقة المعلّقة في الرئيسية', 'hint' => 'PNG أو WebP شفافة بدون خلفية (من remove.bg مثلاً)، من الصدر للأعلى والوجه في المنتصف، وتظهر فوق خلفية زرقاء. فارغة: يظهر أول حرف من اسمك.'],
             ]],
             'highlights' => ['group' => 'about', 'label' => 'ماذا أفعل', 'type' => 'list', 'max_items' => 6, 'title' => 'title', 'item' => [
@@ -200,7 +199,7 @@ class SiteContent
                 ]),
                 'story' => $intro('من أنا: القصة', false),
                 'values' => $intro('من أنا: طريقتي في العمل', false),
-                'skills' => $intro('من أنا: المهارات', false),
+                'skills' => $intro('من أنا: الأدوات', false),
             ]],
             'texts_learning' => ['group' => 'texts', 'label' => 'نصوص الأكاديمية والموارد', 'type' => 'object', 'fields' => [
                 'courses' => $block('صفحة الدورات', ['text' => $long('المقدمة', 300), 'badge' => $text('الميزة أسفل العنوان', 60)]),
@@ -256,7 +255,7 @@ class SiteContent
                     'popular' => $text('شارة الباقة المميّزة', 30),
                     'about_work' => $text('من أنا: الزر الأساسي', 40),
                     'about_learn' => $text('من أنا: الزر الثاني', 40),
-                    'all_tools' => $text('من أنا: أسفل المهارات', 60),
+                    'all_tools' => $text('من أنا: أسفل الأدوات', 60),
                     'private_workshop' => $text('الورش الخاصة', 40),
                     'subscribe' => $text('الاشتراك في النشرة', 40),
                     'about_author' => $text('أسفل كل مقال (عنك)', 40),
