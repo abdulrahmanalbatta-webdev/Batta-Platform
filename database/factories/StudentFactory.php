@@ -34,11 +34,6 @@ class StudentFactory extends Factory
         return $this->state(fn (array $attributes) => ['password' => $password]);
     }
 
-    public function pro(): static
-    {
-        return $this->state(fn (array $attributes) => ['pro_until' => now()->addMonth()]);
-    }
-
     public function suspended(): static
     {
         return $this->state(fn (array $attributes) => ['suspended_at' => now()->subDay()]);

@@ -33,7 +33,6 @@ class CourseFactory extends Factory
             'level' => CourseLevel::Intermediate,
             'category' => CourseCategory::Frontend,
             'status' => CourseStatus::Draft,
-            'price' => 49,
         ];
     }
 

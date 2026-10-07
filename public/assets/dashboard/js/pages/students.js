@@ -1,5 +1,5 @@
 document.addEventListener('app:ready', async () => {
-  const { $, esc, num, money, date, badge, icon, person, toast, confirmDialog, openDrawer, closeDrawer, openModal, closeModal, DataTable, api, showFieldErrors } = App;
+  const { $, esc, num, date, badge, icon, person, toast, confirmDialog, openDrawer, closeDrawer, openModal, closeModal, DataTable, api, showFieldErrors } = App;
   const canManage = App.can('manage_students');
   const COLORS = ['#0066ff', '#0b0d12', '#334155', '#5c9dff', '#0e9f6e', '#7c3aed', '#c27803'];
   const load = async () => (await api.get('students')).data.map((s) => ({ ...s, color: COLORS[s.id % COLORS.length] }));
@@ -13,13 +13,13 @@ document.addEventListener('app:ready', async () => {
 
   function stats() {
     const active = rows.filter((s) => s.state === 'active').length;
-    const pro = rows.filter((s) => s.is_pro).length;
-    const avg = rows.length ? Math.round(rows.reduce((a, s) => a + s.progress, 0) / rows.length) : 0;
+    const inCourses = rows.filter((s) => s.courses).length;
+    const inWorkshops = rows.filter((s) => s.workshops).length;
     $('#studentStats').innerHTML = [
       ['users', 'c-blue', 'إجمالي الأعضاء', num(rows.length)],
       ['check-circle', 'c-green', 'نشطون', num(active)],
-      ['award', 'c-violet', 'أعضاء Pro', num(pro)],
-      ['trend', 'c-amber', 'متوسط الإنجاز', `${avg}%`],
+      ['play', 'c-violet', 'مسجّلون في دورات', num(inCourses)],
+      ['calendar', 'c-amber', 'مسجّلون في ورش', num(inWorkshops)],
     ]
       .map(([ic, tone, l, v]) => `<div class="card kpi"><div class="kpi-top"><span class="kpi-label">${l}</span><span class="kpi-ico ${tone}">${icon(ic)}</span></div><div class="kpi-value">${v}</div></div>`)
       .join('');
@@ -37,11 +37,9 @@ document.addEventListener('app:ready', async () => {
     },
     columns: [
       { key: 'name', label: 'الطالب', sortable: true, render: (s) => `<button class="link-reset" data-student="${s.id}" style="border:0;background:none;padding:0;text-align:start;cursor:pointer">${person({ ...s, sub: s.email })}</button>` },
-      { key: 'is_pro', label: 'العضوية', render: (s) => (s.is_pro ? '<span class="badge info">Pro</span>' : '<span class="badge">مجانية</span>') },
       { key: 'country', label: 'الدولة', sortable: true, render: (s) => `<span class="nowrap">${esc(s.country || '—')}</span>` },
       { key: 'courses', label: 'الدورات', sortable: true, className: 'num' },
-      { key: 'progress', label: 'الإنجاز', sortable: true, render: (s) => `<div style="min-width:120px;display:flex;align-items:center;gap:8px"><div class="progress ${s.progress === 100 ? 'green' : ''}" style="flex:1"><i style="width:${s.progress}%"></i></div><small class="num">${s.progress}%</small></div>` },
-      { key: 'spent', label: 'المدفوع', sortable: true, className: 'num', render: (s) => money(s.spent) },
+      { key: 'workshops', label: 'الورش', sortable: true, className: 'num' },
       { key: 'joined', label: 'انضم', sortable: true, render: (s) => `<span class="nowrap">${date(s.joined)}</span>` },
       { key: 'state_label', label: 'الحالة', sortable: true, render: (s) => badge(s.state_label) },
       {
@@ -77,7 +75,7 @@ document.addEventListener('app:ready', async () => {
   });
   [...new Set(rows.map((s) => s.country).filter(Boolean))].sort().forEach((c) => $('#countryFilter').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
   $('#countryFilter').addEventListener('change', (e) => table.setFilter('country', e.target.value ? (r) => r.country === e.target.value : null));
-  $('#planFilter').addEventListener('change', (e) => table.setFilter('plan', e.target.value ? (r) => (e.target.value === 'pro' ? r.is_pro : !r.is_pro) : null));
+  $('#planFilter').addEventListener('change', (e) => table.setFilter('plan', e.target.value ? (r) => (e.target.value === 'registered' ? r.courses || r.workshops : !r.courses && !r.workshops) : null));
   $('#q').addEventListener('input', App.debounce((e) => table.setQuery(e.target.value), 150));
 
   // global search from the topbar lands here as ?q=
@@ -186,24 +184,27 @@ document.addEventListener('app:ready', async () => {
       <div class="drawer-body">
         <div style="display:flex;align-items:center;gap:14px">
           <span class="avatar lg" style="background:${s.color}">${esc(s.initial)}</span>
-          <div style="flex:1;min-width:0"><b style="font-size:17px;color:var(--fg);display:block">${esc(s.name)}</b><small class="muted">${esc(s.email)}</small><div style="display:flex;gap:6px;margin-top:6px">${badge(s.state_label)}${s.is_pro ? `<span class="badge info">Pro حتى ${date(full.pro_until)}</span>` : ''}</div></div>
+          <div style="flex:1;min-width:0"><b style="font-size:17px;color:var(--fg);display:block">${esc(s.name)}</b><small class="muted">${esc(s.email)}</small><div style="display:flex;gap:6px;margin-top:6px">${badge(s.state_label)}</div></div>
         </div>
         <div class="card stat-row" style="border-top:1px solid var(--line)">
           <div class="mini-stat"><b>${full.courses}</b><small>دورات</small></div>
-          <div class="mini-stat"><b>${full.progress}%</b><small>إنجاز</small></div>
-          <div class="mini-stat"><b>${money(full.spent)}</b><small>المدفوع</small></div>
+          <div class="mini-stat"><b>${full.workshops}</b><small>ورش</small></div>
         </div>
         <div>
           <div class="label" style="margin-bottom:8px">الدورات المسجّل بها</div>
           <div class="card">${
             full.enrollments
-              .map((c) => `<div class="list-item"><span class="grow"><b>${esc(c.title)}</b><div class="progress ${c.progress === 100 ? 'green' : ''}" style="margin-top:8px"><i style="width:${c.progress}%"></i></div></span><small class="num">${c.progress}%</small></div>`)
+              .map((c) => `<div class="list-item"><span class="grow"><b>${esc(c.title)}</b></span><small class="muted">${date(c.date)}</small></div>`)
               .join('') || '<div class="list-item muted">غير مسجّل في أي دورة.</div>'
           }</div>
         </div>
         <div>
-          <div class="label" style="margin-bottom:8px">آخر الطلبات</div>
-          <div class="card">${full.orders.length ? full.orders.map((o) => `<div class="list-item"><span class="grow"><b>${esc(o.item_name)}</b><small>${esc(o.number)} · ${date(o.date)} · ${esc(o.status_label)}</small></span><b class="num">${money(o.total)}</b></div>`).join('') : '<div class="list-item muted">لا توجد طلبات.</div>'}</div>
+          <div class="label" style="margin-bottom:8px">الورش المسجّل بها</div>
+          <div class="card">${
+            full.workshop_registrations
+              .map((w) => `<div class="list-item"><span class="grow"><b>${esc(w.title)}</b><small>موعدها ${date(w.workshop_date)}</small></span><small class="muted">${date(w.date)}</small></div>`)
+              .join('') || '<div class="list-item muted">غير مسجّل في أي ورشة.</div>'
+          }</div>
         </div>
         <div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px;font-size:13.5px">
           <span>${icon('phone', 'sm')} ${s.phone ? `<bdi class="mono">${esc(s.phone)}</bdi>` : '<span class="muted">لا يوجد رقم</span>'}</span>
@@ -215,14 +216,13 @@ document.addEventListener('app:ready', async () => {
         ${s.whatsapp_url ? `<a class="btn btn-soft" style="flex:1" href="${esc(s.whatsapp_url)}" target="_blank" rel="noopener">${icon('phone', 'sm')}واتساب</a>` : ''}
         <button class="btn btn-ghost" style="flex:1" data-mail="${s.id}">${icon('mail', 'sm')}مراسلة</button>
         <button class="btn ${s.state === 'suspended' ? 'btn-soft' : 'btn-danger-soft'}" style="flex:1" data-toggle="${s.id}">${s.state === 'suspended' ? 'إعادة التفعيل' : 'إيقاف الحساب'}</button>
-      </div>` : ''}
-      ${App.can('manage_sales') ? `<div class="drawer-foot" style="border-top:0;padding-top:0"><a class="btn btn-primary" style="flex:1" href="${App.url('orders', { student: s.id }, 'new')}">${icon('plus', 'sm')}تسجيل طلب يدوي (بعد الدفع)</a></div>` : ''}`);
+      </div>` : ''}`);
   }
 
   $('#export').addEventListener('click', () =>
     App.downloadCSV('students.csv', [
       { key: 'code', label: 'المعرف' }, { key: 'name', label: 'الاسم' }, { key: 'email', label: 'البريد' }, { key: 'phone', label: 'الهاتف' }, { key: 'country', label: 'الدولة' },
-      { key: 'courses', label: 'الدورات' }, { key: 'progress', label: 'الإنجاز %' }, { key: 'spent', label: 'المدفوع' }, { key: 'joined', label: 'تاريخ الانضمام' }, { key: 'state_label', label: 'الحالة' },
+      { key: 'courses', label: 'الدورات' }, { key: 'workshops', label: 'الورش' }, { key: 'joined', label: 'تاريخ الانضمام' }, { key: 'state_label', label: 'الحالة' },
     ], table.view),
   );
 

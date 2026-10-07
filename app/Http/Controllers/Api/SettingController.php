@@ -26,7 +26,7 @@ class SettingController extends Controller
         $definitions = PlatformSettings::definitions();
 
         $ownerOnly = array_intersect(array_keys($request->all()), PlatformSettings::ownerOnlyKeys());
-        abort_if($ownerOnly !== [] && $request->user()->cannot('manage-platform-data'), 403, 'إعدادات الدفع والبريد للمالك فقط.');
+        abort_if($ownerOnly !== [] && $request->user()->cannot('manage-platform-data'), 403, 'إعدادات البريد للمالك فقط.');
 
         $validated = $request->validate(
             collect($definitions)->map(fn (array $definition): array => ['sometimes', ...$definition['rules']])->all(),

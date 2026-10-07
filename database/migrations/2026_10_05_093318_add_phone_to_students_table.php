@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * The student's phone (WhatsApp): payments are arranged by hand, so the team needs a way to reach them.
+     * The student's phone (WhatsApp), so the team has a way to reach them.
      */
     public function up(): void
     {

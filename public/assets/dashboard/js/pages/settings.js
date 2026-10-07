@@ -42,12 +42,12 @@ document.addEventListener('app:ready', () => {
 
   /* ---------- the member's email switches for bell alerts ---------- */
   const ALERTS = {
-    orders: ['طلب شراء مكتمل', 'بريد عند كل عملية شراء مكتملة.'],
+    registrations: ['تسجيل في دورة أو ورشة', 'بريد عند كل تسجيل جديد من الموقع، فيه اسم الطالب ورقمه.'],
     leads: ['طلب مشروع جديد', 'بريد عند وصول طلب من صفحة الخدمات.'],
     reviews: ['تقييم بانتظار المراجعة', 'بريد عند وصول تقييم جديد.'],
-    comments: ['تعليق على مقال بانتظار المراجعة', 'بريد عند وصول تعليق جديد على مقالاتك.'],
+    comments: ['تعليق بانتظار المراجعة', 'بريد عند وصول تعليق جديد على مقال أو دورة أو ورشة.'],
     messages: ['رسائل الطلاب والعملاء', 'بريد عند وصول رسالة جديدة.'],
-    students: ['طالب جديد سجّل في الموقع', 'بريد فيه اسمه ورقم واتساب للتواصل معه وترتيب الدفع.'],
+    students: ['طالب جديد أنشأ حساباً في الموقع', 'بريد فيه اسمه ورقم واتساب للتواصل معه.'],
   };
   const prefs = App.user?.email_preferences || {};
   $('#notifPrefs').innerHTML = Object.entries(prefs)
@@ -93,7 +93,7 @@ document.addEventListener('app:ready', () => {
   };
   function fill(res) {
     const data = res.data;
-    // where payments and mail go is the owner's (meta.owner_only)
+    // where the mail goes is the owner's (meta.owner_only)
     const ownerOnly = new Set(res.meta.owner_only);
     const editable = (key) => canEdit && (!ownerOnly.has(key) || App.can('manage_platform_data'));
     $$('[data-setting]', form).forEach((el) => {

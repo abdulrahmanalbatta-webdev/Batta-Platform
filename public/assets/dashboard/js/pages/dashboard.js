@@ -1,7 +1,7 @@
 document.addEventListener('app:ready', async () => {
   const { $, esc, num, money, badge, person } = App;
   const COLORS = ['#0066ff', '#7c3aed', '#334155', '#0e9f6e', '#c27803', '#0891b2'];
-  const MIX_COLORS = { courses: '#0066ff', workshops: '#0891b2', pro: '#7c3aed', services: '#0b0d12' };
+  const MIX_COLORS = { courses: '#0066ff', workshops: '#0891b2' };
   const STAGE_COLORS = { new: '#0066ff', contacted: '#0891b2', proposal: '#c27803', won: '#0e9f6e', lost: '#e02424' };
   const MONTHS = ['', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
@@ -31,67 +31,67 @@ document.addEventListener('app:ready', async () => {
   const trend = (k) =>
     k.change === null ? '<span class="trend">—</span>' : `<span class="trend ${k.change >= 0 ? 'up' : 'down'}">${k.change >= 0 ? '+' : ''}${k.change}%</span>`;
   const vs = `عن نفس الفترة من ${d.previous_month}`;
-  $('#kpiRevenueLabel').textContent = `إيرادات ${d.month}`;
-  $('#kpiRevenue').textContent = money(d.kpis.revenue.value);
-  $('#kpiRevenueNote').innerHTML = `${trend(d.kpis.revenue)} ${vs}`;
+  $('#kpiEnrollmentsLabel').textContent = `تسجيلات الدورات في ${d.month}`;
+  $('#kpiEnrollments').textContent = num(d.kpis.enrollments.value);
+  $('#kpiEnrollmentsNote').innerHTML = `${trend(d.kpis.enrollments)} ${vs}`;
+  $('#kpiWorkshops').textContent = num(d.kpis.workshop_registrations.value);
+  $('#kpiWorkshopsNote').innerHTML = `${trend(d.kpis.workshop_registrations)} هذا الشهر`;
   $('#kpiStudents').textContent = num(d.kpis.students.value);
   $('#kpiStudentsNote').innerHTML = `${trend(d.kpis.students)} هذا الشهر`;
-  $('#kpiOrders').textContent = num(d.kpis.orders.value);
-  $('#kpiOrdersNote').innerHTML = `${trend(d.kpis.orders)} هذا الشهر`;
-  $('#kpiEnrollments').textContent = num(d.kpis.enrollments.value);
-  $('#kpiEnrollmentsNote').innerHTML = `${trend(d.kpis.enrollments)} هذا الشهر`;
+  $('#kpiLeads').textContent = num(d.kpis.leads.value);
+  $('#kpiLeadsNote').innerHTML = `${trend(d.kpis.leads)} هذا الشهر`;
   document.querySelectorAll('[data-spark]').forEach((el) => Charts.spark(el, d.kpis[el.dataset.spark].spark, el.dataset.color));
 
-  /* ---------- revenue: courses & workshops (paid orders) vs development services (won requests) ---------- */
-  function drawRevenue(n) {
-    const labels = d.revenue.labels.slice(-n);
-    const courses = d.revenue.courses.slice(-n);
-    const services = d.revenue.services.slice(-n);
-    Charts.bars($('#revenueChart'), {
+  /* ---------- registrations per month: courses vs workshops ---------- */
+  function drawRegistrations(n) {
+    const labels = d.registrations.labels.slice(-n);
+    const courses = d.registrations.courses.slice(-n);
+    const workshops = d.registrations.workshops.slice(-n);
+    Charts.bars($('#registrationsChart'), {
       labels,
       stacked: true,
       series: [
-        { name: 'الدورات والورش', color: '#0066ff', data: courses },
-        { name: 'خدمات التطوير', color: '#0b0d12', data: services },
+        { name: 'الدورات', color: '#0066ff', data: courses },
+        { name: 'الورش', color: '#0891b2', data: workshops },
       ],
-      format: (v) => money(v),
+      format: (v) => num(v),
     });
     const sum = (a) => a.reduce((x, y) => x + y, 0);
-    $('#revTotal').textContent = money(sum(courses) + sum(services));
-    $('#revCourses').textContent = money(sum(courses));
-    $('#revServices').textContent = money(sum(services));
+    $('#regTotal').textContent = num(sum(courses) + sum(workshops));
+    $('#regCourses').textContent = num(sum(courses));
+    $('#regWorkshops').textContent = num(sum(workshops));
   }
-  drawRevenue(12);
-  $('#revRange').addEventListener('click', (e) => {
+  drawRegistrations(12);
+  $('#regRange').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
-    $('#revRange').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
-    drawRevenue(Number(b.dataset.range));
+    $('#regRange').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+    drawRegistrations(Number(b.dataset.range));
   });
 
-  /* ---------- where the last 30 days' revenue came from ---------- */
-  const mixTotal = d.sales_mix.reduce((a, m) => a + m.value, 0);
+  /* ---------- courses vs workshops over the last 30 days ---------- */
+  const mixTotal = d.registrations_mix.reduce((a, m) => a + m.value, 0);
   const share = (v) => (mixTotal ? Math.round((v / mixTotal) * 100) : 0);
   Charts.donut($('#mixChart'), {
-    items: mixTotal ? d.sales_mix.filter((m) => m.value).map((m) => ({ label: m.label, value: share(m.value), color: MIX_COLORS[m.key] })) : [],
-    centerValue: money(mixTotal),
-    centerLabel: 'آخر 30 يوماً',
+    items: mixTotal ? d.registrations_mix.filter((m) => m.value).map((m) => ({ label: m.label, value: share(m.value), color: MIX_COLORS[m.key] })) : [],
+    centerValue: num(mixTotal),
+    centerLabel: 'تسجيل',
   });
-  $('#mixList').innerHTML = d.sales_mix
-    .map((m) => `<div class="list-item" style="padding:8px 0;border:0"><i style="width:10px;height:10px;border-radius:3px;background:${MIX_COLORS[m.key]}"></i><span class="grow">${esc(m.label)}</span><span class="muted num" style="font-size:12.5px">${money(m.value)}</span><b style="min-width:42px;text-align:end">${share(m.value)}%</b></div>`)
+  $('#mixList').innerHTML = d.registrations_mix
+    .map((m) => `<div class="list-item" style="padding:8px 0;border:0"><i style="width:10px;height:10px;border-radius:3px;background:${MIX_COLORS[m.key]}"></i><span class="grow">${esc(m.label)}</span><span class="muted num" style="font-size:12.5px">${num(m.value)}</span><b style="min-width:42px;text-align:end">${share(m.value)}%</b></div>`)
     .join('');
 
-  /* ---------- recent orders ---------- */
-  $('#recentOrders').innerHTML =
-    d.recent_orders
+  /* ---------- recent registrations ---------- */
+  $('#recentRegistrations').innerHTML =
+    d.recent_registrations
       .map(
-        (o) =>
-          `<tr><td class="mono"><a href="${App.url('orders', { q: o.number })}">${esc(o.number)}</a></td><td>${person({ name: o.student.name, initial: o.student.initial, color: COLORS[o.student.id % COLORS.length] })}</td><td>${esc(o.item_name)}</td><td class="num">${money(o.total)}</td><td>${badge(o.status_label)}</td></tr>`,
+        (r) =>
+          `<tr><td><a href="${App.url('students', { q: r.student.email })}">${person({ name: r.student.name, initial: r.student.initial, color: COLORS[r.student.id % COLORS.length] })}</a></td><td>${esc(r.title)}</td><td>${badge(r.type_label)}</td><td class="muted">${esc(App.ago(r.at))}</td></tr>`,
       )
-      .join('') || '<tr><td colspan="5" class="muted" style="text-align:center">لا توجد طلبات بعد</td></tr>';
+      .join('') || '<tr><td colspan="4" class="muted" style="text-align:center">لا توجد تسجيلات بعد</td></tr>';
 
-  /* ---------- top courses by revenue ---------- */
-  const maxRev = d.top_courses[0]?.revenue || 1;
+  /* ---------- top courses by students ---------- */
+  const maxStudents = d.top_courses[0]?.students || 1;
   $('#topCourses').innerHTML =
     d.top_courses
       .map(
@@ -100,12 +100,12 @@ document.addEventListener('app:ready', async () => {
         <span class="thumb">${esc(c.glyph)}</span>
         <div class="grow">
           <b>${esc(c.title)}</b>
-          <div class="progress" style="margin-top:6px"><i style="width:${(c.revenue / maxRev) * 100}%"></i></div>
+          <div class="progress" style="margin-top:6px"><i style="width:${(c.students / maxStudents) * 100}%"></i></div>
         </div>
-        <b class="num">${money(c.revenue)}</b>
+        <b class="num">${num(c.students)}</b>
       </a>`,
       )
-      .join('') || '<div class="list-item muted">لا توجد مبيعات بعد</div>';
+      .join('') || '<div class="list-item muted">لا توجد تسجيلات بعد</div>';
 
   /* ---------- upcoming workshops ---------- */
   $('#upcomingWorkshops').innerHTML =
@@ -141,13 +141,13 @@ document.addEventListener('app:ready', async () => {
 
   $('#exportReport').addEventListener('click', () =>
     App.downloadCSV(
-      'revenue-report.csv',
+      'registrations-report.csv',
       [
         { key: 'month', label: 'الشهر' },
-        { key: 'courses', label: 'الدورات والورش' },
-        { key: 'services', label: 'خدمات التطوير' },
+        { key: 'courses', label: 'الدورات' },
+        { key: 'workshops', label: 'الورش' },
       ],
-      d.revenue.labels.map((m, i) => ({ month: m, courses: d.revenue.courses[i], services: d.revenue.services[i] })),
+      d.registrations.labels.map((m, i) => ({ month: m, courses: d.registrations.courses[i], workshops: d.registrations.workshops[i] })),
     ),
   );
 });

@@ -2,13 +2,12 @@
 
 namespace Tests\Feature\Api;
 
-use App\Enums\OrderItemType;
 use App\Enums\Role;
 use App\Enums\WorkshopFormat;
-use App\Models\Order;
 use App\Models\Student;
 use App\Models\User;
 use App\Models\Workshop;
+use App\Models\WorkshopRegistration;
 use App\Notifications\WorkshopReminder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -35,7 +34,6 @@ class WorkshopControllerTest extends TestCase
             'time' => '19:00',
             'format' => WorkshopFormat::Online->value,
             'place' => 'Zoom',
-            'price' => 19,
             'seats' => 40,
             ...$overrides,
         ];
@@ -64,7 +62,7 @@ class WorkshopControllerTest extends TestCase
         $response->assertCreated()
             ->assertJsonPath('data.time', '19:00')
             ->assertJsonPath('data.format_label', 'أونلاين')
-            ->assertJsonPath('data.price', 19)
+            ->assertJsonMissingPath('data.price')
             ->assertJsonPath('data.taken', 0);
         $this->assertDatabaseHas('workshops', ['title' => 'ابنِ ملف أعمالك في ساعتين', 'seats' => 40]);
     }
@@ -94,18 +92,18 @@ class WorkshopControllerTest extends TestCase
         $inPerson->assertJsonPath('data.place', '—');
     }
 
-    public function test_invalid_seats_and_price_return_422(): void
+    public function test_invalid_seats_return_422(): void
     {
-        $response = $this->actingAs($this->editor())->postJson(route('api.workshops.store'), $this->payload(['seats' => 0, 'price' => -5]));
+        $response = $this->actingAs($this->editor())->postJson(route('api.workshops.store'), $this->payload(['seats' => 0]));
 
-        $response->assertUnprocessable()->assertJsonValidationErrors(['seats', 'price']);
+        $response->assertUnprocessable()->assertJsonValidationErrors(['seats']);
     }
 
     public function test_empty_payload_returns_422_for_required_fields(): void
     {
         $response = $this->actingAs($this->editor())->postJson(route('api.workshops.store'), []);
 
-        $response->assertUnprocessable()->assertJsonValidationErrors(['title', 'date', 'time', 'format', 'price', 'seats']);
+        $response->assertUnprocessable()->assertJsonValidationErrors(['title', 'date', 'time', 'format', 'seats']);
     }
 
     public function test_deletes_workshop(): void
@@ -117,25 +115,21 @@ class WorkshopControllerTest extends TestCase
         $this->assertModelMissing($workshop);
     }
 
-    public function test_accountant_cannot_edit_and_gets_403(): void
+    public function test_support_cannot_edit_and_gets_403(): void
     {
         $workshop = Workshop::factory()->create();
 
-        $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->putJson(route('api.workshops.update', $workshop), $this->payload());
+        $response = $this->actingAs(User::factory()->role(Role::Support)->create())->putJson(route('api.workshops.update', $workshop), $this->payload());
 
         $response->assertForbidden();
     }
 
-    private function registerFor(Workshop $workshop, ?Student $student = null): Order
+    private function registerFor(Workshop $workshop, ?Student $student = null): WorkshopRegistration
     {
-        return Order::factory()->create([
-            'item_type' => OrderItemType::Workshop,
-            'item_id' => $workshop->id,
-            'student_id' => $student ?? Student::factory(),
-        ]);
+        return WorkshopRegistration::factory()->for($workshop)->for($student ?? Student::factory())->create();
     }
 
-    public function test_paid_orders_take_seats_and_fill_the_workshop(): void
+    public function test_registrations_take_seats_and_fill_the_workshop(): void
     {
         $workshop = Workshop::factory()->create(['seats' => 2]);
         $this->registerFor($workshop);
@@ -149,23 +143,31 @@ class WorkshopControllerTest extends TestCase
     public function test_lists_registered_students(): void
     {
         $workshop = Workshop::factory()->create();
-        $order = $this->registerFor($workshop, Student::factory()->create(['name' => 'نور']));
+        $student = Student::factory()->create(['name' => 'نور', 'email' => 'nour@example.com']);
+        $this->registerFor($workshop, $student);
 
         $response = $this->actingAs(User::factory()->role(Role::Support)->create())->getJson(route('api.workshops.registrations.index', $workshop));
 
-        $response->assertOk()->assertJsonPath('data.0.name', 'نور')->assertJsonPath('data.0.order_number', $order->number());
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.student_id', $student->id)
+            ->assertJsonPath('data.0.name', 'نور')
+            ->assertJsonPath('data.0.email', 'nour@example.com')
+            ->assertJsonPath('data.0.registered_at', today()->toDateString());
     }
 
     public function test_reminder_emails_every_registered_student(): void
     {
         Notification::fake();
         $workshop = Workshop::factory()->create();
-        $order = $this->registerFor($workshop);
+        $registration = $this->registerFor($workshop);
+        $notRegistered = Student::factory()->create();
 
         $response = $this->actingAs($this->editor())->postJson(route('api.workshops.reminders.store', $workshop));
 
         $response->assertOk()->assertJsonPath('sent', 1);
-        Notification::assertSentTo($order->student, WorkshopReminder::class);
+        Notification::assertSentTo($registration->student, WorkshopReminder::class);
+        Notification::assertNotSentTo($notRegistered, WorkshopReminder::class);
     }
 
     public function test_seats_cannot_drop_below_bookings(): void
@@ -184,7 +186,9 @@ class WorkshopControllerTest extends TestCase
         $workshop = Workshop::factory()->create();
         $this->registerFor($workshop);
 
-        $this->actingAs($this->editor())->deleteJson(route('api.workshops.destroy', $workshop))->assertUnprocessable();
+        $this->actingAs($this->editor())->deleteJson(route('api.workshops.destroy', $workshop))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['workshop' => 'لا يمكن حذف ورشة فيها مسجّلون.']);
 
         $this->assertModelExists($workshop);
     }

@@ -47,26 +47,6 @@
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-head"><h3>التسعير</h3></div>
-          <div class="card-body form-grid">
-            <div class="field">
-              <label for="price">السعر</label>
-              <div class="input-group"><input class="input ltr" id="price" type="number" min="0" placeholder="0" style="text-align:left"><span class="addon">{{ trim($currencySymbol) }}</span></div>
-              <span class="hint">اترك 0 لدورة مجانية</span>
-            </div>
-            <div class="field">
-              <label for="oldPrice">السعر قبل الخصم</label>
-              <div class="input-group"><input class="input ltr" id="oldPrice" type="number" min="0" placeholder="اختياري" style="text-align:left"><span class="addon">{{ trim($currencySymbol) }}</span></div>
-            </div>
-            <div class="field full">
-              <label class="switch"><input type="checkbox" id="ppp" checked><span class="track"></span>تسعير إقليمي تلقائي (أسعار أقل للدول ذات الدخل المنخفض)</label>
-            </div>
-            <div class="field full">
-              <label class="switch"><input type="checkbox" id="pro" checked><span class="track"></span>متاحة لمشتركي Pro بدون دفع إضافي</label>
-            </div>
-          </div>
-        </div>
       </div>
 
       <aside style="display:flex;flex-direction:column;gap:20px;min-width:0">

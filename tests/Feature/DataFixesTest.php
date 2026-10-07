@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Article;
-use App\Models\Order;
+use App\Models\Enrollment;
 use App\Models\Setting;
 use App\Models\Student;
 use App\Models\User;
@@ -61,14 +61,16 @@ class DataFixesTest extends TestCase
     public function test_the_year_is_compared_with_the_same_stretch_a_year_before(): void
     {
         $this->travelTo(now()->setDate(2026, 10, 5)->setTime(12, 0));
-        // same revenue on the same dates a year apart: no change
-        Order::factory()->create(['total' => 100, 'paid_at' => now()->subDays(3)]);
-        Order::factory()->create(['total' => 100, 'paid_at' => now()->subYear()->subDays(3)]);
+        // the same registrations on the same dates a year apart: no change
+        Enrollment::factory()->create(['created_at' => now()->subDays(3)]);
+        Enrollment::factory()->create(['created_at' => now()->subYear()->subDays(3)]);
         // after "today" a year ago: outside the comparison
-        Order::factory()->create(['total' => 500, 'paid_at' => now()->subYear()->addDays(10)]);
+        Enrollment::factory()->count(5)->create(['created_at' => now()->subYear()->addDays(10)]);
 
         $response = $this->actingAs(User::factory()->create())->getJson(route('api.analytics', ['days' => 365]));
 
-        $response->assertJsonPath('data.kpis.revenue.previous', 100)->assertJsonPath('data.kpis.revenue.change', 0);
+        $response->assertJsonPath('data.kpis.registrations.value', 1)
+            ->assertJsonPath('data.kpis.registrations.previous', 1)
+            ->assertJsonPath('data.kpis.registrations.change', 0);
     }
 }

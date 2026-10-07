@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\OrderItemType;
-use App\Enums\OrderStatus;
 use App\Enums\WorkshopFormat;
 use App\Models\Concerns\HasComments;
 use App\Models\Concerns\LogsActivity;
@@ -13,7 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['title', 'description', 'date', 'start_time', 'format', 'place', 'price', 'seats'])]
+#[Fillable(['title', 'description', 'date', 'start_time', 'format', 'place', 'seats'])]
 class Workshop extends Model
 {
     /** @use HasFactory<WorkshopFactory> */
@@ -29,20 +27,17 @@ class Workshop extends Model
         return [
             'date' => 'date',
             'format' => WorkshopFormat::class,
-            'price' => 'decimal:2',
         ];
     }
 
     /**
-     * Paid bookings: one completed workshop order is one seat.
+     * The students' seats: one registration is one seat.
      *
-     * @return HasMany<Order, $this>
+     * @return HasMany<WorkshopRegistration, $this>
      */
     public function registrations(): HasMany
     {
-        return $this->hasMany(Order::class, 'item_id')
-            ->where('item_type', OrderItemType::Workshop)
-            ->where('status', OrderStatus::Completed);
+        return $this->hasMany(WorkshopRegistration::class);
     }
 
     /**

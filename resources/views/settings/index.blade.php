@@ -8,7 +8,7 @@
       <div>
         <div class="crumbs"><a href="{{ route('dashboard') }}">الرئيسية</a><span class="sep">/</span><span>الإعدادات</span></div>
         <h1>الإعدادات</h1>
-        <p>إعدادات المنصة، الدفع، الإشعارات والفريق.</p>
+        <p>إعدادات المنصة، البريد، الإشعارات والفريق.</p>
       </div>
       <div class="page-actions">
         <button class="btn btn-primary" id="saveAll" form="settingsForm" data-requires="manage_settings"><i data-icon="save" class="sm"></i>حفظ التغييرات</button>
@@ -18,7 +18,6 @@
     <div class="card">
       <div class="tabs" data-tabs="settings" role="tablist">
         <button class="on" data-tab="general" role="tab">عام</button>
-        <button data-tab="payments" role="tab">الدفع</button>
         <button data-tab="mail" role="tab">البريد</button>
         <button data-tab="analytics" role="tab">الإحصاءات</button>
         <button data-tab="notifications" role="tab">الإشعارات</button>
@@ -36,6 +35,7 @@
             <div class="field full"><label for="tagline">الوصف المختصر</label><input class="input" id="tagline" data-setting="tagline" maxlength="160"></div>
             <div class="field"><label for="email">بريد التواصل</label><input class="input ltr" id="email" data-setting="contact_email" type="email"></div>
             <div class="field"><label for="wa">رقم واتساب</label><input class="input ltr" id="wa" data-setting="whatsapp" placeholder="+970 59 000 0000"></div>
+            <div class="field"><label for="currency">عملة ميزانيات المشاريع</label><select class="select" id="currency" data-setting="currency"><option value="USD">دولار أمريكي (USD)</option><option value="SAR">ريال سعودي (SAR)</option><option value="JOD">دينار أردني (JOD)</option></select></div>
           </div>
           <div style="margin-top:22px">
             <div class="setting-row"><div><b>وضع الصيانة</b><p>إخفاء الموقع مؤقتاً عن الزوار وإظهار صفحة "نعود قريباً".</p></div><label class="switch"><input type="checkbox" id="maintenance" data-setting="maintenance_mode"><span class="track"></span></label></div>
@@ -43,23 +43,6 @@
             <div class="setting-row"><div><b>التعليقات</b><p>تعليقات الطلاب وردودهم على المقالات والدورات والورش، مع مراجعتها قبل النشر.</p></div><label class="switch"><input type="checkbox" data-setting="article_comments"><span class="track"></span></label></div>
           </div>
           <p class="muted" style="font-size:12.5px;margin-top:14px">هذه الإعدادات يقرأها الموقع العام من <span class="mono ltr">/api/v1/settings</span>.</p>
-        </div>
-
-        <!-- payments -->
-        <div class="tab-panel card-body" data-panel-group="settings" data-panel="payments">
-          <div class="form-grid" style="margin-bottom:18px">
-            <div class="field full"><label for="payInfo">تعليمات الدفع — للمالك فقط</label><textarea class="textarea" id="payInfo" rows="5" data-setting="payment_instructions" maxlength="1000" placeholder="مثال: تحويل بنكي إلى بنك فلسطين، الحساب 000000، أو محفظة جوال باي على الرقم 059…، ثم أرسل صورة الإيصال على واتساب."></textarea><small class="muted">يعرضها الموقع للطالب، وتظهر في فاتورة الطلب المعلّق.</small></div>
-          </div>
-          <p class="muted" style="font-size:12.5px;margin:-8px 0 18px">الدفع يدوي: تتواصل مع الطالب، وبعد استلام المبلغ تسجّل الطلب من صفحة الطلبات (تحويل بنكي، محفظة إلكترونية أو نقداً) فتُفتح له الدورة.</p>
-          <div class="form-grid">
-            <div class="field"><label for="currency">العملة</label><select class="select" id="currency" data-setting="currency"><option value="USD">دولار أمريكي (USD)</option><option value="SAR">ريال سعودي (SAR)</option><option value="JOD">دينار أردني (JOD)</option></select></div>
-            <div class="field"><label for="vat">ضريبة القيمة المضافة % (ضمن السعر)</label><input class="input ltr" id="vat" data-setting="vat_percent" type="number" min="0" max="30" step="0.5"></div>
-            <div class="field"><label for="proPrice">سعر شهر Pro</label><input class="input ltr" id="proPrice" data-setting="pro_month_price" type="number" min="1" step="0.5"></div>
-            <div class="field full"><label for="invoiceNote">ملاحظة الفاتورة</label><textarea class="textarea" id="invoiceNote" rows="3" data-setting="invoice_note" maxlength="500"></textarea></div>
-          </div>
-          <div style="margin-top:18px">
-            <div class="setting-row"><div><b>ضمان استرداد 14 يوماً</b><p>إظهار سياسة الاسترداد في صفحات الدورات.</p></div><label class="switch"><input type="checkbox" data-setting="refund_guarantee"><span class="track"></span></label></div>
-          </div>
         </div>
 
         <!-- mail -->
@@ -107,7 +90,7 @@
           <p class="muted" style="margin-bottom:6px">إشعاراتك تظهر في الجرس دائماً؛ اختر ما يصلك منها بالبريد أيضاً. يُحفظ كل تغيير فوراً.</p>
           <div id="notifPrefs"></div>
           <div class="label" style="margin:22px 0 4px">للمنصة كلها</div>
-          <div class="setting-row"><div><b>التقرير الأسبوعي</b><p>ملخص مبيعات الأسبوع للمالك والمدراء صباح كل أحد.</p></div><label class="switch"><input type="checkbox" data-setting="weekly_report"><span class="track"></span></label></div>
+          <div class="setting-row"><div><b>التقرير الأسبوعي</b><p>ملخص تسجيلات الأسبوع للمالك والمدراء صباح كل أحد.</p></div><label class="switch"><input type="checkbox" data-setting="weekly_report"><span class="track"></span></label></div>
           <div class="setting-row"><div><b>النشرة البريدية</b><p>إرسال كل مقال جديد بالبريد للطلاب ولمشتركي النشرة عند نشره (إذا كان خيار "إرساله في النشرة" مفعّلاً في المقال).</p></div><label class="switch"><input type="checkbox" data-setting="newsletter_new_articles"><span class="track"></span></label></div>
         </div>
 

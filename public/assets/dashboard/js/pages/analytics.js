@@ -1,9 +1,9 @@
 document.addEventListener('app:ready', () => {
-  const { $, $$, esc, num, money, icon, api } = App;
-  const METHOD_COLORS = ['#0066ff', '#0b0d12', '#0e9f6e', '#c27803', '#7c3aed'];
+  const { $, $$, esc, num, icon, api } = App;
+  const SPLIT_COLORS = ['#0066ff', '#0891b2'];
   const PERIODS = { 7: 'آخر 7 أيام', 30: 'آخر 30 يوماً', 90: 'آخر 90 يوماً', 365: 'آخر 12 شهراً' };
   let report;
-  let metric = 'revenue';
+  let metric = 'registrations';
 
   const trend = (k) =>
     k.change === null ? '<span class="trend">—</span> لا توجد فترة سابقة للمقارنة' : `<span class="trend ${k.change >= 0 ? 'up' : 'down'}">${k.change >= 0 ? '+' : ''}${k.change}%</span> عن الفترة السابقة`;
@@ -11,26 +11,25 @@ document.addEventListener('app:ready', () => {
   function kpis() {
     const k = report.kpis;
     $('#kpis').innerHTML = [
-      ['dollar', 'c-blue', 'الإيرادات', money(k.revenue.value), k.revenue],
-      ['cart', 'c-green', 'الطلبات المكتملة', num(k.orders.value), k.orders],
+      ['award', 'c-blue', 'كل التسجيلات', num(k.registrations.value), k.registrations],
+      ['play', 'c-green', 'في الدورات', num(k.enrollments.value), k.enrollments],
+      ['calendar', 'c-amber', 'في الورش', num(k.workshop_registrations.value), k.workshop_registrations],
       ['users', 'c-violet', 'طلاب جدد', num(k.students.value), k.students],
-      ['tag', 'c-amber', 'متوسط قيمة الطلب', money(k.average_order.value), k.average_order],
     ]
       .map(([ic, tone, label, value, kpi]) => `<div class="card kpi"><div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-ico ${tone}">${icon(ic)}</span></div><div class="kpi-value">${value}</div><div class="kpi-note">${trend(kpi)}</div></div>`)
       .join('');
   }
 
   function series() {
-    const isRevenue = metric === 'revenue';
+    const isRegistrations = metric === 'registrations';
     const s = report.series;
-    $('#seriesTitle').textContent = isRevenue ? 'الإيرادات' : 'الطلاب الجدد';
+    $('#seriesTitle').textContent = isRegistrations ? 'التسجيلات' : 'الطلاب الجدد';
     $('#seriesNote').textContent = `${PERIODS[report.days]} · ${report.days > 90 ? 'شهرياً' : 'يومياً'}`;
     Charts.line($('#seriesChart'), {
       labels: s.labels,
       xEvery: Math.max(1, Math.ceil(s.labels.length / 10)),
       height: 300,
-      series: [{ name: isRevenue ? 'الإيرادات' : 'طلاب جدد', color: isRevenue ? '#0066ff' : '#7c3aed', data: s[metric], area: true }],
-      ...(isRevenue ? { format: (v) => money(v) } : {}),
+      series: [{ name: isRegistrations ? 'تسجيلات' : 'طلاب جدد', color: isRegistrations ? '#0066ff' : '#7c3aed', data: s[metric], area: true }],
     });
   }
 
@@ -55,26 +54,25 @@ document.addEventListener('app:ready', () => {
       .join('');
   }
 
-  function methods() {
-    const total = report.payment_methods.reduce((a, m) => a + m.value, 0);
-    const items = report.payment_methods.map((m, i) => ({ label: m.label, value: Math.round((m.value / total) * 100), color: METHOD_COLORS[i % METHOD_COLORS.length] }));
-    Charts.donut($('#methodsChart'), { items, centerValue: num(total), centerLabel: 'طلب مكتمل' });
-    $('#methodsLegend').innerHTML = items.map((m) => `<span><i style="background:${m.color}"></i>${esc(m.label)} <bdi>${m.value}%</bdi></span>`).join('') || '<span class="muted">لا توجد طلبات في هذه الفترة</span>';
+  function split() {
+    const total = report.split.reduce((a, m) => a + m.value, 0);
+    const items = total ? report.split.filter((m) => m.value).map((m, i) => ({ label: m.label, value: Math.round((m.value / total) * 100), color: SPLIT_COLORS[i % SPLIT_COLORS.length] })) : [];
+    Charts.donut($('#splitChart'), { items, centerValue: num(total), centerLabel: 'تسجيل' });
+    $('#splitLegend').innerHTML = items.map((m) => `<span><i style="background:${m.color}"></i>${esc(m.label)} <bdi>${m.value}%</bdi></span>`).join('') || '<span class="muted">لا توجد تسجيلات في هذه الفترة</span>';
   }
 
-  function products() {
-    const max = report.top_products[0]?.revenue || 1;
-    $('#topProducts').innerHTML =
-      report.top_products
+  function items() {
+    const max = report.top_items[0]?.registrations || 1;
+    $('#topItems').innerHTML =
+      report.top_items
         .map(
           (p) => `<tr>
         <td><b style="color:var(--fg)">${esc(p.name)}</b><div class="muted" style="font-size:12px">${esc(p.type_label)}</div></td>
-        <td class="num">${num(p.orders)}</td>
-        <td class="num">${money(p.revenue)}</td>
-        <td><div class="progress"><i style="width:${(p.revenue / max) * 100}%"></i></div></td>
+        <td class="num">${num(p.registrations)}</td>
+        <td><div class="progress"><i style="width:${(p.registrations / max) * 100}%"></i></div></td>
       </tr>`,
         )
-        .join('') || '<tr><td colspan="4" class="muted" style="text-align:center">لا توجد مبيعات في هذه الفترة</td></tr>';
+        .join('') || '<tr><td colspan="3" class="muted" style="text-align:center">لا توجد تسجيلات في هذه الفترة</td></tr>';
   }
 
   function countries() {
@@ -87,10 +85,10 @@ document.addEventListener('app:ready', () => {
         <div class="progress"><i style="width:${(c.value / max) * 100}%"></i></div>
       </div>`,
         )
-        .join('') || '<p class="muted">لا يوجد مشترون في هذه الفترة</p>';
+        .join('') || '<p class="muted">لا يوجد مسجّلون في هذه الفترة</p>';
   }
 
-  /* ---------- site traffic (Google Analytics): loaded on its own so a slow or failing Google never holds up the sales ---------- */
+  /* ---------- site traffic (Google Analytics): loaded on its own so a slow or failing Google never holds up the registrations ---------- */
   const DEVICE_COLORS = ['#0066ff', '#7c3aed', '#0e9f6e', '#c27803'];
   let trafficRequest = 0;
 
@@ -181,12 +179,12 @@ document.addEventListener('app:ready', () => {
     } finally {
       $('#period').disabled = false;
     }
-    $('#periodNote').textContent = `المبيعات والطلاب خلال ${PERIODS[days]}، مقارنة بالفترة التي قبلها.`;
+    $('#periodNote').textContent = `التسجيلات والطلاب خلال ${PERIODS[days]}، مقارنة بالفترة التي قبلها.`;
     kpis();
     series();
     funnel();
-    methods();
-    products();
+    split();
+    items();
     countries();
   }
 
@@ -204,13 +202,13 @@ document.addEventListener('app:ready', () => {
   $('#exportReport').addEventListener('click', () => {
     if (!report) return;
     App.downloadCSV(
-      `sales-${report.days}d.csv`,
+      `registrations-${report.days}d.csv`,
       [
         { key: 'label', label: report.days > 90 ? 'الشهر' : 'اليوم' },
-        { key: 'revenue', label: 'الإيرادات' },
+        { key: 'registrations', label: 'التسجيلات' },
         { key: 'students', label: 'طلاب جدد' },
       ],
-      report.series.labels.map((label, i) => ({ label, revenue: report.series.revenue[i], students: report.series.students[i] })),
+      report.series.labels.map((label, i) => ({ label, registrations: report.series.registrations[i], students: report.series.students[i] })),
     );
   });
 

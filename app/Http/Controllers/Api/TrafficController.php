@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Support\GoogleAnalytics;
 use App\Support\GoogleAnalyticsUnavailable;
-use App\Support\SalesReport;
+use App\Support\RegistrationsReport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -18,7 +18,7 @@ class TrafficController extends Controller
      */
     public function __invoke(Request $request, GoogleAnalytics $analytics): JsonResponse
     {
-        $validated = $request->validate(['days' => ['sometimes', 'integer', Rule::in(SalesReport::PERIODS)]]);
+        $validated = $request->validate(['days' => ['sometimes', 'integer', Rule::in(RegistrationsReport::PERIODS)]]);
 
         if (! $analytics->configured()) {
             return response()->json(['data' => null, 'meta' => ['configured' => false, 'error' => null]]);

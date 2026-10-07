@@ -31,7 +31,7 @@ class TeamMemberControllerTest extends TestCase
             ->assertJsonPath('data.2.id', $editor->id)
             ->assertJsonPath('data.2.can.delete', true)
             ->assertJsonPath('meta.can_invite', true)
-            ->assertJsonPath('meta.roles.*.value', ['editor', 'support', 'accountant']);
+            ->assertJsonPath('meta.roles.*.value', ['editor', 'support']);
     }
 
     public function test_editor_sees_team_but_cannot_invite(): void
@@ -118,10 +118,10 @@ class TeamMemberControllerTest extends TestCase
     {
         $editor = User::factory()->create();
 
-        $response = $this->actingAs(User::factory()->admin()->create())->patchJson(route('api.team.update', $editor), ['role' => Role::Accountant->value]);
+        $response = $this->actingAs(User::factory()->admin()->create())->patchJson(route('api.team.update', $editor), ['role' => Role::Support->value]);
 
-        $response->assertOk()->assertJsonPath('data.role_label', 'محاسب');
-        $this->assertSame(Role::Accountant, $editor->fresh()->role);
+        $response->assertOk()->assertJsonPath('data.role_label', 'دعم فني');
+        $this->assertSame(Role::Support, $editor->fresh()->role);
     }
 
     public function test_admin_cannot_change_owner_role_and_gets_403(): void

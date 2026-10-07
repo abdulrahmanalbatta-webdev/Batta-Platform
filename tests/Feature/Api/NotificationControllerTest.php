@@ -65,9 +65,9 @@ class NotificationControllerTest extends TestCase
 
         $response = $this->actingAs($support)->putJson(route('api.notification-preferences.update'), ['messages' => true]);
 
-        $response->assertOk()->assertExactJson(['data' => ['reviews' => true, 'comments' => true, 'messages' => true, 'students' => true]]);
+        $response->assertOk()->assertExactJson(['data' => ['registrations' => true, 'reviews' => true, 'comments' => true, 'messages' => true, 'students' => true]]);
         $this->actingAs($support)->putJson(route('api.notification-preferences.update'), ['reviews' => false])
-            ->assertExactJson(['data' => ['reviews' => false, 'comments' => true, 'messages' => true, 'students' => true]]);
+            ->assertExactJson(['data' => ['registrations' => true, 'reviews' => false, 'comments' => true, 'messages' => true, 'students' => true]]);
     }
 
     public function test_preferences_must_be_booleans_of_known_types(): void
@@ -79,12 +79,12 @@ class NotificationControllerTest extends TestCase
 
     public function test_own_preferences_come_with_the_signed_in_member_only(): void
     {
-        $accountant = User::factory()->role(Role::Accountant)->create();
+        $editor = User::factory()->role(Role::Editor)->create();
 
-        $this->actingAs($accountant)->get(route('settings.index'))->assertSee('"email_preferences":{"orders":true}', escape: false);
+        $this->actingAs($editor)->get(route('settings.index'))->assertSee('"email_preferences":{"reviews":true,"comments":true}', escape: false);
         $this->actingAs(User::factory()->owner()->create())->getJson(route('api.team.index'))
-            ->assertJsonPath('data.0.email_preferences.orders', true)
-            ->assertJsonPath('data.1.email', $accountant->email)
+            ->assertJsonPath('data.0.email_preferences.registrations', true)
+            ->assertJsonPath('data.1.email', $editor->email)
             ->assertJsonMissingPath('data.1.email_preferences');
     }
 }

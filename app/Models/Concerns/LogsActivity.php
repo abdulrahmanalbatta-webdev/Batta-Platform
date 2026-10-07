@@ -14,7 +14,7 @@ trait LogsActivity
     /**
      * Attributes whose changes never make an entry on their own.
      */
-    private const QUIET_ATTRIBUTES = ['created_at', 'updated_at', 'position', 'times_used', 'read_at', 'last_message_at', 'last_active_at'];
+    private const QUIET_ATTRIBUTES = ['created_at', 'updated_at', 'position', 'read_at', 'last_message_at', 'last_active_at'];
 
     public static function bootLogsActivity(): void
     {

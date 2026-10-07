@@ -36,8 +36,8 @@
     <aside class="auth-side">
       <div class="inner">
         <img src="{{ asset('assets/dashboard/img/logo-white.png') }}" alt="" style="height:40px;width:auto;align-self:flex-start">
-        <h2>كل منصتك في لوحة واحدة: الدورات، الطلاب، المبيعات والطلبات.</h2>
-        <p style="opacity:.75">تابع الإيرادات لحظياً، ردّ على طلابك، وأدر طلبات المشاريع من مكان واحد.</p>
+        <h2>كل منصتك في لوحة واحدة: الدورات، الورش، الطلاب والتسجيلات.</h2>
+        <p style="opacity:.75">تابع التسجيلات لحظياً، ردّ على طلابك، وأدر طلبات المشاريع من مكان واحد.</p>
         <div style="display:flex;gap:28px;flex-wrap:wrap">
           <div><b style="font-size:26px;color:#fff;display:block">2,300+</b><small style="opacity:.7">طالب</small></div>
           <div><b style="font-size:26px;color:#fff;display:block">7</b><small style="opacity:.7">دورات</small></div>

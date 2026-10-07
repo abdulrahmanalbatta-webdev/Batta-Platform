@@ -33,14 +33,14 @@ class WorkshopController extends Controller
     }
 
     /**
-     * Delete a workshop nobody has paid for yet.
+     * Delete a workshop nobody has registered in yet.
      *
      * @throws ValidationException
      */
     public function destroy(Workshop $workshop): Response
     {
         if ($workshop->registrations()->exists()) {
-            throw ValidationException::withMessages(['workshop' => 'لا يمكن حذف ورشة فيها مسجلون. استرد طلباتهم أولاً.']);
+            throw ValidationException::withMessages(['workshop' => 'لا يمكن حذف ورشة فيها مسجّلون.']);
         }
 
         $workshop->delete();

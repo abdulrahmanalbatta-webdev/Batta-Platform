@@ -23,8 +23,6 @@
             'article-create' => route('articles.create'),
             'article-edit' => route('articles.edit', '__ID__'),
             'tools' => route('tools.index'),
-            'orders' => route('orders.index'),
-            'coupons' => route('coupons.index'),
             'leads' => route('leads.index'),
             'students' => route('students.index'),
             'subscribers' => route('subscribers.index'),

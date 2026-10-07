@@ -9,9 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Created by CompleteOrder and removed by RefundOrder (no request writes enrollments directly).
+ * A student registered in a course, from the course page on the site.
  */
-#[Fillable(['student_id', 'course_id', 'order_id'])]
+#[Fillable(['student_id', 'course_id'])]
 class Enrollment extends Model
 {
     /** @use HasFactory<EnrollmentFactory> */
@@ -31,13 +31,5 @@ class Enrollment extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
-    }
-
-    /**
-     * @return BelongsTo<Order, $this>
-     */
-    public function order(): BelongsTo
-    {
-        return $this->belongsTo(Order::class);
     }
 }

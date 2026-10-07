@@ -6,11 +6,13 @@ use App\Enums\Role;
 use App\Jobs\ExportPlatformData;
 use App\Models\Activity;
 use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\Lead;
-use App\Models\Order;
 use App\Models\Review;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\Workshop;
+use App\Models\WorkshopRegistration;
 use App\Notifications\ExportReady;
 use App\Support\PlatformSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -54,7 +56,7 @@ class PlatformDataTest extends TestCase
         Storage::fake('local');
         Notification::fake();
         $owner = User::factory()->owner()->create();
-        Order::factory()->count(2)->create();
+        WorkshopRegistration::factory()->count(2)->create();
         app(PlatformSettings::class)->update(['mail_password' => 'sk_live_topsecret']);
 
         (new ExportPlatformData($owner))->handle();
@@ -65,11 +67,12 @@ class PlatformDataTest extends TestCase
         $manifest = json_decode($zip->getFromName('manifest.json'), true);
         $users = json_decode($zip->getFromName('users.json'), true);
         $settings = $zip->getFromName('settings.json');
-        $orders = json_decode($zip->getFromName('orders.json'), true);
+        $registrations = json_decode($zip->getFromName('workshop_registrations.json'), true);
         $zip->close();
 
-        $this->assertSame(2, $manifest['rows']['orders']);
-        $this->assertCount(2, $orders);
+        $this->assertSame(2, $manifest['rows']['workshop_registrations']);
+        $this->assertCount(2, $registrations);
+        $this->assertArrayNotHasKey('orders', $manifest['rows']);
         $this->assertArrayNotHasKey('password', $users[0]);
         $this->assertStringNotContainsString('topsecret', $settings);
         Notification::assertSentTo($owner, ExportReady::class);
@@ -129,15 +132,16 @@ class PlatformDataTest extends TestCase
         Storage::disk('public')->put('courses/cover.png', 'png');
         $owner = User::factory()->owner()->create();
         $editor = User::factory()->role(Role::Editor)->create();
-        Order::factory()->count(3)->create();
+        Enrollment::factory()->count(2)->create();
+        WorkshopRegistration::factory()->count(3)->create();
         Review::factory()->create();
         Lead::factory()->create();
         app(PlatformSettings::class)->update(['site_name' => 'منصتي']);
 
         $response = $this->actingAs($owner)->postJson(route('api.data-wipe'), ['password' => 'password', 'confirmation' => 'احذف كل البيانات']);
 
-        $response->assertOk()->assertJsonPath('deleted.orders', 3);
-        $this->assertSame(0, Order::count() + Course::count() + Lead::count() + Review::count());
+        $response->assertOk()->assertJsonPath('deleted.workshop_registrations', 3)->assertJsonPath('deleted.enrollments', 2);
+        $this->assertSame(0, WorkshopRegistration::count() + Enrollment::count() + Workshop::count() + Course::count() + Lead::count() + Review::count());
         $this->assertModelExists($editor);
         $this->assertSame('"منصتي"', Setting::find('site_name')->value);
         $this->assertSame('wiped', Activity::query()->latest('id')->first()->action);

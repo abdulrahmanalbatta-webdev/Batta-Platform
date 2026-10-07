@@ -78,7 +78,7 @@ class ConversationMessageControllerTest extends TestCase
         $conversation = Conversation::factory()->create();
         $message = ConversationMessage::factory()->for($conversation)->create(['attachment_path' => 'conversations/1/abc.pdf', 'attachment_name' => 'offer.pdf']);
 
-        $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->get(route('api.conversations.messages.attachment', [$conversation, $message]));
+        $response = $this->actingAs(User::factory()->role(Role::Editor)->create())->get(route('api.conversations.messages.attachment', [$conversation, $message]));
 
         $response->assertOk()->assertDownload('offer.pdf');
     }

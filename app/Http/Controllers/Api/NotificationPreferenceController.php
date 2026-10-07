@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class NotificationPreferenceController extends Controller
 {
     /**
-     * Turn the email for each alert type on or off for the signed-in member, e.g. {"orders": true, "messages": false}.
+     * Turn the email for each alert type on or off for the signed-in member, e.g. {"registrations": true, "messages": false}.
      */
     public function update(Request $request): JsonResponse
     {

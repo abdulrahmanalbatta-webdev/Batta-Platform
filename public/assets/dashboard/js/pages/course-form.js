@@ -90,10 +90,6 @@ document.addEventListener('app:ready', async () => {
     $('#short').value = c.short_description || '';
     $('#shortCount').textContent = $('#short').value.length;
     $('#desc').value = c.description || '';
-    $('#price').value = c.price;
-    $('#oldPrice').value = c.old_price ?? '';
-    $('#ppp').checked = c.has_regional_pricing;
-    $('#pro').checked = c.is_included_in_pro;
     $('#status').value = c.status;
     $('#publishAt').value = c.publish_at || '';
     $('#certificate').checked = c.has_certificate;
@@ -141,14 +137,10 @@ document.addEventListener('app:ready', async () => {
         category: $('#category').value,
         status,
         publish_at: $('#publishAt').value || null,
-        price: Number($('#price').value) || 0,
-        old_price: $('#oldPrice').value === '' ? null : Number($('#oldPrice').value),
-        has_regional_pricing: $('#ppp').checked,
-        is_included_in_pro: $('#pro').checked,
         has_certificate: $('#certificate').checked,
         allows_questions: $('#comments').checked,
       };
-      const fields = { title: '#title', slug: '#slug', short_description: '#short', description: '#desc', price: '#price', old_price: '#oldPrice', publish_at: '#publishAt' };
+      const fields = { title: '#title', slug: '#slug', short_description: '#short', description: '#desc', publish_at: '#publishAt' };
       saving = true;
       try {
         existing = (await (existing ? api.put(`courses/${existing.id}`, data) : api.post('courses', data))).data;

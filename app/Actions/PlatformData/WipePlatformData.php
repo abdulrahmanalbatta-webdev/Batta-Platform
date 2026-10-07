@@ -7,14 +7,14 @@ use App\Models\ConversationMessage;
 use App\Models\Student;
 use App\Models\User;
 use App\Support\DashboardSummary;
-use App\Support\SalesReport;
+use App\Support\RegistrationsReport;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Deletes all of the platform's business data (courses, students, orders… see PlatformTables) with their
+ * Deletes all of the platform's business data (courses, students, registrations… see PlatformTables) with their
  * uploaded files. The team, the settings and the activity log stay; the wipe itself is logged.
  */
 class WipePlatformData
@@ -47,7 +47,7 @@ class WipePlatformData
         Storage::disk(ConversationMessage::ATTACHMENT_DISK)->deleteDirectory('conversations');
 
         Cache::forget(DashboardSummary::CACHE_KEY);
-        foreach (SalesReport::PERIODS as $days) {
+        foreach (RegistrationsReport::PERIODS as $days) {
             Cache::forget("analytics.{$days}");
         }
 

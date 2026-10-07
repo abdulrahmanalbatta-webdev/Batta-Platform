@@ -24,7 +24,7 @@ class ToolCategoryControllerTest extends TestCase
         $editors = ToolCategory::factory()->create(['position' => 1]);
         Tool::factory()->count(2)->for($backend, 'category')->create();
 
-        $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->getJson(route('api.tool-categories.index'));
+        $response = $this->actingAs(User::factory()->role(Role::Support)->create())->getJson(route('api.tool-categories.index'));
 
         $response->assertOk()
             ->assertJsonPath('data.*.id', [$editors->id, $backend->id])
@@ -116,11 +116,11 @@ class ToolCategoryControllerTest extends TestCase
         $response->assertOk()->assertJsonPath('data.*.id', [$second->id, $first->id]);
     }
 
-    public function test_accountant_cannot_delete_category_and_gets_403(): void
+    public function test_support_cannot_delete_category_and_gets_403(): void
     {
         $category = ToolCategory::factory()->create();
 
-        $this->actingAs(User::factory()->role(Role::Accountant)->create())->deleteJson(route('api.tool-categories.destroy', $category))->assertForbidden();
+        $this->actingAs(User::factory()->role(Role::Support)->create())->deleteJson(route('api.tool-categories.destroy', $category))->assertForbidden();
 
         $this->assertModelExists($category);
     }

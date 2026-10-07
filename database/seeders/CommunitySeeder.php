@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Enums\LeadStage;
-use App\Enums\OrderStatus;
 use App\Enums\ReviewStatus;
 use App\Models\Article;
 use App\Models\Comment;
@@ -12,14 +11,13 @@ use App\Models\ConversationMessage;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lead;
-use App\Models\Order;
 use App\Models\Review;
 use App\Models\Student;
 use App\Models\User;
 use App\Models\Workshop;
 use App\Notifications\Alerts\ContactMessageReceived;
 use App\Notifications\Alerts\LeadReceived;
-use App\Notifications\Alerts\OrderPaid;
+use App\Notifications\Alerts\RegistrationReceived;
 use App\Notifications\Alerts\ReviewSubmitted;
 use App\Support\TeamAlerts;
 use Illuminate\Database\Seeder;
@@ -92,7 +90,7 @@ class CommunitySeeder extends Seeder
     private function alerts(): void
     {
         $alerts = [
-            [new OrderPaid(Order::query()->where('status', OrderStatus::Completed)->latest('paid_at')->firstOrFail()), now()->subMinutes(5), false],
+            [new RegistrationReceived(($enrollment = Enrollment::query()->with('student', 'course')->latest()->firstOrFail())->student, $enrollment->course), now()->subMinutes(5), false],
             [new ContactMessageReceived(ConversationMessage::query()->where('from_contact', true)->latest()->firstOrFail()), now()->subMinutes(58), false],
             [new LeadReceived(Lead::query()->latest()->firstOrFail()), now()->subDays(2), false],
             [new ReviewSubmitted(Review::query()->where('status', ReviewStatus::Pending)->latest()->firstOrFail()), now()->subDays(3), true],

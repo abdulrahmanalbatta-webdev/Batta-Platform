@@ -19,7 +19,7 @@ class ReviewControllerTest extends TestCase
         Review::factory()->create(['created_at' => now()->subDay()]);
         $review = Review::factory()->published()->create(['reply' => 'شكراً', 'replied_by' => $owner->id]);
 
-        $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->getJson(route('api.reviews.index'));
+        $response = $this->actingAs(User::factory()->role(Role::Editor)->create())->getJson(route('api.reviews.index'));
 
         $response->assertOk()
             ->assertJsonCount(2, 'data')
@@ -81,16 +81,6 @@ class ReviewControllerTest extends TestCase
         $this->actingAs(User::factory()->create())->deleteJson(route('api.reviews.destroy', $review))->assertNoContent();
 
         $this->assertModelMissing($review);
-    }
-
-    public function test_accountant_cannot_moderate(): void
-    {
-        $review = Review::factory()->create();
-        $accountant = User::factory()->role(Role::Accountant)->create();
-
-        $this->actingAs($accountant)->putJson(route('api.reviews.status.update', $review), ['status' => 'published'])->assertForbidden();
-        $this->actingAs($accountant)->putJson(route('api.reviews.reply.update', $review), ['reply' => 'x'])->assertForbidden();
-        $this->actingAs($accountant)->deleteJson(route('api.reviews.destroy', $review))->assertForbidden();
     }
 
     public function test_course_rating_averages_published_reviews_only(): void

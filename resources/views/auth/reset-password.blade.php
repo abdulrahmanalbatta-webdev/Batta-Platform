@@ -38,7 +38,7 @@
     <aside class="auth-side">
       <div class="inner">
         <img src="{{ asset('assets/dashboard/img/logo-white.png') }}" alt="" style="height:40px;width:auto;align-self:flex-start">
-        <h2>كل منصتك في لوحة واحدة: الدورات، الطلاب، المبيعات والطلبات.</h2>
+        <h2>كل منصتك في لوحة واحدة: الدورات، الورش، الطلاب والتسجيلات.</h2>
       </div>
     </aside>
   </div>

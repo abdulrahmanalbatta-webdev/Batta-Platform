@@ -7,7 +7,7 @@ namespace App\Enums;
  */
 enum AlertType: string
 {
-    case Orders = 'orders';
+    case Registrations = 'registrations';
     case Leads = 'leads';
     case Reviews = 'reviews';
     case Comments = 'comments';
@@ -20,11 +20,10 @@ enum AlertType: string
     public function isFor(Role $role): bool
     {
         return match ($this) {
-            self::Orders => $role->canManageSales(),
             self::Leads => $role->canManageLeads(),
             self::Reviews, self::Comments => $role->canModerateReviews(),
             self::Messages => $role->canAnswerMessages(),
-            self::Students => $role->canManageStudents(),
+            self::Students, self::Registrations => $role->canManageStudents(),
         };
     }
 

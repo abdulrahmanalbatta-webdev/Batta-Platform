@@ -18,7 +18,7 @@ class SettingControllerTest extends TestCase
 
     public function test_every_member_reads_the_settings_with_defaults(): void
     {
-        $response = $this->actingAs(User::factory()->role(Role::Accountant)->create())->getJson(route('api.settings.show'));
+        $response = $this->actingAs(User::factory()->role(Role::Editor)->create())->getJson(route('api.settings.show'));
 
         $response->assertOk()
             ->assertJsonPath('data.site_name', 'Batta')
@@ -33,15 +33,17 @@ class SettingControllerTest extends TestCase
         $response = $this->actingAs(User::factory()->admin()->create())->putJson(route('api.settings.update'), [
             'site_name' => 'منصة البطة',
             'session_lifetime' => 30,
-            'pro_month_price' => 12,
+            'currency' => 'SAR',
             'maintenance_mode' => true,
         ]);
 
-        $response->assertOk()->assertJsonPath('data.site_name', 'منصة البطة')->assertJsonPath('data.maintenance_mode', true);
+        $response->assertOk()
+            ->assertJsonPath('data.site_name', 'منصة البطة')
+            ->assertJsonPath('data.currency', 'SAR')
+            ->assertJsonPath('data.maintenance_mode', true);
         $this->assertSame('منصة البطة', config('app.name'));
         $this->assertSame(30, config('session.lifetime'));
-        $this->assertSame(12.0, config('sales.pro_month_price'));
-        $this->assertEqualsCanonicalizing(['site_name', 'session_lifetime', 'pro_month_price', 'maintenance_mode'], Activity::sole()->properties['changed']);
+        $this->assertEqualsCanonicalizing(['site_name', 'session_lifetime', 'currency', 'maintenance_mode'], Activity::sole()->properties['changed']);
     }
 
     public function test_secrets_are_encrypted_masked_and_kept_when_left_empty(): void
@@ -76,14 +78,13 @@ class SettingControllerTest extends TestCase
         $response = $this->actingAs(User::factory()->owner()->create())->putJson(route('api.settings.update'), [
             'site_url' => 'batta',
             'currency' => 'EUR',
-            'vat_percent' => 50,
             'ga_credentials' => '{"type":"user"}',
             'session_lifetime' => 45,
         ]);
 
         $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['site_url', 'currency', 'vat_percent', 'ga_credentials', 'session_lifetime'])
-            ->assertJsonPath('errors.vat_percent.0', 'قيمة ضريبة القيمة المضافة يجب ألا تتجاوز 30.');
+            ->assertJsonValidationErrors(['site_url', 'currency', 'ga_credentials', 'session_lifetime'])
+            ->assertJsonPath('errors.currency.0', 'قيمة العملة المختارة غير صالحة.');
     }
 
     public function test_editor_cannot_change_settings(): void

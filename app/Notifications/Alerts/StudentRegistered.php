@@ -6,7 +6,7 @@ use App\Enums\AlertType;
 use App\Models\Student;
 
 /**
- * A new account on the site: the team gets in touch to arrange the payment by hand.
+ * A new account on the site.
  */
 class StudentRegistered extends TeamAlert
 {

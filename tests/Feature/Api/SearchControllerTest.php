@@ -3,12 +3,11 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Conversation;
-use App\Models\Coupon;
 use App\Models\Course;
 use App\Models\Lead;
-use App\Models\Order;
 use App\Models\Student;
 use App\Models\User;
+use App\Models\Workshop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -34,32 +33,18 @@ class SearchControllerTest extends TestCase
             ->assertJsonPath('data.2.items.0.params', ['c' => $conversation->id]);
     }
 
-    public function test_finds_an_order_by_number_or_by_student(): void
-    {
-        $order = Order::factory()->create(['item_name' => 'Git']);
-        Order::factory()->count(2)->create();
-
-        $member = User::factory()->create();
-
-        $this->actingAs($member)->getJson(route('api.search', ['q' => $order->number()]))
-            ->assertJsonPath('data.0.group', 'orders')
-            ->assertJsonCount(1, 'data.0.items')
-            ->assertJsonPath('data.0.items.0.params', ['q' => $order->number()]);
-        $this->actingAs($member)->getJson(route('api.search', ['q' => $order->student->email]))
-            ->assertJsonPath('data.1.items.0.title', $order->number().' · Git');
-    }
-
-    public function test_courses_open_their_edit_page_and_coupons_match_by_code(): void
+    public function test_courses_open_their_edit_page_and_workshops_show_their_date(): void
     {
         $course = Course::factory()->create(['title' => 'Next.js من الصفر']);
-        Coupon::factory()->create(['code' => 'NEXT20', 'value' => 20]);
+        $workshop = Workshop::factory()->create(['title' => 'Next.js عملياً']);
 
         $response = $this->actingAs(User::factory()->create())->getJson(route('api.search', ['q' => 'next']));
 
-        $response->assertJsonPath('data.0.items.0.page', 'course-edit')
+        $response->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.items.0.page', 'course-edit')
             ->assertJsonPath('data.0.items.0.params', ['id' => $course->id])
-            ->assertJsonPath('data.1.group', 'coupons')
-            ->assertJsonPath('data.1.items.0.subtitle', '20%');
+            ->assertJsonPath('data.1.group', 'workshops')
+            ->assertJsonPath('data.1.items.0.subtitle', $workshop->date->toDateString());
     }
 
     public function test_at_most_five_per_group(): void

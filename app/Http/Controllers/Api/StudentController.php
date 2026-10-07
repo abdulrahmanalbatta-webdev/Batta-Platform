@@ -2,24 +2,22 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\StudentResource;
 use App\Models\Enrollment;
-use App\Models\Order;
 use App\Models\Student;
+use App\Models\WorkshopRegistration;
 use Illuminate\Http\JsonResponse;
 
 class StudentController extends Controller
 {
     /**
-     * Every student, newest first, with their courses and what they've paid.
+     * Every student, newest first, with how many courses and workshops they registered in.
      */
     public function index(): JsonResponse
     {
         $students = Student::query()
-            ->withCount('enrollments')
-            ->withSum(['orders' => fn ($query) => $query->where('status', OrderStatus::Completed)], 'total')
+            ->withCount(['enrollments', 'workshopRegistrations'])
             ->latest()->latest('id')
             ->get();
 
@@ -29,11 +27,11 @@ class StudentController extends Controller
     }
 
     /**
-     * One student's profile: the courses they're enrolled in, newest first, and their latest orders.
+     * One student's profile: the courses and the workshops they registered in, newest first.
      */
     public function show(Student $student): JsonResponse
     {
-        $student->loadCount('enrollments');
+        $student->loadCount(['enrollments', 'workshopRegistrations']);
 
         return response()->json([
             'data' => [
@@ -44,14 +42,12 @@ class StudentController extends Controller
                         'title' => $enrollment->course->title,
                         'date' => $enrollment->created_at->toDateString(),
                     ]),
-                'orders' => $student->orders()->latest()->latest('id')->limit(5)->get()
-                    ->map(fn (Order $order): array => [
-                        'id' => $order->id,
-                        'number' => $order->number(),
-                        'item_name' => $order->item_name,
-                        'total' => (float) $order->total,
-                        'status_label' => $order->status->label(),
-                        'date' => $order->created_at->toDateString(),
+                'workshop_registrations' => $student->workshopRegistrations()->with('workshop:id,title,date')->latest()->latest('id')->get()
+                    ->map(fn (WorkshopRegistration $registration): array => [
+                        'workshop_id' => $registration->workshop_id,
+                        'title' => $registration->workshop->title,
+                        'workshop_date' => $registration->workshop->date->toDateString(),
+                        'date' => $registration->created_at->toDateString(),
                     ]),
             ],
         ]);
