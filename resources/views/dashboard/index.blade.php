@@ -33,9 +33,9 @@
         <div class="kpi-bottom"><span class="kpi-note" id="kpiOrdersNote"></span><span data-spark="orders" data-color="#0e9f6e"></span></div>
       </div>
       <div class="card kpi">
-        <div class="kpi-top"><span class="kpi-label">معدل إكمال الدورات</span><span class="kpi-ico c-amber"><i data-icon="award"></i></span></div>
-        <div class="kpi-value" id="kpiCompletion">—</div>
-        <div class="kpi-bottom"><span class="kpi-note" id="kpiLessonsNote"></span><span data-spark="lessons" data-color="#c27803"></span></div>
+        <div class="kpi-top"><span class="kpi-label">تسجيلات الدورات</span><span class="kpi-ico c-amber"><i data-icon="award"></i></span></div>
+        <div class="kpi-value" id="kpiEnrollments">—</div>
+        <div class="kpi-bottom"><span class="kpi-note" id="kpiEnrollmentsNote"></span><span data-spark="enrollments" data-color="#c27803"></span></div>
       </div>
     </div>
 

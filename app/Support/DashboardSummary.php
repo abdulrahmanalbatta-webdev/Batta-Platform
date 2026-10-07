@@ -9,15 +9,14 @@ use App\Enums\OrderItemType;
 use App\Enums\OrderStatus;
 use App\Models\Article;
 use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\Lead;
-use App\Models\LessonCompletion;
 use App\Models\Order;
 use App\Models\Student;
 use App\Models\Workshop;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 /**
  * The numbers on the dashboard home page. Revenue is what customers paid for completed orders (refunded ones
@@ -54,7 +53,7 @@ class DashboardSummary
         $orders = Order::query()->where('status', OrderStatus::Completed)->where('paid_at', '>=', $first)->get(['item_type', 'total', 'paid_at']);
         $won = Lead::query()->where('stage', LeadStage::Won)->where('decided_at', '>=', $first)->get(['budget', 'decided_at']);
         $students = Student::query()->where('created_at', '>=', $first)->pluck('created_at');
-        $lessons = LessonCompletion::query()->where('completed_at', '>=', $first)->pluck('completed_at');
+        $enrollments = Enrollment::query()->where('created_at', '>=', $first)->pluck('created_at');
 
         $perMonth = fn (Collection $dates, ?Collection $amounts = null): array => $months
             ->map(fn (Carbon $month): float => (float) $dates
@@ -83,8 +82,7 @@ class DashboardSummary
                 'revenue' => $this->kpi($inMonth($revenueDates, $revenueAmounts), array_map(fn (float $a, float $b): float => $a + $b, $courseRevenue, $serviceRevenue)),
                 'students' => $this->kpi($inMonth($students), $perMonth($students)),
                 'orders' => $this->kpi($inMonth($orders->pluck('paid_at')), $perMonth($orders->pluck('paid_at'))),
-                'lessons' => $this->kpi($inMonth($lessons), $perMonth($lessons)),
-                'completion' => $this->completionRate(),
+                'enrollments' => $this->kpi($inMonth($enrollments), $perMonth($enrollments)),
             ],
             'revenue' => [
                 'labels' => $months->map(fn (Carbon $month): string => $month->locale('ar')->translatedFormat('F'))->all(),
@@ -138,32 +136,6 @@ class DashboardSummary
         return (float) $dates->keys()
             ->filter(fn (int $i): bool => $dates[$i]->between($from, $to))
             ->sum(fn (int $i): float => $amounts === null ? 1 : (float) $amounts[$i]);
-    }
-
-    /**
-     * Average progress over every enrolment, in percent, worked out in one query (no list of students in PHP).
-     */
-    private function completionRate(): int
-    {
-        $lessonsPerCourse = DB::table('lessons')
-            ->join('course_modules', 'course_modules.id', '=', 'lessons.course_module_id')
-            ->groupBy('course_modules.course_id')
-            ->select('course_modules.course_id', DB::raw('count(*) as total'));
-
-        $donePerEnrolment = DB::table('lesson_completions')
-            ->join('lessons', 'lessons.id', '=', 'lesson_completions.lesson_id')
-            ->join('course_modules', 'course_modules.id', '=', 'lessons.course_module_id')
-            ->groupBy('lesson_completions.student_id', 'course_modules.course_id')
-            ->select('lesson_completions.student_id', 'course_modules.course_id', DB::raw('count(*) as done'));
-
-        $average = DB::table('enrollments')
-            ->leftJoinSub($lessonsPerCourse, 'course_lessons', 'course_lessons.course_id', '=', 'enrollments.course_id')
-            ->leftJoinSub($donePerEnrolment, 'progress', fn ($join) => $join
-                ->on('progress.student_id', '=', 'enrollments.student_id')
-                ->on('progress.course_id', '=', 'enrollments.course_id'))
-            ->value(DB::raw('avg(case when course_lessons.total > 0 then (case when coalesce(progress.done, 0) > course_lessons.total then course_lessons.total else coalesce(progress.done, 0) end) * 100.0 / course_lessons.total else 0 end)'));
-
-        return (int) round((float) $average);
     }
 
     /**

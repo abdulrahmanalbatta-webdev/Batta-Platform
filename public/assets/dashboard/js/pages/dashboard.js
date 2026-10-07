@@ -38,8 +38,8 @@ document.addEventListener('app:ready', async () => {
   $('#kpiStudentsNote').innerHTML = `${trend(d.kpis.students)} هذا الشهر`;
   $('#kpiOrders').textContent = num(d.kpis.orders.value);
   $('#kpiOrdersNote').innerHTML = `${trend(d.kpis.orders)} هذا الشهر`;
-  $('#kpiCompletion').textContent = `${d.kpis.completion}%`;
-  $('#kpiLessonsNote').innerHTML = `${num(d.kpis.lessons.value)} درساً أُنجز هذا الشهر`;
+  $('#kpiEnrollments').textContent = num(d.kpis.enrollments.value);
+  $('#kpiEnrollmentsNote').innerHTML = `${trend(d.kpis.enrollments)} هذا الشهر`;
   document.querySelectorAll('[data-spark]').forEach((el) => Charts.spark(el, d.kpis[el.dataset.spark].spark, el.dataset.color));
 
   /* ---------- revenue: courses & workshops (paid orders) vs development services (won requests) ---------- */

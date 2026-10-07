@@ -9,7 +9,6 @@ namespace App\Actions\PlatformData;
 final class PlatformTables
 {
     public const BUSINESS = [
-        'lesson_completions',
         'enrollments',
         'reviews',
         'comments',
@@ -20,8 +19,6 @@ final class PlatformTables
         'students',
         'subscribers',
         'leads',
-        'lessons',
-        'course_modules',
         'courses',
         'workshops',
         'articles',

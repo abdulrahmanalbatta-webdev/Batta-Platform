@@ -18,8 +18,7 @@ class CourseController extends Controller
     }
 
     /**
-     * A published course's page with its curriculum (lesson titles and lengths; the lessons themselves stay
-     * behind the student's access).
+     * A published course's page.
      */
     public function show(string $slug): CourseResource
     {

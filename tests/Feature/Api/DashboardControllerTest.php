@@ -6,11 +6,8 @@ use App\Enums\LeadStage;
 use App\Enums\OrderItemType;
 use App\Enums\OrderStatus;
 use App\Models\Course;
-use App\Models\CourseModule;
 use App\Models\Enrollment;
 use App\Models\Lead;
-use App\Models\Lesson;
-use App\Models\LessonCompletion;
 use App\Models\Order;
 use App\Models\Student;
 use App\Models\User;
@@ -65,20 +62,16 @@ class DashboardControllerTest extends TestCase
             ->assertJsonCount(12, 'data.kpis.students.spark');
     }
 
-    public function test_completion_is_the_average_progress_over_enrolments(): void
+    public function test_enrollments_counts_this_months_course_registrations(): void
     {
-        $course = Course::factory()->create();
-        $lessons = Lesson::factory()->count(4)->for(CourseModule::factory()->for($course), 'module')->create();
-        [$done, $started] = Student::factory()->count(2)->create();
-        Enrollment::factory()->for($done)->for($course)->create();
-        Enrollment::factory()->for($started)->for($course)->create();
-        $lessons->each(fn (Lesson $lesson) => LessonCompletion::factory()->for($done)->for($lesson)->create(['completed_at' => now()]));
-        LessonCompletion::factory()->for($started)->for($lessons[0])->create(['completed_at' => now()]);
+        Enrollment::factory()->count(2)->create(['created_at' => now()]);
+        Enrollment::factory()->create(['created_at' => now()->subMonths(2)]);
 
         $response = $this->actingAs(User::factory()->create())->getJson(route('api.dashboard'));
 
-        // (100% + 25%) / 2
-        $response->assertJsonPath('data.kpis.completion', 63)->assertJsonPath('data.kpis.lessons.value', 5);
+        $response->assertJsonPath('data.kpis.enrollments.value', 2)
+            ->assertJsonCount(12, 'data.kpis.enrollments.spark')
+            ->assertJsonMissingPath('data.kpis.completion');
     }
 
     public function test_sales_mix_top_courses_workshops_pipeline_and_recent_orders(): void

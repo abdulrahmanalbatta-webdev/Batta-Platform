@@ -5,10 +5,8 @@ namespace App\Http\Requests;
 use App\Enums\CourseCategory;
 use App\Enums\CourseLevel;
 use App\Enums\CourseStatus;
-use App\Support\Duration;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 class CourseRequest extends FormRequest
 {
@@ -38,35 +36,6 @@ class CourseRequest extends FormRequest
             'is_included_in_pro' => ['boolean'],
             'has_certificate' => ['boolean'],
             'allows_questions' => ['boolean'],
-            'modules' => ['array', 'max:50'],
-            'modules.*.id' => ['nullable', 'integer'],
-            'modules.*.title' => ['nullable', 'string', 'max:255'],
-            'modules.*.lessons' => ['array', 'max:200'],
-            'modules.*.lessons.*.id' => ['nullable', 'integer'],
-            'modules.*.lessons.*.title' => ['nullable', 'string', 'max:255'],
-            'modules.*.lessons.*.duration' => ['nullable', 'string', 'regex:'.Duration::PATTERN],
-        ];
-    }
-
-    /**
-     * @return array<int, callable(Validator): void>
-     */
-    public function after(): array
-    {
-        return [
-            function (Validator $validator): void {
-                if ($validator->errors()->isNotEmpty() || $this->enum('status', CourseStatus::class) !== CourseStatus::Published) {
-                    return;
-                }
-
-                $hasLesson = collect($this->input('modules', []))
-                    ->flatMap(fn (array $module): array => $module['lessons'] ?? [])
-                    ->contains(fn (array $lesson): bool => filled($lesson['title'] ?? null));
-
-                if (! $hasLesson) {
-                    $validator->errors()->add('modules', 'أضف درساً واحداً على الأقل قبل النشر.');
-                }
-            },
         ];
     }
 
@@ -90,9 +59,6 @@ class CourseRequest extends FormRequest
             'publish_at' => 'تاريخ النشر',
             'price' => 'السعر',
             'old_price' => 'السعر قبل الخصم',
-            'modules.*.title' => 'عنوان الوحدة',
-            'modules.*.lessons.*.title' => 'عنوان الدرس',
-            'modules.*.lessons.*.duration' => 'مدة الدرس',
         ];
     }
 
@@ -106,17 +72,16 @@ class CourseRequest extends FormRequest
         return [
             'slug.regex' => 'الرابط: حروف إنجليزية صغيرة وأرقام وشرطات فقط.',
             'old_price.gt' => 'السعر قبل الخصم يجب أن يكون أعلى من السعر الحالي.',
-            'modules.*.lessons.*.duration.regex' => 'مدة الدرس بصيغة دقائق:ثوانٍ، مثل 12:40.',
         ];
     }
 
     /**
-     * The course's own columns (the curriculum is saved separately by SyncCurriculum).
+     * The course's own columns (the slug is set by the controller).
      *
      * @return array<string, mixed>
      */
     public function courseAttributes(): array
     {
-        return $this->safe()->except(['modules', 'slug']);
+        return $this->safe()->except(['slug']);
     }
 }
