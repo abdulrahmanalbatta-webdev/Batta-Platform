@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Site;
 
+use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
@@ -10,7 +11,7 @@ use Illuminate\Support\Str;
  * A comment on the site: the student's first name only, the team's reply, and (on a top-level comment) the
  * students' published replies.
  *
- * @mixin \App\Models\Comment
+ * @mixin Comment
  */
 class CommentResource extends JsonResource
 {

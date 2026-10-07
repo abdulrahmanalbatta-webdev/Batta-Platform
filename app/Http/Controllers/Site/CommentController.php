@@ -10,7 +10,6 @@ use App\Models\Course;
 use App\Models\Student;
 use App\Models\Workshop;
 use App\Support\PlatformSettings;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

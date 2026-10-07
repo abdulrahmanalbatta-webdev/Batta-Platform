@@ -3,13 +3,14 @@
 namespace App\Http\Resources;
 
 use App\Models\Article;
+use App\Models\Comment;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 
 /**
- * @mixin \App\Models\Comment
+ * @mixin Comment
  */
 class CommentResource extends JsonResource
 {

@@ -5,10 +5,10 @@ namespace Tests\Feature\Api;
 use App\Enums\Role;
 use App\Models\Article;
 use App\Models\Comment;
-use App\Models\Student;
 use App\Models\Course;
-use App\Models\Workshop;
+use App\Models\Student;
 use App\Models\User;
+use App\Models\Workshop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
