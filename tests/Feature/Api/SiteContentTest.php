@@ -24,7 +24,7 @@ class SiteContentTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.announcement', $defaults['announcement'])
             ->assertJsonPath('data.services.0.id', 'websites')
-            ->assertJsonPath('data.case_studies.0.kpis.0', ['value' => '-62%', 'label' => 'مواعيد ضائعة'])
+            ->assertJsonMissingPath('data.case_studies')
             ->assertJsonPath('data.photo', null);
     }
 
@@ -50,15 +50,16 @@ class SiteContentTest extends TestCase
     public function test_lists_with_nested_items_are_validated_and_kept_clean(): void
     {
         $editor = User::factory()->role(Role::Editor)->create();
-        $study = ['id' => 'clinic', 'title' => 'نظام عيادة', 'tag' => 'تطبيق', 'sector' => 'صحة', 'problem' => 'حجوزات ضائعة', 'solution' => 'حجز أونلاين', 'tech' => ['Laravel'], 'kpis' => [['value' => '×2', 'label' => 'الحجوزات', 'x' => 1]]];
+        $package = ['id' => 'starter', 'label' => 'للبداية', 'title' => 'موقع تعريفي', 'price' => '400$', 'price_note' => 'تبدأ من', 'desc' => 'لعرض نشاطك.', 'features' => ['حتى 5 صفحات'], 'popular' => false, 'x' => 1];
 
-        $this->actingAs($editor)->putJson(route('api.site-content.update', 'case_studies'), ['value' => [$study]])
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'packages'), ['value' => [$package]])
             ->assertOk()
-            ->assertJsonPath('data.0.kpis.0', ['value' => '×2', 'label' => 'الحجوزات']);
+            ->assertJsonMissingPath('data.0.x')
+            ->assertJsonPath('data.0.features', ['حتى 5 صفحات']);
 
-        $invalid = $this->actingAs($editor)->putJson(route('api.site-content.update', 'case_studies'), ['value' => [[...$study, 'id' => 'Not Valid', 'kpis' => [['value' => '', 'label' => 'x']]]]])
-            ->assertJsonValidationErrors(['value.0.id', 'value.0.kpis.0.value']);
-        $this->assertSame('حقل الرقم مطلوب.', $invalid->json('errors')['value.0.kpis.0.value'][0]);
+        $invalid = $this->actingAs($editor)->putJson(route('api.site-content.update', 'packages'), ['value' => [[...$package, 'id' => 'Not Valid', 'title' => '', 'features' => ['']]]])
+            ->assertJsonValidationErrors(['value.0.id', 'value.0.title', 'value.0.features.0']);
+        $this->assertSame('حقل الاسم مطلوب.', $invalid->json('errors')['value.0.title'][0]);
 
         $this->actingAs($editor)->putJson(route('api.site-content.update', 'highlights'), ['value' => [['icon' => 'rocket', 'title' => 'أ', 'text' => 'ب']]])
             ->assertJsonValidationErrors('value.0.icon');
@@ -146,67 +147,49 @@ class SiteContentTest extends TestCase
             ->assertJsonPath('data.texts_general.maintenance', SiteContent::defaults()['texts_general']['maintenance']);
     }
 
-    public function test_project_images_are_uploaded_shown_as_urls_and_deleted_when_dropped(): void
+    public function test_the_cutout_photo_is_uploaded_shown_as_a_url_and_deleted_when_dropped(): void
     {
         Storage::fake('public');
         $editor = User::factory()->role(Role::Editor)->create();
-        $upload = fn (): string => $this->actingAs($editor)->postJson(route('api.site-images.store'), ['image' => $this->png('shot.png', 400)])
+        $upload = fn (): string => $this->actingAs($editor)->postJson(route('api.site-images.store'), ['image' => $this->png('me.png', 400)])
             ->assertCreated()->json('data.path');
-        $cover = $upload();
-        $shot = $upload();
-
-        $studies = SiteContent::defaults()['case_studies'];
-        $studies[0]['cover'] = $cover;
-        $studies[0]['gallery'] = [$shot];
-        $this->actingAs($editor)->putJson(route('api.site-content.update', 'case_studies'), ['value' => $studies])->assertOk();
-
-        $this->getJson(route('site.content'))
-            ->assertJsonPath('data.case_studies.0.cover', Storage::disk('public')->url($cover))
-            ->assertJsonPath('data.case_studies.0.gallery', [Storage::disk('public')->url($shot)])
-            ->assertJsonPath('data.case_studies.1.cover', null);
-        $this->actingAs($editor)->getJson(route('api.site-content.show'))->assertJsonPath('data.case_studies.0.cover', $cover);
-
-        $studies[0]['gallery'] = [];
-        $this->actingAs($editor)->putJson(route('api.site-content.update', 'case_studies'), ['value' => $studies])->assertOk();
-        Storage::disk('public')->assertMissing($shot);
-        Storage::disk('public')->assertExists($cover);
-
-        $this->actingAs($editor)->deleteJson(route('api.site-content.destroy', 'case_studies'))->assertOk();
-        Storage::disk('public')->assertMissing($cover);
-    }
-
-    public function test_the_cutout_photo_reaches_the_site_as_a_url(): void
-    {
-        Storage::fake('public');
-        $editor = User::factory()->role(Role::Editor)->create();
-        $path = $this->actingAs($editor)->postJson(route('api.site-images.store'), ['image' => $this->png('me.png', 400)])->json('data.path');
+        $first = $upload();
+        $second = $upload();
 
         $profile = SiteContent::defaults()['profile'];
-        $profile['cutout'] = $path;
+        $profile['cutout'] = $first;
         $this->actingAs($editor)->putJson(route('api.site-content.update', 'profile'), ['value' => $profile])->assertOk();
 
-        $this->getJson(route('site.content'))->assertJsonPath('data.profile.cutout', Storage::disk('public')->url($path));
+        $this->getJson(route('site.content'))->assertJsonPath('data.profile.cutout', Storage::disk('public')->url($first));
+        $this->actingAs($editor)->getJson(route('api.site-content.show'))->assertJsonPath('data.profile.cutout', $first);
+
+        $profile['cutout'] = $second;
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'profile'), ['value' => $profile])->assertOk();
+        Storage::disk('public')->assertMissing($first);
+        Storage::disk('public')->assertExists($second);
+
+        $this->actingAs($editor)->deleteJson(route('api.site-content.destroy', 'profile'))->assertOk();
+        Storage::disk('public')->assertMissing($second);
     }
 
     public function test_images_must_be_uploaded_ones(): void
     {
-        $studies = SiteContent::defaults()['case_studies'];
-        $studies[0]['cover'] = '../../.env';
+        $profile = SiteContent::defaults()['profile'];
+        $profile['cutout'] = '../../.env';
 
-        $this->actingAs(User::factory()->role(Role::Editor)->create())->putJson(route('api.site-content.update', 'case_studies'), ['value' => $studies])
-            ->assertJsonValidationErrors('value.0.cover');
+        $this->actingAs(User::factory()->role(Role::Editor)->create())->putJson(route('api.site-content.update', 'profile'), ['value' => $profile])
+            ->assertJsonValidationErrors('value.cutout');
     }
 
-    public function test_projects_saved_before_images_existed_get_empty_ones(): void
+    public function test_a_profile_saved_before_the_cutout_existed_has_none(): void
     {
-        $studies = SiteContent::defaults()['case_studies'];
-        unset($studies[0]['cover'], $studies[0]['gallery'], $studies[0]['link']);
-        SiteBlock::query()->create(['key' => 'case_studies', 'value' => $studies]);
+        $profile = SiteContent::defaults()['profile'];
+        unset($profile['cutout']);
+        SiteBlock::query()->create(['key' => 'profile', 'value' => $profile]);
 
         $this->getJson(route('site.content'))
-            ->assertJsonPath('data.case_studies.0.cover', null)
-            ->assertJsonPath('data.case_studies.0.gallery', [])
-            ->assertJsonPath('data.case_studies.0.title', $studies[0]['title']);
+            ->assertJsonPath('data.profile.cutout', null)
+            ->assertJsonPath('data.profile.name', $profile['name']);
     }
 
     /**

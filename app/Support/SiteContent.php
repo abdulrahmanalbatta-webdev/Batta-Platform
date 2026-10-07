@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * The public site's own content, edited on the dashboard's "محتوى الموقع" page: the announcement bar, the home
- * page, the about page, services and packages, case studies, testimonials, FAQs, and the headings and intros of
+ * page, the about page, services and packages, testimonials, FAQs, and the headings and intros of
  * every page.
  *
  * Each section has a schema (fields and limits) that drives both the validation here and the editor in the
@@ -22,7 +22,7 @@ class SiteContent
     public const PHOTO_PATH = 'site/profile';
 
     /**
-     * Where images uploaded for the content (project covers and galleries) are kept, on the public disk.
+     * Where images uploaded for the content (the hanging badge photo) are kept, on the public disk.
      */
     public const IMAGES_DIR = 'site/images';
 
@@ -148,25 +148,7 @@ class SiteContent
                 'text' => $text('الوصف', 200),
             ]],
 
-            // الأعمال والآراء
-            'case_studies' => ['group' => 'work', 'label' => 'الأعمال', 'type' => 'list', 'max_items' => 20, 'title' => 'title', 'item' => [
-                'id' => ['type' => 'text', 'label' => 'المعرّف (بالإنجليزية)', 'max' => 40, 'required' => true, 'pattern' => '/^[a-z0-9-]+$/'],
-                'title' => $text('العنوان', 80),
-                'tag' => $text('النوع', 30),
-                'sector' => $text('القطاع', 40),
-                'problem' => $long('المشكلة', 400),
-                'solution' => $long('الحل', 400),
-                'tech' => $strings('التقنيات', 8, 30),
-                'kpis' => ['type' => 'list', 'label' => 'النتائج', 'max_items' => 4, 'title' => 'label', 'item' => [
-                    'value' => $text('الرقم', 20),
-                    'label' => $text('الوصف', 40),
-                ]],
-                'cover' => ['type' => 'image', 'label' => 'صورة المشروع', 'hint' => 'تظهر على كرت المشروع وأعلى صفحته. عرضية (16:10) وواضحة.'],
-                'gallery' => ['type' => 'images', 'label' => 'معرض الصور', 'max_items' => 8, 'hint' => 'لقطات من المشروع تظهر في صفحته.'],
-                'client' => $text('العميل', 60, false),
-                'year' => $text('السنة', 10, false),
-                'link' => ['type' => 'url', 'label' => 'رابط المشروع المباشر', 'max' => 255, 'required' => false],
-            ]],
+            // الآراء والأسئلة
             'testimonials' => ['group' => 'work', 'label' => 'آراء العملاء والطلاب', 'type' => 'list', 'max_items' => 20, 'title' => 'name', 'item' => [
                 'name' => $text('الاسم', 60),
                 'role' => $text('الصفة', 80),
@@ -188,7 +170,6 @@ class SiteContent
                 'why' => $intro('لماذا تعمل معي'),
                 'about' => $block('من أنا', ['eyebrow' => $text('العنوان الصغير', 40)]),
                 'courses' => $intro('الدورات'),
-                'projects' => $intro('مشاريع مميزة'),
                 'articles' => $intro('المقالات'),
                 'workshop' => $intro('الورشة القادمة', false),
                 'testimonials' => $intro('الآراء', false),
@@ -196,7 +177,7 @@ class SiteContent
                 'newsletter' => $block('النشرة البريدية', ['title' => $text('العنوان', 80), 'text' => $long('المقدمة', 300)]),
                 'cta' => $intro('الدعوة الأخيرة (أسفل الصفحة)'),
             ]],
-            'texts_pages' => ['group' => 'texts', 'label' => 'نصوص الخدمات والأعمال ومن أنا', 'type' => 'object', 'fields' => [
+            'texts_pages' => ['group' => 'texts', 'label' => 'نصوص الخدمات والتواصل ومن أنا', 'type' => 'object', 'fields' => [
                 'services' => $block('صفحة الخدمات', ['text' => $long('المقدمة', 300)]),
                 'packages' => $intro('الباقات', false),
                 'process' => $intro('طريقة العمل', false),
@@ -213,11 +194,6 @@ class SiteContent
                         'label' => $text('كما تظهر للزائر', 40),
                         'amount' => ['type' => 'text', 'label' => 'المبلغ بالدولار (يُحفظ مع الطلب)', 'max' => 7, 'required' => true, 'pattern' => '/^[0-9]{1,7}$/', 'hint' => 'أعلى الفئة، أو بدايتها للفئة الأخيرة'],
                     ]],
-                ]),
-                'work' => $block('صفحة الأعمال', [
-                    'text' => $long('المقدمة', 300),
-                    'cta_title' => $text('عنوان الدعوة أسفل الصفحة', 80),
-                    'cta_text' => $text('نص الدعوة', 200),
                 ]),
                 'story' => $intro('من أنا: القصة', false),
                 'values' => $intro('من أنا: طريقتي في العمل', false),
@@ -252,7 +228,7 @@ class SiteContent
             ]],
             'texts_ui' => ['group' => 'texts', 'label' => 'الأزرار والعناوين', 'hint' => 'أسماء الصفحات (تظهر في العنوان والقائمة والتذييل)، نصوص الأزرار، ورسائل الصفحات الفارغة.', 'type' => 'object', 'fields' => [
                 'pages' => $block('أسماء الصفحات', [
-                    'services' => $text('الخدمات', 30), 'work' => $text('الأعمال', 30), 'about' => $text('من أنا', 30),
+                    'services' => $text('الخدمات', 30), 'about' => $text('من أنا', 30),
                     'courses' => $text('الدورات', 30), 'workshops' => $text('الورش', 30), 'academy' => $text('مجموعة الدورات والورش', 30),
                     'articles' => $text('المقالات', 30), 'tools' => $text('الأدوات', 30), 'resources' => $text('مجموعة المقالات والأدوات', 30),
                     'contact' => $text('التواصل', 30),
@@ -262,12 +238,11 @@ class SiteContent
                 ]),
                 'buttons' => $block('الأزرار', [
                     'quote' => $text('طلب عرض سعر (الرئيسية والقائمة)', 40),
-                    'see_work' => $text('مشاهدة الأعمال (الرئيسية)', 40),
+                    'see_services' => $text('رابط الخدمات (الرئيسية)', 40),
                     'service_more' => $text('على بطاقة الخدمة', 40),
                     'request_service' => $text('أسفل الخدمات (الرئيسية)', 40),
                     'consult' => $text('لماذا تعمل معي', 40),
                     'read_story' => $text('من أنا (الرئيسية)', 40),
-                    'all_projects' => $text('أسفل المشاريع المميزة', 40),
                     'ask' => $text('أسفل الأسئلة الشائعة', 40),
                     'start_project' => $text('الدعوة الأخيرة: الزر الأساسي', 40),
                     'start_learning' => $text('الدعوة الأخيرة: الزر الثاني', 40),
@@ -276,7 +251,6 @@ class SiteContent
                     'order_service' => $text('صفحة الخدمات: على كل خدمة', 40),
                     'book_call' => $text('صفحة الخدمات: على كل باقة', 40),
                     'popular' => $text('شارة الباقة المميّزة', 30),
-                    'work_cta' => $text('صفحة الأعمال', 40),
                     'about_work' => $text('من أنا: الزر الأساسي', 40),
                     'about_learn' => $text('من أنا: الزر الثاني', 40),
                     'all_tools' => $text('من أنا: أسفل المهارات', 60),
@@ -317,7 +291,7 @@ class SiteContent
      */
     public static function groups(): array
     {
-        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'work' => 'الأعمال والآراء', 'texts' => 'نصوص الصفحات'];
+        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'work' => 'الآراء والأسئلة', 'texts' => 'نصوص الصفحات'];
     }
 
     /**
@@ -426,7 +400,6 @@ class SiteContent
     {
         return match ($definition['type']) {
             'image' => $map($value),
-            'images' => array_values(array_filter(array_map($map, $value ?? []))),
             'object' => is_array($value) ? collect($definition['fields'])->map(fn (array $field, string $name): mixed => self::mapImages($field, $value[$name] ?? null, $map))->all() : $value,
             'list' => is_array($value) ? array_map(fn ($item): mixed => is_array($item) ? [...$item, ...collect($definition['item'])->map(fn (array $field, string $name): mixed => self::mapImages($field, $item[$name] ?? null, $map))->all()] : $item, $value) : $value,
             default => $value,
@@ -482,7 +455,6 @@ class SiteContent
             'url' => [$path => [$required, 'string', 'max:255', 'url:http,https']],
             'bool' => [$path => ['boolean']],
             'image' => [$path => ['nullable', 'string', 'max:255', 'regex:'.self::IMAGE_PATTERN]],
-            'images' => [$path => ['nullable', 'array', 'max:'.$definition['max_items']], "{$path}.*" => ['required', 'string', 'max:255', 'regex:'.self::IMAGE_PATTERN]],
             'icon' => [$path => ['required', Rule::in(array_keys(self::ICONS))]],
             'select' => [$path => ['required', Rule::in(array_keys($definition['options']))]],
         };
@@ -501,7 +473,7 @@ class SiteContent
         return match ($definition['type']) {
             'object' => [...$own, ...collect($definition['fields'])->flatMap(fn (array $field, string $name): array => self::attributes($field, "{$path}.{$name}"))->all()],
             'list' => [...$own, ...collect($definition['item'])->flatMap(fn (array $field, string $name): array => self::attributes($field, "{$path}.*.{$name}"))->all()],
-            'strings', 'tags', 'images' => [...$own, "{$path}.*" => $definition['label']],
+            'strings', 'tags' => [...$own, "{$path}.*" => $definition['label']],
             default => $own,
         };
     }
@@ -539,7 +511,7 @@ class SiteContent
     {
         return match ($definition['type']) {
             'object' => collect($definition['fields'])->map(fn (array $field): mixed => self::blank($field))->all(),
-            'list', 'strings', 'tags', 'images' => [],
+            'list', 'strings', 'tags' => [],
             'bool' => false,
             'image', 'url' => null,
             default => '',
@@ -556,7 +528,7 @@ class SiteContent
         return match ($definition['type']) {
             'object' => collect($definition['fields'])->map(fn (array $field, string $name): mixed => self::clean($field, $value[$name] ?? null))->all(),
             'list' => array_values(array_map(fn ($item): array => collect($definition['item'])->map(fn (array $field, string $name): mixed => self::clean($field, $item[$name] ?? null))->all(), $value ?? [])),
-            'strings', 'tags', 'images' => array_values(array_map('strval', $value ?? [])),
+            'strings', 'tags' => array_values(array_map('strval', $value ?? [])),
             'bool' => (bool) $value,
             default => $value === null ? null : (string) $value,
         };
