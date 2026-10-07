@@ -137,7 +137,7 @@ document.addEventListener('app:ready', async () => {
   }
 
   const photoCard = () => `<section class="sc-section" id="photoSection">
-      <div class="sc-head"><div><h3>صورتك الشخصية</h3><p>تظهر في صفحة "من أنا" وبجانب اسمك في المقالات. مربعة وواضحة، 300×300 على الأقل. صورة البطاقة المعلّقة في الرئيسية لها حقل خاص تحت "التعريف" بالأسفل.</p></div></div>
+      <div class="sc-head"><div><h3>صورتك الشخصية</h3><p>تظهر في صفحة "من أنا" وبجانب اسمك في المقالات. مربعة وواضحة، 300×300 على الأقل. بدونها يظهر أول حرف من اسمك. صورة البطاقة المعلّقة في الرئيسية لها حقل خاص تحت "التعريف" بالأسفل.</p></div></div>
       <div class="sc-photo">
         ${photo ? `<img src="${esc(photo)}" alt="">` : '<span class="ph">صورة الموقع الحالية</span>'}
         ${canEdit ? `<label class="btn btn-ghost btn-sm">${icon('upload', 'sm')}رفع صورة<input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" hidden></label>${photo ? '<button type="button" class="btn btn-ghost btn-sm" id="photoRemove">إزالة</button>' : ''}` : ''}
