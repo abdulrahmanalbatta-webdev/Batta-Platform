@@ -152,7 +152,7 @@
       { page: 'tools', href: url('tools'), icon: 'code', label: 'الأدوات' },
       { page: 'site-content', href: url('site-content'), icon: 'globe', label: 'محتوى الموقع' },
     ] },
-    { label: 'الأعمال', items: [
+    { label: 'العملاء', items: [
       { page: 'leads', href: url('leads'), icon: 'briefcase', label: 'طلبات المشاريع', count: newLeads },
     ] },
     { label: 'المجتمع', items: [
