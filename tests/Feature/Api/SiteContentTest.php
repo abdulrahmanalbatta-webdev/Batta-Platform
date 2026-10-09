@@ -137,13 +137,13 @@ class SiteContentTest extends TestCase
     public function test_a_section_saved_before_a_field_existed_gets_that_fields_original_text(): void
     {
         $old = SiteContent::defaults()['texts_general'];
-        unset($old['footer']['made_with'], $old['maintenance']);
+        unset($old['footer']['text'], $old['maintenance']);
         $old['login']['title'] = 'عنوان محفوظ قديماً';
         SiteBlock::query()->create(['key' => 'texts_general', 'value' => $old]);
 
         $this->getJson(route('site.content'))
             ->assertJsonPath('data.texts_general.login.title', 'عنوان محفوظ قديماً')
-            ->assertJsonPath('data.texts_general.footer.made_with', 'صُنع بـ Vue')
+            ->assertJsonPath('data.texts_general.footer.text', SiteContent::defaults()['texts_general']['footer']['text'])
             ->assertJsonPath('data.texts_general.maintenance', SiteContent::defaults()['texts_general']['maintenance']);
     }
 

@@ -269,7 +269,7 @@ class SiteContent
                 'not_found' => $block('صفحة غير موجودة (404)', ['text' => $text('النص', 160), 'button' => $text('الزر', 40)]),
             ]],
             'texts_general' => ['group' => 'texts', 'label' => 'التذييل وصفحات الدخول', 'type' => 'object', 'fields' => [
-                'footer' => $block('التذييل', ['text' => $text('النبذة (بعد المسمّى)', 200), 'made_with' => $text('السطر الصغير أسفل التذييل', 60, false, 'مثل: صُنع بـ Vue. اتركه فارغاً لإخفائه')]),
+                'footer' => $block('التذييل', ['text' => $text('النبذة (بعد المسمّى)', 200)]),
                 'maintenance' => $block('رسالة وضع الصيانة', ['title' => $text('العنوان', 60), 'text' => $text('النص', 200)]),
                 'login' => $block('تسجيل الدخول', ['title' => $text('العنوان', 60), 'text' => $text('المقدمة', 160)]),
                 'register' => $block('إنشاء حساب', ['title' => $text('العنوان', 60), 'text' => $text('المقدمة', 160)]),
