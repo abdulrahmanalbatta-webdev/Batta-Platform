@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\DataWipeController;
 use App\Http\Controllers\Api\LeadController;
+use App\Http\Controllers\Api\LearningPathController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\NotificationReadController;
@@ -96,6 +97,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/workshops/{workshop}/registrations', [WorkshopRegistrationController::class, 'index'])->name('workshops.registrations.index');
     Route::apiResource('articles', ArticleController::class)->only(['index', 'show']);
     Route::apiResource('courses', CourseController::class)->only(['index', 'show']);
+    Route::apiResource('learning-paths', LearningPathController::class)->only(['index', 'show']);
 
     Route::middleware('can:manage-content')->group(function () {
         Route::apiResource('tools', ToolController::class)->only(['store', 'update', 'destroy']);
@@ -112,6 +114,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/courses/{course}/status', [CourseStatusController::class, 'update'])->name('courses.status.update');
         Route::post('/courses/{course}/copies', [CourseCopyController::class, 'store'])->name('courses.copies.store');
         Route::post('/courses/{course}/cover', [CourseCoverController::class, 'store'])->name('courses.cover.store');
+        Route::apiResource('learning-paths', LearningPathController::class)->only(['store', 'update', 'destroy']);
+        Route::post('/learning-paths/{learning_path}/move', [LearningPathController::class, 'move'])->name('learning-paths.move');
     });
 
     // students: every member reads; owner, admin and support suspend and email (Role::canManageStudents)

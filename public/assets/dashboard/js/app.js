@@ -148,6 +148,7 @@
     { label: 'المحتوى', items: [
       { page: 'courses', href: url('courses'), icon: 'play', label: 'الدورات', also: ['course-form'] },
       { page: 'workshops', href: url('workshops'), icon: 'calendar', label: 'الورش' },
+      { page: 'paths', href: url('paths'), icon: 'pin', label: 'المسارات', also: ['path-form'] },
       { page: 'articles', href: url('articles'), icon: 'article', label: 'المقالات', also: ['article-editor'] },
       { page: 'tools', href: url('tools'), icon: 'code', label: 'الأدوات' },
       { page: 'site-content', href: url('site-content'), icon: 'globe', label: 'محتوى الموقع' },
@@ -317,6 +318,7 @@
               <a href="${url('course-create')}">${icon('play', 'sm')}دورة جديدة</a>
               <a href="${url('article-create')}">${icon('article', 'sm')}مقال جديد</a>
               <a href="${url('workshops', {}, 'new')}">${icon('calendar', 'sm')}ورشة جديدة</a>
+              <a href="${url('path-create')}">${icon('pin', 'sm')}مسار جديد</a>
               <a href="${url('tools', {}, 'new')}">${icon('code', 'sm')}أداة جديدة</a>
             </div>
           </div>
