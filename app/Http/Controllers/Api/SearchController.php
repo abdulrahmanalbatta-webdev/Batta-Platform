@@ -7,6 +7,7 @@ use App\Models\Article;
 use App\Models\Conversation;
 use App\Models\Course;
 use App\Models\Lead;
+use App\Models\LearningPath;
 use App\Models\Student;
 use App\Models\Tool;
 use App\Models\Workshop;
@@ -33,6 +34,8 @@ class SearchController extends Controller
                 ->map(fn (Student $student): array => $this->item($student->name, $student->email, 'students', ['q' => $student->email]))],
             ['courses', 'الدورات', Course::query()->whereLike('title', $like)->limit(self::PER_GROUP)->get(['id', 'title', 'status'])
                 ->map(fn (Course $course): array => $this->item($course->title, $course->status->label(), 'course-edit', ['id' => $course->id]))],
+            ['paths', 'المسارات', LearningPath::query()->whereLike('title', $like)->limit(self::PER_GROUP)->get(['id', 'title', 'is_published'])
+                ->map(fn (LearningPath $path): array => $this->item($path->title, $path->is_published ? 'منشور' : 'مخفي', 'path-edit', ['id' => $path->id]))],
             ['articles', 'المقالات', Article::query()->whereLike('title', $like)->limit(self::PER_GROUP)->get(['id', 'title', 'status'])
                 ->map(fn (Article $article): array => $this->item($article->title, $article->status->label(), 'article-edit', ['id' => $article->id]))],
             ['workshops', 'الورش', Workshop::query()->whereLike('title', $like)->limit(self::PER_GROUP)->get(['id', 'title', 'date'])

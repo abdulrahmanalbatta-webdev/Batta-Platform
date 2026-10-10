@@ -49,13 +49,6 @@ class SiteContent
         'flutter' => 'Flutter',
     ];
 
-    /**
-     * What a learning path's free resource is, and the language it's in.
-     */
-    public const RESOURCE_TYPES = ['video' => 'فيديو', 'course' => 'دورة', 'docs' => 'توثيق', 'article' => 'مقال', 'book' => 'كتاب', 'practice' => 'تمارين'];
-
-    public const LANGUAGES = ['ar' => 'عربي', 'en' => 'إنجليزي'];
-
     public const NETWORKS = [
         'github' => 'GitHub', 'linkedin' => 'LinkedIn', 'x' => 'X', 'youtube' => 'YouTube', 'instagram' => 'Instagram',
         'facebook' => 'Facebook', 'tiktok' => 'TikTok', 'behance' => 'Behance', 'dribbble' => 'Dribbble',
@@ -152,28 +145,6 @@ class SiteContent
             'process' => ['group' => 'services', 'label' => 'مراحل العمل', 'type' => 'list', 'max_items' => 8, 'title' => 'title', 'item' => [
                 'title' => $text('المرحلة', 60),
                 'text' => $text('الوصف', 200),
-            ]],
-
-            // المسارات: خريطة تعلّم لكل تخصص، مراحل وفي كل مرحلة مصادر مجانية
-            'paths' => ['group' => 'paths', 'label' => 'المسارات', 'hint' => 'كل مسار يظهر في صفحة المسارات وله صفحة بخريطته: المراحل بالترتيب، وفي كل مرحلة ما يتعلّمه الطالب ومصادر مجانية لها.', 'type' => 'list', 'max_items' => 12, 'title' => 'title', 'item' => [
-                'id' => ['type' => 'text', 'label' => 'المعرّف في الرابط (بالإنجليزية)', 'max' => 40, 'required' => true, 'pattern' => '/^[a-z0-9-]+$/', 'hint' => 'مثل: frontend، فتصبح صفحته /paths/frontend'],
-                'title' => $text('اسم المسار', 60),
-                'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],
-                'summary' => $long('الوصف المختصر', 300),
-                'audience' => $text('لمن هذا المسار', 100),
-                'duration' => $text('المدة التقريبية', 30, true, 'مثل: 6–9 أشهر'),
-                'outcomes' => $strings('في آخر المسار تستطيع', 6, 100),
-                'stages' => ['type' => 'list', 'label' => 'المراحل', 'max_items' => 12, 'title' => 'title', 'item' => [
-                    'title' => $text('المرحلة', 80),
-                    'text' => $long('ماذا ولماذا', 400),
-                    'topics' => $strings('المواضيع', 12, 40),
-                    'resources' => ['type' => 'list', 'label' => 'المصادر المجانية', 'max_items' => 10, 'title' => 'title', 'item' => [
-                        'title' => $text('اسم المصدر', 100),
-                        'url' => ['type' => 'url', 'label' => 'الرابط', 'max' => 255, 'required' => true],
-                        'type' => ['type' => 'select', 'label' => 'النوع', 'options' => self::RESOURCE_TYPES],
-                        'lang' => ['type' => 'select', 'label' => 'اللغة', 'options' => self::LANGUAGES],
-                    ]],
-                ]],
             ]],
 
             // الآراء والأسئلة
@@ -323,7 +294,7 @@ class SiteContent
      */
     public static function groups(): array
     {
-        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'paths' => 'المسارات', 'work' => 'الآراء والأسئلة', 'texts' => 'نصوص الصفحات'];
+        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'work' => 'الآراء والأسئلة', 'texts' => 'نصوص الصفحات'];
     }
 
     /**

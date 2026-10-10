@@ -3,6 +3,7 @@
 use App\Http\Controllers\NewsletterUnsubscribeController;
 use App\Models\Article;
 use App\Models\Course;
+use App\Models\LearningPath;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -31,6 +32,11 @@ Route::middleware('auth')->prefix('dashboard')->group(function () {
     Route::view('/courses/create', 'courses.form')->middleware('can:manage-content')->name('courses.create');
     Route::get('/courses/{course}/edit', fn (Course $course) => view('courses.form', ['id' => $course->id]))
         ->middleware('can:manage-content')->name('courses.edit');
+
+    Route::view('/paths', 'paths.index')->name('paths.index');
+    Route::view('/paths/create', 'paths.form')->middleware('can:manage-content')->name('paths.create');
+    Route::get('/paths/{learningPath}/edit', fn (LearningPath $learningPath) => view('paths.form', ['id' => $learningPath->id]))
+        ->middleware('can:manage-content')->name('paths.edit');
 
     Route::view('/workshops', 'workshops.index')->name('workshops.index');
 

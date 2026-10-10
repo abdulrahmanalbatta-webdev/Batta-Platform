@@ -18,6 +18,7 @@ final class PlatformTables
         'students',
         'subscribers',
         'leads',
+        'learning_paths',
         'courses',
         'workshops',
         'articles',

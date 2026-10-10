@@ -29,6 +29,8 @@ class DashboardPagesTest extends TestCase
             'courses' => ['courses.index', []],
             'course create' => ['courses.create', []],
             'workshops' => ['workshops.index', []],
+            'paths' => ['paths.index', []],
+            'path create' => ['paths.create', []],
             'articles' => ['articles.index', []],
             'article create' => ['articles.create', []],
             'tools' => ['tools.index', []],

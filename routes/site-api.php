@@ -8,6 +8,7 @@ use App\Http\Controllers\Site\ContactMessageController;
 use App\Http\Controllers\Site\ContentController;
 use App\Http\Controllers\Site\CourseController;
 use App\Http\Controllers\Site\CourseReviewController;
+use App\Http\Controllers\Site\LearningPathController;
 use App\Http\Controllers\Site\MyCourseController;
 use App\Http\Controllers\Site\MyReviewController;
 use App\Http\Controllers\Site\MyWorkshopController;
@@ -46,6 +47,8 @@ Route::get('/articles/{slug}', [ArticleController::class, 'show'])->name('articl
 Route::get('/articles/{key}/comments', [CommentController::class, 'index'])->defaults('type', 'article')->name('articles.comments.index');
 Route::get('/courses/{key}/comments', [CommentController::class, 'index'])->defaults('type', 'course')->name('courses.comments.index');
 Route::get('/workshops/{key}/comments', [CommentController::class, 'index'])->defaults('type', 'workshop')->whereNumber('key')->name('workshops.comments.index');
+Route::get('/paths', [LearningPathController::class, 'index'])->name('paths.index');
+Route::get('/paths/{slug}', [LearningPathController::class, 'show'])->name('paths.show');
 Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
 Route::post('/tools/{tool}/click', [ToolController::class, 'click'])->whereNumber('tool')->name('tools.click');
 
