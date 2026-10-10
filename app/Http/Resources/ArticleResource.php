@@ -57,7 +57,6 @@ class ArticleResource extends JsonResource
                 'excerpt' => $this->excerpt,
                 'body' => $this->body,
                 'is_featured' => $this->is_featured,
-                'send_newsletter' => $this->send_newsletter,
                 'meta_title' => $this->meta_title,
                 'meta_description' => $this->meta_description,
             ]),

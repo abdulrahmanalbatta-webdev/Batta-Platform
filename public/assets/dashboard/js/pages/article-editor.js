@@ -143,7 +143,6 @@ document.addEventListener('app:ready', async () => {
     $('#metaTitle').value = a.meta_title || '';
     $('#metaDesc').value = a.meta_description || '';
     $('#featured').checked = a.is_featured;
-    $('#newsletter').checked = a.send_newsletter;
     if (a.cover_url) showCover(a.cover_url);
     $('#saveState').textContent = `آخر تعديل: ${new Date(a.updated_at).toLocaleString('ar-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' })}`;
   }
@@ -221,7 +220,6 @@ document.addEventListener('app:ready', async () => {
         status,
         publish_at: status === 'scheduled' && at ? new Date(at).toISOString() : null,
         is_featured: $('#featured').checked,
-        send_newsletter: $('#newsletter').checked,
         meta_title: $('#metaTitle').value.trim() || null,
         meta_description: $('#metaDesc').value.trim() || null,
       };

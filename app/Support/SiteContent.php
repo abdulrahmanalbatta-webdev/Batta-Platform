@@ -173,12 +173,6 @@ class SiteContent
                 'workshop' => $intro('الورشة القادمة', false),
                 'testimonials' => $intro('الآراء'),
                 'faq' => $intro('الأسئلة الشائعة'),
-                'newsletter' => $block('النشرة البريدية', [
-                    'eyebrow' => $text('العنوان الصغير', 40),
-                    'title' => $text('العنوان', 80),
-                    'text' => $long('المقدمة', 300),
-                    'perks' => $strings('المزايا تحت الحقل', 3, 40),
-                ]),
                 'cta' => $intro('الدعوة الأخيرة (أسفل الصفحة)'),
             ]],
             'texts_pages' => ['group' => 'texts', 'label' => 'نصوص الخدمات والتواصل ومن أنا', 'type' => 'object', 'fields' => [
@@ -219,7 +213,6 @@ class SiteContent
                     'text' => $long('مقدمة صفحة المقالات', 300),
                     'badge' => $text('الميزة أسفل العنوان', 60),
                     'author_bio' => $text('نبذتك أسفل كل مقال (بعد المسمّى)', 200),
-                    'newsletter_text' => $text('دعوة النشرة بجانب المقال', 120),
                     'related_eyebrow' => $text('مقالات ذات صلة: العنوان الصغير', 40),
                     'related_title' => $text('مقالات ذات صلة: العنوان', 80),
                 ]),
@@ -263,7 +256,6 @@ class SiteContent
                     'about_learn' => $text('من أنا: الزر الثاني', 40),
                     'all_tools' => $text('من أنا: أسفل الأدوات', 60),
                     'private_workshop' => $text('الورش الخاصة', 40),
-                    'subscribe' => $text('الاشتراك في النشرة', 40),
                     'about_author' => $text('أسفل كل مقال (عنك)', 40),
                     'enroll' => $text('صفحة الدورة: التسجيل', 40),
                     'book_seat' => $text('بطاقة الورشة: الحجز', 40),

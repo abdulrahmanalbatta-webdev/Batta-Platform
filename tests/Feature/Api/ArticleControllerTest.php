@@ -34,7 +34,6 @@ class ArticleControllerTest extends TestCase
             'status' => ArticleStatus::Draft->value,
             'publish_at' => null,
             'is_featured' => false,
-            'send_newsletter' => true,
             'meta_title' => 'Server Actions',
             'meta_description' => 'متى تستخدم Server Actions',
             ...$overrides,

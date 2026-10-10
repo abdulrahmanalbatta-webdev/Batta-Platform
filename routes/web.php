@@ -1,18 +1,11 @@
 <?php
 
-use App\Http\Controllers\NewsletterUnsubscribeController;
 use App\Models\Article;
 use App\Models\Course;
 use App\Models\LearningPath;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
-
-// the unsubscribe link in newsletter emails (signed, so nobody can unsubscribe someone else)
-Route::middleware(['signed:relative', 'throttle:20,1,unsubscribe'])->group(function () {
-    Route::get('/newsletter/unsubscribe', [NewsletterUnsubscribeController::class, 'show'])->name('newsletter.unsubscribe');
-    Route::post('/newsletter/unsubscribe', [NewsletterUnsubscribeController::class, 'store'])->name('newsletter.unsubscribe.store');
-});
 
 Route::middleware('guest')->group(function () {
     Route::view('/login', 'auth.login')->name('login');
@@ -52,7 +45,6 @@ Route::middleware('auth')->prefix('dashboard')->group(function () {
 
     // community
     Route::view('/students', 'students.index')->name('students.index');
-    Route::view('/subscribers', 'subscribers.index')->name('subscribers.index');
     Route::view('/messages', 'messages.index')->name('messages.index');
     Route::view('/reviews', 'reviews.index')->name('reviews.index');
     Route::view('/comments', 'comments.index')->name('comments.index');

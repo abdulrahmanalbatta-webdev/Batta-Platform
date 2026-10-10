@@ -31,7 +31,6 @@ class ArticleRequest extends FormRequest
             'status' => ['required', Rule::enum(ArticleStatus::class)],
             'publish_at' => ['nullable', 'required_if:status,'.ArticleStatus::Scheduled->value, 'date', 'after:now'],
             'is_featured' => ['boolean'],
-            'send_newsletter' => ['boolean'],
             'meta_title' => ['nullable', 'string', 'max:60'],
             'meta_description' => ['nullable', 'string', 'max:160'],
         ];
