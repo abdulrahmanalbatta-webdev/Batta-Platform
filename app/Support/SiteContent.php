@@ -49,6 +49,13 @@ class SiteContent
         'flutter' => 'Flutter',
     ];
 
+    /**
+     * What a learning path's free resource is, and the language it's in.
+     */
+    public const RESOURCE_TYPES = ['video' => 'فيديو', 'course' => 'دورة', 'docs' => 'توثيق', 'article' => 'مقال', 'book' => 'كتاب', 'practice' => 'تمارين'];
+
+    public const LANGUAGES = ['ar' => 'عربي', 'en' => 'إنجليزي'];
+
     public const NETWORKS = [
         'github' => 'GitHub', 'linkedin' => 'LinkedIn', 'x' => 'X', 'youtube' => 'YouTube', 'instagram' => 'Instagram',
         'facebook' => 'Facebook', 'tiktok' => 'TikTok', 'behance' => 'Behance', 'dribbble' => 'Dribbble',
@@ -147,6 +154,28 @@ class SiteContent
                 'text' => $text('الوصف', 200),
             ]],
 
+            // المسارات: خريطة تعلّم لكل تخصص، مراحل وفي كل مرحلة مصادر مجانية
+            'paths' => ['group' => 'paths', 'label' => 'المسارات', 'hint' => 'كل مسار يظهر في صفحة المسارات وله صفحة بخريطته: المراحل بالترتيب، وفي كل مرحلة ما يتعلّمه الطالب ومصادر مجانية لها.', 'type' => 'list', 'max_items' => 12, 'title' => 'title', 'item' => [
+                'id' => ['type' => 'text', 'label' => 'المعرّف في الرابط (بالإنجليزية)', 'max' => 40, 'required' => true, 'pattern' => '/^[a-z0-9-]+$/', 'hint' => 'مثل: frontend، فتصبح صفحته /paths/frontend'],
+                'title' => $text('اسم المسار', 60),
+                'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],
+                'summary' => $long('الوصف المختصر', 300),
+                'audience' => $text('لمن هذا المسار', 100),
+                'duration' => $text('المدة التقريبية', 30, true, 'مثل: 6–9 أشهر'),
+                'outcomes' => $strings('في آخر المسار تستطيع', 6, 100),
+                'stages' => ['type' => 'list', 'label' => 'المراحل', 'max_items' => 12, 'title' => 'title', 'item' => [
+                    'title' => $text('المرحلة', 80),
+                    'text' => $long('ماذا ولماذا', 400),
+                    'topics' => $strings('المواضيع', 12, 40),
+                    'resources' => ['type' => 'list', 'label' => 'المصادر المجانية', 'max_items' => 10, 'title' => 'title', 'item' => [
+                        'title' => $text('اسم المصدر', 100),
+                        'url' => ['type' => 'url', 'label' => 'الرابط', 'max' => 255, 'required' => true],
+                        'type' => ['type' => 'select', 'label' => 'النوع', 'options' => self::RESOURCE_TYPES],
+                        'lang' => ['type' => 'select', 'label' => 'اللغة', 'options' => self::LANGUAGES],
+                    ]],
+                ]],
+            ]],
+
             // الآراء والأسئلة
             'testimonials' => ['group' => 'work', 'label' => 'آراء العملاء والطلاب', 'type' => 'list', 'max_items' => 20, 'title' => 'name', 'item' => [
                 'name' => $text('الاسم', 60),
@@ -203,6 +232,7 @@ class SiteContent
             ]],
             'texts_learning' => ['group' => 'texts', 'label' => 'نصوص الأكاديمية والموارد', 'type' => 'object', 'fields' => [
                 'courses' => $block('صفحة الدورات', ['text' => $long('المقدمة', 300), 'badge' => $text('الميزة أسفل العنوان', 60)]),
+                'paths' => $block('صفحة المسارات', ['text' => $long('المقدمة', 300), 'badge' => $text('الميزة أسفل العنوان', 60)]),
                 'workshops' => $block('صفحة الورش', [
                     'text' => $long('المقدمة', 300),
                     'badges' => $strings('المزايا أسفل العنوان', 3, 60),
@@ -231,12 +261,12 @@ class SiteContent
             'texts_ui' => ['group' => 'texts', 'label' => 'الأزرار والعناوين', 'hint' => 'أسماء الصفحات (تظهر في العنوان والقائمة والتذييل)، نصوص الأزرار، ورسائل الصفحات الفارغة.', 'type' => 'object', 'fields' => [
                 'pages' => $block('أسماء الصفحات', [
                     'services' => $text('الخدمات', 30), 'about' => $text('من أنا', 30),
-                    'courses' => $text('الدورات', 30), 'workshops' => $text('الورش', 30), 'academy' => $text('مجموعة الدورات والورش', 30),
+                    'courses' => $text('الدورات', 30), 'workshops' => $text('الورش', 30), 'paths' => $text('المسارات', 30), 'academy' => $text('مجموعة الدورات والورش', 30),
                     'articles' => $text('المقالات', 30), 'tools' => $text('الأدوات', 30), 'resources' => $text('مجموعة المقالات والأدوات', 30),
                     'contact' => $text('التواصل', 30),
                 ]),
                 'menu' => $block('وصف الصفحات في القائمة', [
-                    'courses' => $text('الدورات', 80), 'workshops' => $text('الورش', 80), 'articles' => $text('المقالات', 80), 'tools' => $text('الأدوات', 80),
+                    'courses' => $text('الدورات', 80), 'workshops' => $text('الورش', 80), 'paths' => $text('المسارات', 80), 'articles' => $text('المقالات', 80), 'tools' => $text('الأدوات', 80),
                 ]),
                 'buttons' => $block('الأزرار', [
                     'quote' => $text('طلب عرض سعر (الرئيسية والقائمة)', 40),
@@ -293,7 +323,7 @@ class SiteContent
      */
     public static function groups(): array
     {
-        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'work' => 'الآراء والأسئلة', 'texts' => 'نصوص الصفحات'];
+        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'paths' => 'المسارات', 'work' => 'الآراء والأسئلة', 'texts' => 'نصوص الصفحات'];
     }
 
     /**

@@ -273,6 +273,363 @@
     "دعم مجاني لمدة شهر بعد الإطلاق",
     "خبرة في التدريس، فتفهم كل قرار تقني نتخذه"
   ],
+  "paths": [
+    {
+      "id": "frontend",
+      "title": "مطوّر واجهات Frontend",
+      "icon": "monitor",
+      "summary": "من أول سطر HTML إلى تطبيق واجهات تفاعلي بإطار عمل حديث، بخطوات مرتبة ومصادر مجانية.",
+      "audience": "للمبتدئين تماماً ومن يحب الجانب المرئي من الويب",
+      "duration": "6–9 أشهر",
+      "outcomes": [
+        "بناء صفحات متجاوبة مع كل الشاشات",
+        "كتابة JavaScript نظيفة وفهم كيف تعمل",
+        "بناء تطبيق كامل بـ Vue ونشره",
+        "التعامل مع Git والعمل في فريق"
+      ],
+      "stages": [
+        {
+          "title": "أساسيات الويب: HTML و CSS",
+          "text": "تبني هيكل الصفحة بـ HTML وتنسّقها بـ CSS، وتتعلّم كيف تجعلها تعمل على الجوال والكمبيوتر.",
+          "topics": [
+            "HTML الدلالي",
+            "CSS والمحدِّدات",
+            "Flexbox",
+            "Grid",
+            "التصميم المتجاوب"
+          ],
+          "resources": [
+            {
+              "title": "قناة Elzero Web School",
+              "url": "https://www.youtube.com/@ElzeroWebSchool",
+              "type": "video",
+              "lang": "ar"
+            },
+            {
+              "title": "موسوعة حسوب: HTML",
+              "url": "https://wiki.hsoub.com/HTML",
+              "type": "docs",
+              "lang": "ar"
+            },
+            {
+              "title": "موسوعة حسوب: CSS",
+              "url": "https://wiki.hsoub.com/CSS",
+              "type": "docs",
+              "lang": "ar"
+            },
+            {
+              "title": "Learn CSS على web.dev",
+              "url": "https://web.dev/learn/css",
+              "type": "course",
+              "lang": "en"
+            }
+          ]
+        },
+        {
+          "title": "JavaScript",
+          "text": "لغة الويب: المتغيرات والدوال والمصفوفات، ثم التعامل مع الصفحة (DOM) وجلب البيانات من الخوادم.",
+          "topics": [
+            "الأساسيات",
+            "الدوال والنطاق",
+            "المصفوفات والكائنات",
+            "DOM والأحداث",
+            "fetch و async/await"
+          ],
+          "resources": [
+            {
+              "title": "موسوعة حسوب: JavaScript",
+              "url": "https://wiki.hsoub.com/JavaScript",
+              "type": "docs",
+              "lang": "ar"
+            },
+            {
+              "title": "The Modern JavaScript Tutorial",
+              "url": "https://javascript.info",
+              "type": "book",
+              "lang": "en"
+            },
+            {
+              "title": "freeCodeCamp: JavaScript",
+              "url": "https://www.freecodecamp.org/learn",
+              "type": "practice",
+              "lang": "en"
+            }
+          ]
+        },
+        {
+          "title": "Git و GitHub",
+          "text": "تحفظ تاريخ عملك وترجع لأي نسخة، وتنشر مشاريعك وتتعاون مع غيرك.",
+          "topics": [
+            "commit و branch",
+            "merge",
+            "GitHub و Pull Requests"
+          ],
+          "resources": [
+            {
+              "title": "كتاب Pro Git بالعربية",
+              "url": "https://git-scm.com/book/ar/v2",
+              "type": "book",
+              "lang": "ar"
+            },
+            {
+              "title": "GitHub Skills",
+              "url": "https://skills.github.com",
+              "type": "practice",
+              "lang": "en"
+            }
+          ]
+        },
+        {
+          "title": "إطار عمل: Vue",
+          "text": "تبني واجهات من مكوّنات قابلة لإعادة الاستخدام، وتدير حالة التطبيق والتنقّل بين الصفحات.",
+          "topics": [
+            "المكوّنات",
+            "التفاعلية",
+            "Vue Router",
+            "إدارة الحالة"
+          ],
+          "resources": [
+            {
+              "title": "توثيق Vue الرسمي",
+              "url": "https://vuejs.org/guide/introduction.html",
+              "type": "docs",
+              "lang": "en"
+            },
+            {
+              "title": "Vue Mastery: الدروس المجانية",
+              "url": "https://www.vuemastery.com/courses",
+              "type": "video",
+              "lang": "en"
+            }
+          ]
+        },
+        {
+          "title": "مشاريع حقيقية",
+          "text": "تطبّق كل ما تعلّمته على تصاميم حقيقية وتبني ملف أعمال تعرضه على أصحاب العمل.",
+          "topics": [
+            "تحويل تصميم إلى صفحة",
+            "ملف أعمال",
+            "النشر على الإنترنت"
+          ],
+          "resources": [
+            {
+              "title": "Frontend Mentor",
+              "url": "https://www.frontendmentor.io",
+              "type": "practice",
+              "lang": "en"
+            },
+            {
+              "title": "The Odin Project",
+              "url": "https://www.theodinproject.com",
+              "type": "course",
+              "lang": "en"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backend",
+      "title": "مطوّر خلفيات Backend بـ Laravel",
+      "icon": "code",
+      "summary": "تبني الخوادم وقواعد البيانات و APIs التي تعتمد عليها التطبيقات، باستخدام PHP و Laravel.",
+      "audience": "لمن يعرف أساسيات البرمجة ويحب المنطق والبيانات",
+      "duration": "6–9 أشهر",
+      "outcomes": [
+        "تصميم قاعدة بيانات وكتابة استعلامات SQL",
+        "بناء تطبيق كامل بـ Laravel",
+        "بناء API آمن تستخدمه الواجهات والتطبيقات",
+        "نشر التطبيق على خادم حقيقي"
+      ],
+      "stages": [
+        {
+          "title": "أساسيات PHP",
+          "text": "اللغة التي يعمل بها Laravel: الأنواع والدوال والبرمجة الكائنية.",
+          "topics": [
+            "المتغيرات والأنواع",
+            "الدوال",
+            "البرمجة الكائنية OOP",
+            "Composer"
+          ],
+          "resources": [
+            {
+              "title": "موسوعة حسوب: PHP",
+              "url": "https://wiki.hsoub.com/PHP",
+              "type": "docs",
+              "lang": "ar"
+            },
+            {
+              "title": "توثيق PHP الرسمي",
+              "url": "https://www.php.net/manual/en/",
+              "type": "docs",
+              "lang": "en"
+            }
+          ]
+        },
+        {
+          "title": "قواعد البيانات و SQL",
+          "text": "تصمم الجداول والعلاقات بينها وتكتب الاستعلامات التي تجلب البيانات وتعدّلها.",
+          "topics": [
+            "الجداول والعلاقات",
+            "SELECT و JOIN",
+            "الفهارس"
+          ],
+          "resources": [
+            {
+              "title": "SQLBolt: تمارين تفاعلية",
+              "url": "https://sqlbolt.com",
+              "type": "practice",
+              "lang": "en"
+            },
+            {
+              "title": "PostgreSQL Tutorial",
+              "url": "https://www.postgresqltutorial.com",
+              "type": "course",
+              "lang": "en"
+            }
+          ]
+        },
+        {
+          "title": "Laravel",
+          "text": "إطار العمل الأشهر في PHP: المسارات والمتحكمات و Eloquent والنماذج والتحقق من البيانات.",
+          "topics": [
+            "Routing",
+            "Eloquent",
+            "Blade",
+            "التحقق والصلاحيات",
+            "الاختبارات"
+          ],
+          "resources": [
+            {
+              "title": "Laravel Bootcamp",
+              "url": "https://bootcamp.laravel.com",
+              "type": "course",
+              "lang": "en"
+            },
+            {
+              "title": "30 Days to Learn Laravel على Laracasts",
+              "url": "https://laracasts.com/series/30-days-to-learn-laravel-11",
+              "type": "video",
+              "lang": "en"
+            },
+            {
+              "title": "توثيق Laravel",
+              "url": "https://laravel.com/docs",
+              "type": "docs",
+              "lang": "en"
+            }
+          ]
+        },
+        {
+          "title": "APIs",
+          "text": "تبني واجهات برمجية تتحدث معها تطبيقات الويب والجوال، وتفهم HTTP وطريقة عمله.",
+          "topics": [
+            "HTTP والحالات",
+            "REST",
+            "المصادقة بالرموز (Sanctum)"
+          ],
+          "resources": [
+            {
+              "title": "HTTP على MDN",
+              "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP",
+              "type": "docs",
+              "lang": "en"
+            },
+            {
+              "title": "Laravel Sanctum",
+              "url": "https://laravel.com/docs/sanctum",
+              "type": "docs",
+              "lang": "en"
+            }
+          ]
+        },
+        {
+          "title": "النشر والأدوات",
+          "text": "تنقل تطبيقك من جهازك إلى الإنترنت، وتتعامل مع الخوادم والحاويات.",
+          "topics": [
+            "Git",
+            "Linux للخوادم",
+            "Docker"
+          ],
+          "resources": [
+            {
+              "title": "كتاب Pro Git بالعربية",
+              "url": "https://git-scm.com/book/ar/v2",
+              "type": "book",
+              "lang": "ar"
+            },
+            {
+              "title": "Docker: البداية",
+              "url": "https://docs.docker.com/get-started/",
+              "type": "docs",
+              "lang": "en"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "programming-basics",
+      "title": "أساسيات البرمجة",
+      "icon": "bulb",
+      "summary": "قبل أي تخصص: كيف تفكر كمبرمج، وكيف تحل المشكلات خطوة بخطوة بلغة سهلة.",
+      "audience": "لمن لم يكتب سطر برمجة من قبل",
+      "duration": "1–2 شهر",
+      "outcomes": [
+        "فهم المتغيرات والشروط والحلقات",
+        "تقسيم أي مشكلة إلى خطوات",
+        "اختيار تخصصك التالي بثقة"
+      ],
+      "stages": [
+        {
+          "title": "التفكير البرمجي",
+          "text": "تتعلّم كيف تحوّل مشكلة إلى خطوات واضحة يفهمها الحاسوب.",
+          "topics": [
+            "الخوارزميات",
+            "المتغيرات",
+            "الشروط والحلقات"
+          ],
+          "resources": [
+            {
+              "title": "CS50x من جامعة هارفارد",
+              "url": "https://cs50.harvard.edu/x/",
+              "type": "course",
+              "lang": "en"
+            },
+            {
+              "title": "قناة Elzero Web School",
+              "url": "https://www.youtube.com/@ElzeroWebSchool",
+              "type": "video",
+              "lang": "ar"
+            }
+          ]
+        },
+        {
+          "title": "أول لغة برمجة",
+          "text": "تطبّق ما تعلّمته بلغة سهلة وتكتب برامج صغيرة حقيقية.",
+          "topics": [
+            "الدوال",
+            "القوائم",
+            "حل التمارين"
+          ],
+          "resources": [
+            {
+              "title": "freeCodeCamp",
+              "url": "https://www.freecodecamp.org/learn",
+              "type": "practice",
+              "lang": "en"
+            },
+            {
+              "title": "موسوعة حسوب: JavaScript",
+              "url": "https://wiki.hsoub.com/JavaScript",
+              "type": "docs",
+              "lang": "ar"
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "testimonials": [
     {
       "name": "محمد",
@@ -441,6 +798,10 @@
       "text": "كل دورة تنتهي بمشروع حقيقي تنشره على الإنترنت وتضيفه لملف أعمالك.",
       "badge": "شهادة إتمام لكل دورة"
     },
+    "paths": {
+      "text": "اختر تخصصك، واتبع خريطة واضحة بالترتيب، وفي كل مرحلة مصادر مجانية مختارة بعناية.",
+      "badge": "كل المصادر مجانية"
+    },
     "workshops": {
       "text": "جلسات مباشرة من ساعتين إلى يوم كامل، تطبّق فيها مع مدرّب وتخرج بمشروع.",
       "badges": [
@@ -475,6 +836,7 @@
       "about": "من أنا",
       "courses": "الدورات",
       "workshops": "الورش",
+      "paths": "المسارات",
       "academy": "الأكاديمية",
       "articles": "المقالات",
       "tools": "أدواتي",
@@ -484,6 +846,7 @@
     "menu": {
       "courses": "دورات مسجّلة تنتهي بمشروع حقيقي",
       "workshops": "جلسات مباشرة أونلاين وحضورياً",
+      "paths": "خرائط تعلّم لكل تخصص بمصادر مجانية",
       "articles": "دروس وتجارب من مشاريع حقيقية",
       "tools": "الأدوات التي أعمل بها يومياً"
     },

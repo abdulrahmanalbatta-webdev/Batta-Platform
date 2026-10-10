@@ -71,6 +71,23 @@ class SiteContentTest extends TestCase
             ->assertJsonValidationErrors('value');
     }
 
+    public function test_paths_keep_their_stages_and_free_resources_valid(): void
+    {
+        $editor = User::factory()->role(Role::Editor)->create();
+        $paths = SiteContent::defaults()['paths'];
+        $paths[0]['stages'][0]['resources'][0]['stray'] = 'x';
+
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'paths'), ['value' => $paths])
+            ->assertOk()
+            ->assertJsonMissingPath('data.0.stages.0.resources.0.stray');
+        $this->getJson(route('site.content'))->assertJsonPath('data.paths.0.stages.0.resources.0.lang', $paths[0]['stages'][0]['resources'][0]['lang']);
+
+        $paths[0]['id'] = 'Front End';
+        $paths[0]['stages'][0]['resources'][0] = ['title' => 'مصدر', 'url' => 'javascript:alert(1)', 'type' => 'podcast', 'lang' => 'fr'];
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'paths'), ['value' => $paths])
+            ->assertJsonValidationErrors(['value.0.id', 'value.0.stages.0.resources.0.url', 'value.0.stages.0.resources.0.type', 'value.0.stages.0.resources.0.lang']);
+    }
+
     public function test_a_section_goes_back_to_the_original_text(): void
     {
         $editor = User::factory()->role(Role::Editor)->create();
