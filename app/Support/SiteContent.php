@@ -171,7 +171,7 @@ class SiteContent
                 'courses' => $intro('الدورات'),
                 'articles' => $intro('المقالات'),
                 'workshop' => $intro('الورشة القادمة', false),
-                'testimonials' => $intro('الآراء', false),
+                'testimonials' => $intro('الآراء'),
                 'faq' => $intro('الأسئلة الشائعة'),
                 'newsletter' => $block('النشرة البريدية', ['title' => $text('العنوان', 80), 'text' => $long('المقدمة', 300)]),
                 'cta' => $intro('الدعوة الأخيرة (أسفل الصفحة)'),
