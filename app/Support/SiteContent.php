@@ -173,7 +173,12 @@ class SiteContent
                 'workshop' => $intro('الورشة القادمة', false),
                 'testimonials' => $intro('الآراء'),
                 'faq' => $intro('الأسئلة الشائعة'),
-                'newsletter' => $block('النشرة البريدية', ['title' => $text('العنوان', 80), 'text' => $long('المقدمة', 300)]),
+                'newsletter' => $block('النشرة البريدية', [
+                    'eyebrow' => $text('العنوان الصغير', 40),
+                    'title' => $text('العنوان', 80),
+                    'text' => $long('المقدمة', 300),
+                    'perks' => $strings('المزايا تحت الحقل', 3, 40),
+                ]),
                 'cta' => $intro('الدعوة الأخيرة (أسفل الصفحة)'),
             ]],
             'texts_pages' => ['group' => 'texts', 'label' => 'نصوص الخدمات والتواصل ومن أنا', 'type' => 'object', 'fields' => [
