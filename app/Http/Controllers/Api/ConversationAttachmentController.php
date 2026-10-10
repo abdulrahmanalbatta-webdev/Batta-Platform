@@ -17,6 +17,6 @@ class ConversationAttachmentController extends Controller
     {
         abort_if($message->attachment_path === null, 404);
 
-        return Storage::disk(ConversationMessage::ATTACHMENT_DISK)->download($message->attachment_path, $message->attachment_name);
+        return Storage::disk(ConversationMessage::attachmentDisk())->download($message->attachment_path, $message->attachment_name);
     }
 }

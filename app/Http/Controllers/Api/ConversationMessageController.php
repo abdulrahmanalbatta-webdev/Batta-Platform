@@ -34,7 +34,7 @@ class ConversationMessageController extends Controller
             'from_contact' => false,
             'user_id' => $request->user()->id,
             'body' => isset($validated['body']) ? trim($validated['body']) : null,
-            'attachment_path' => $file?->store("conversations/{$conversation->id}", ConversationMessage::ATTACHMENT_DISK),
+            'attachment_path' => $file?->store("conversations/{$conversation->id}", ConversationMessage::attachmentDisk()),
             'attachment_name' => $file === null ? null : Str::limit(basename($file->getClientOriginalName()), 200, ''),
         ]);
 

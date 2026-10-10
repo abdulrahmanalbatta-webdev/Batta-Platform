@@ -79,6 +79,19 @@ class PlatformDataTest extends TestCase
         $this->assertSame('exported', Activity::sole()->action);
     }
 
+    public function test_exports_go_to_the_default_disk_so_a_cloud_bucket_can_hold_them(): void
+    {
+        config(['filesystems.default' => 'private-bucket']);
+        Storage::fake('private-bucket');
+        Notification::fake();
+        $owner = User::factory()->owner()->create();
+
+        (new ExportPlatformData($owner))->handle();
+
+        $this->assertCount(1, Storage::disk('private-bucket')->files('exports'));
+        $this->actingAs($owner)->getJson(route('api.data-exports.index'))->assertOk()->assertJsonCount(1, 'data');
+    }
+
     public function test_owner_lists_downloads_and_deletes_exports(): void
     {
         Storage::fake('local');

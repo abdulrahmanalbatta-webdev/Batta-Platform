@@ -29,6 +29,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // outside local and tests, only APP_URL's host (and its subdomains) is served: a forged Host header gets a 400
         $middleware->trustHosts();
+        // behind a load balancer (Laravel Cloud: TRUSTED_PROXIES=*), so HTTPS and the visitor's IP are read from its headers
+        if (env('TRUSTED_PROXIES')) {
+            $middleware->trustProxies(at: env('TRUSTED_PROXIES'));
+        }
         $middleware->append(SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

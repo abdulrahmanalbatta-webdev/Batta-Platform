@@ -133,6 +133,13 @@ return [
 
     'mysqldump' => env('MYSQLDUMP_BINARY', 'mysqldump'),
 
+    /*
+    | The nightly "app:backup-database". Turn it off (DB_BACKUPS=false) where the host backs the database up
+    | itself, such as Laravel Cloud, or where mysqldump isn't installed.
+    */
+
+    'backups' => (bool) env('DB_BACKUPS', true),
+
     'migrations' => [
         'table' => 'migrations',
         'update_date_on_publish' => true,

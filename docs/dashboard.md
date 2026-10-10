@@ -87,6 +87,32 @@ php artisan optimize                  # config + routes + views cache
 
 **النسخ الاحتياطي**: `app:backup-database` كل ليلة الساعة 3 (`mysqldump` بلقطة وحدة متسقة، مضغوط) بـ `storage/app/private/backups`، وبيحذف الأقدم من 14 يوم. **انسخهم برّا الخادم** (rclone/S3 أو نسخ مزوّد الاستضافة)، لأن نسخة على نفس الخادم ما بتحمي من خرابه. نسخة البيانات من الإعدادات (ZIP/JSON) للنقل والأرشيف، مش بديل عن هاد.
 
+### على Laravel Cloud
+
+ملفات الخادم على Cloud بتنمسح مع كل نشر وما بتنشارك بين النسخ، فالملفات بتروح على تخزين Cloud (R2) عن طريق `league/flysystem-aws-s3-v3`:
+- **bucket عام** اسمه `public` (الأغلفة، الشعارات، الصور الشخصية، صور محتوى الموقع)، والكود بيستخدم `Storage::disk('public')`.
+- **bucket خاص** هو الـ disk الافتراضي: مرفقات الرسائل (`ConversationMessage::attachmentDisk()`) ونسخ البيانات (`ExportPlatformData::disk()`). ملف الـ ZIP بيتبني بملف مؤقت وبعدين بيترفع.
+
+متغيرات البيئة هناك (غير اللي بتنحقن تلقائياً لقاعدة البيانات والتخزين):
+
+```dotenv
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://dash.example.com
+TRUSTED_PROXIES=*          # الطلبات بتوصل من load balancer
+DB_BACKUPS=false           # Cloud بيعمل نسخ قاعدة البيانات، وما في mysqldump
+SESSION_ENCRYPT=true
+SESSION_SECURE_COOKIE=true
+QUEUE_CONNECTION=database
+CACHE_STORE=database
+CORS_ALLOWED_ORIGINS=https://example.com
+```
+
+- أمر البناء: `composer install --no-dev --optimize-autoloader && php artisan optimize`، وأمر النشر: `php artisan migrate --force`.
+- فعّل الـ scheduler على الـ cluster، وشغّل `php artisan queue:work --tries=3 --max-time=3600` كـ background process (أو worker cluster).
+- بعد أول نشر: `php artisan app:create-owner EMAIL "الاسم" --generate-password` عن طريق `cloud command:run` (أو من لوحة Cloud). ما في terminal تكتب فيه كلمة السر، فبيطبع كلمة سر مؤقتة، غيّرها من الملف الشخصي أول ما تدخل.
+- أداة سطر الأوامر موجودة كـ dev dependency: `./vendor/bin/cloud` (التوكن بمتغير `LARAVEL_CLOUD_TOKEN`).
+
 ## الواجهات (resources/views)
 
 ```

@@ -18,9 +18,13 @@ class ConversationMessage extends Model
     use HasFactory;
 
     /**
-     * Attachments live on this private disk; members download them through the API.
+     * Attachments live on the private default disk (local on a server, a private bucket on Laravel Cloud);
+     * members download them through the API.
      */
-    public const ATTACHMENT_DISK = 'local';
+    public static function attachmentDisk(): string
+    {
+        return config('filesystems.default');
+    }
 
     /**
      * Get the attributes that should be cast.

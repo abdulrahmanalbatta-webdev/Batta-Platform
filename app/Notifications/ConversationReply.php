@@ -50,7 +50,7 @@ class ConversationReply extends Notification implements ShouldQueue
 
         if ($this->message->attachment_path !== null) {
             $mail->line('أرفقنا لك ملف: '.$this->message->attachment_name)
-                ->attach(Attachment::fromStorageDisk(ConversationMessage::ATTACHMENT_DISK, $this->message->attachment_path)->as($this->message->attachment_name));
+                ->attach(Attachment::fromStorageDisk(ConversationMessage::attachmentDisk(), $this->message->attachment_path)->as($this->message->attachment_name));
         }
 
         return $mail;

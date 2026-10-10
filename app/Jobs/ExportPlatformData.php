@@ -9,6 +9,7 @@ use App\Notifications\ExportReady;
 use App\Support\PlatformSettings;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\File;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -22,7 +23,13 @@ class ExportPlatformData implements ShouldQueue
 {
     use Queueable;
 
-    public const DISK = 'local';
+    /**
+     * Exports are written to the private default disk, which the web servers and the queue workers share.
+     */
+    public static function disk(): string
+    {
+        return config('filesystems.default');
+    }
 
     public const DIRECTORY = 'exports';
 
@@ -40,12 +47,13 @@ class ExportPlatformData implements ShouldQueue
 
     public function handle(): void
     {
-        $disk = Storage::disk(self::DISK);
+        $disk = Storage::disk(self::disk());
         $name = 'batta-export-'.now()->format('Y-m-d-His').'.zip';
-        $disk->makeDirectory(self::DIRECTORY);
 
+        // built in a temporary file, then stored on the disk (which may be a bucket rather than a folder)
+        $archive = tempnam(sys_get_temp_dir(), 'export-zip');
         $zip = new ZipArchive;
-        if ($zip->open($disk->path(self::DIRECTORY.'/'.$name), ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        if ($zip->open($archive, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             throw new RuntimeException('Could not create the export file.');
         }
 
@@ -68,7 +76,8 @@ class ExportPlatformData implements ShouldQueue
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         $zip->close();
 
-        array_map('unlink', $temporary);
+        $disk->putFileAs(self::DIRECTORY, new File($archive), $name);
+        array_map('unlink', [...$temporary, $archive]);
 
         Activity::create(['user_id' => $this->requester->id, 'action' => 'exported', 'subject_name' => $name]);
         $this->requester->notify(new ExportReady($name, $disk->size(self::DIRECTORY.'/'.$name)));

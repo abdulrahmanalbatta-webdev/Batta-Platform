@@ -17,7 +17,7 @@ class DataExportController extends Controller
      */
     public function index(): JsonResponse
     {
-        $disk = Storage::disk(ExportPlatformData::DISK);
+        $disk = Storage::disk(ExportPlatformData::disk());
 
         return response()->json([
             'data' => collect($disk->files(ExportPlatformData::DIRECTORY))
@@ -46,12 +46,12 @@ class DataExportController extends Controller
 
     public function show(string $file): StreamedResponse
     {
-        return Storage::disk(ExportPlatformData::DISK)->download($this->path($file));
+        return Storage::disk(ExportPlatformData::disk())->download($this->path($file));
     }
 
     public function destroy(string $file): Response
     {
-        Storage::disk(ExportPlatformData::DISK)->delete($this->path($file));
+        Storage::disk(ExportPlatformData::disk())->delete($this->path($file));
 
         return response()->noContent();
     }
@@ -64,7 +64,7 @@ class DataExportController extends Controller
         abort_unless(preg_match('/^batta-export-\d{4}-\d{2}-\d{2}-\d{6}\.zip$/', $file) === 1, 404);
 
         $path = ExportPlatformData::DIRECTORY.'/'.$file;
-        abort_unless(Storage::disk(ExportPlatformData::DISK)->exists($path), 404);
+        abort_unless(Storage::disk(ExportPlatformData::disk())->exists($path), 404);
 
         return $path;
     }
