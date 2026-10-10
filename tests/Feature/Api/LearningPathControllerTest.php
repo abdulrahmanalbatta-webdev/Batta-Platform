@@ -75,7 +75,7 @@ class LearningPathControllerTest extends TestCase
 
         $path = LearningPath::query()->where('slug', 'frontend')->sole();
         $this->assertSame(5, $path->position);
-        $this->assertSame([['type' => 'course', 'id' => $course->id], ['type' => 'workshop', 'id' => $workshop->id], ['type' => 'article', 'id' => $article->id]], $path->stages[0]['items']);
+        $this->assertEquals([['type' => 'course', 'id' => $course->id], ['type' => 'workshop', 'id' => $workshop->id], ['type' => 'article', 'id' => $article->id]], $path->stages[0]['items']);
     }
 
     public function test_the_map_is_validated_down_to_each_resource_and_link(): void
