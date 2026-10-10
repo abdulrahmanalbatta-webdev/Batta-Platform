@@ -28,7 +28,6 @@
             'tools' => route('tools.index'),
             'leads' => route('leads.index'),
             'students' => route('students.index'),
-            'subscribers' => route('subscribers.index'),
             'site-content' => route('site-content.index'),
             'messages' => route('messages.index'),
             'reviews' => route('reviews.index'),

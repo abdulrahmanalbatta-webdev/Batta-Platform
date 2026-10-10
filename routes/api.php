@@ -41,7 +41,6 @@ use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\StudentMessageController;
 use App\Http\Controllers\Api\StudentStatusController;
-use App\Http\Controllers\Api\SubscriberController;
 use App\Http\Controllers\Api\TeamMemberController;
 use App\Http\Controllers\Api\TestEmailController;
 use App\Http\Controllers\Api\ToolCategoryController;
@@ -121,10 +120,7 @@ Route::middleware('auth')->group(function () {
     // students: every member reads; owner, admin and support suspend and email (Role::canManageStudents)
     Route::apiResource('students', StudentController::class)->only(['index', 'show']);
 
-    Route::get('/subscribers', [SubscriberController::class, 'index'])->name('subscribers.index');
-
     Route::middleware('can:manage-students')->group(function () {
-        Route::delete('/subscribers/{subscriber}', [SubscriberController::class, 'destroy'])->name('subscribers.destroy');
         Route::put('/students/status', [StudentStatusController::class, 'update'])->name('students.status.update');
         Route::post('/students/messages', [StudentMessageController::class, 'store'])->name('students.messages.store');
     });

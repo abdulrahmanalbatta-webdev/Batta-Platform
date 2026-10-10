@@ -16,7 +16,6 @@ final class PlatformTables
         'conversation_messages',
         'conversations',
         'students',
-        'subscribers',
         'leads',
         'learning_paths',
         'courses',

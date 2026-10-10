@@ -49,7 +49,6 @@
             <div class="field" id="scheduleField" hidden><label for="publishAt">موعد النشر</label><input class="input" type="datetime-local" id="publishAt"></div>
             <div class="field"><label for="category">التصنيف</label><select class="select" id="category"><option value="tutorials">دروس عملية</option><option value="behind-the-scenes">خلف الكواليس</option><option value="freelancing">العمل الحر</option><option value="tools-ai">أدوات و AI</option></select></div>
             <label class="switch"><input type="checkbox" id="featured"><span class="track"></span>مقال مميز في الصفحة الرئيسية</label>
-            <label class="switch"><input type="checkbox" id="newsletter" checked><span class="track"></span>إرساله في نشرة البطّة</label>
           </div>
         </div>
 

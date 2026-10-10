@@ -5,24 +5,18 @@ namespace Tests\Feature;
 use App\Models\Article;
 use App\Models\Enrollment;
 use App\Models\Setting;
-use App\Models\Student;
 use App\Models\User;
-use App\Notifications\NewArticle;
 use App\Support\PlatformSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class DataFixesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_rescheduling_a_published_article_keeps_its_date_and_does_not_email_again(): void
+    public function test_rescheduling_a_published_article_keeps_its_date(): void
     {
-        Notification::fake();
-        app(PlatformSettings::class)->update(['newsletter_new_articles' => true]);
-        Student::factory()->create();
-        $article = Article::factory()->create(['send_newsletter' => true]);
+        $article = Article::factory()->create();
         $article->update(['status' => 'published']);
         $firstPublished = $article->fresh()->published_at;
 
@@ -32,7 +26,6 @@ class DataFixesTest extends TestCase
 
         $this->assertSame('published', $article->fresh()->status->value);
         $this->assertTrue($article->fresh()->published_at->equalTo($firstPublished));
-        Notification::assertSentTimes(NewArticle::class, 1);
     }
 
     public function test_clearing_the_smtp_server_goes_back_to_the_env_mailer(): void

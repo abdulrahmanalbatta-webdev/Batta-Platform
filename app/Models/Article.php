@@ -6,10 +6,8 @@ use App\Enums\ArticleCategory;
 use App\Enums\ArticleStatus;
 use App\Models\Concerns\HasComments;
 use App\Models\Concerns\LogsActivity;
-use App\Observers\ArticleObserver;
 use Database\Factories\ArticleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,8 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
-#[ObservedBy(ArticleObserver::class)]
-#[Fillable(['title', 'slug', 'excerpt', 'body', 'category', 'status', 'publish_at', 'is_featured', 'send_newsletter', 'meta_title', 'meta_description'])]
+#[Fillable(['title', 'slug', 'excerpt', 'body', 'category', 'status', 'publish_at', 'is_featured', 'meta_title', 'meta_description'])]
 class Article extends Model
 {
     /** @use HasFactory<ArticleFactory> */
@@ -37,7 +34,6 @@ class Article extends Model
             'publish_at' => 'datetime',
             'published_at' => 'datetime',
             'is_featured' => 'boolean',
-            'send_newsletter' => 'boolean',
         ];
     }
 

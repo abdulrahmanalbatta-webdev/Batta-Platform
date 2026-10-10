@@ -3,12 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\Role;
-use App\Models\Article;
 use App\Models\Course;
 use App\Models\Enrollment;
-use App\Models\Student;
 use App\Models\User;
-use App\Notifications\NewArticle;
 use App\Notifications\NewDeviceLogin;
 use App\Notifications\WeeklyReport;
 use App\Support\PlatformSettings;
@@ -58,37 +55,6 @@ class SettingsEffectsTest extends TestCase
         $this->settings(['weekly_report' => false]);
         $this->artisan('reports:weekly')->expectsOutput('The weekly report is switched off.');
         Notification::assertSentToTimes($owner, WeeklyReport::class, 1);
-    }
-
-    public function test_new_article_is_emailed_to_active_students_when_both_switches_are_on(): void
-    {
-        Notification::fake();
-        $active = Student::factory()->create();
-        $suspended = Student::factory()->suspended()->create();
-        $article = Article::factory()->create(['send_newsletter' => true]);
-
-        $article->update(['status' => 'published']);
-        Notification::assertNothingSent();
-
-        $this->settings(['newsletter_new_articles' => true]);
-        $other = Article::factory()->create(['send_newsletter' => true]);
-        $other->update(['status' => 'published']);
-        // editing a live article doesn't send it again
-        $other->update(['title' => 'عنوان جديد']);
-
-        Notification::assertSentToTimes($active, NewArticle::class, 1);
-        Notification::assertNotSentTo($suspended, NewArticle::class);
-    }
-
-    public function test_article_without_its_newsletter_box_is_not_emailed(): void
-    {
-        Notification::fake();
-        $this->settings(['newsletter_new_articles' => true]);
-        Student::factory()->create();
-
-        Article::factory()->create(['send_newsletter' => false])->update(['status' => 'published']);
-
-        Notification::assertNothingSent();
     }
 
     public function test_sign_in_from_a_new_device_is_emailed_after_the_first_one(): void
