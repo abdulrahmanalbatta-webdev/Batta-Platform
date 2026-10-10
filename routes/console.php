@@ -10,13 +10,15 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Artisan::command('app:create-owner {email} {name}', function (string $email, string $name) {
+// --generate-password: for hosts that run commands without a terminal (Laravel Cloud), a one-time password is printed instead of asked
+Artisan::command('app:create-owner {email} {name} {--generate-password}', function (string $email, string $name) {
     if (User::where('role', Role::Owner)->exists()) {
         $this->error('The dashboard already has an owner.');
 
@@ -24,7 +26,7 @@ Artisan::command('app:create-owner {email} {name}', function (string $email, str
     }
 
     $validator = Validator::make(
-        ['email' => $email, 'password' => $password = $this->secret('Password')],
+        ['email' => $email, 'password' => $password = $this->option('generate-password') ? Str::password(20) : $this->secret('Password')],
         ['email' => ['required', 'email', 'unique:users'], 'password' => ['required', Password::defaults()]],
     );
 
@@ -41,6 +43,11 @@ Artisan::command('app:create-owner {email} {name}', function (string $email, str
 
     $this->info("Owner {$email} created. Sign in at ".route('login'));
 
+    if ($this->option('generate-password')) {
+        $this->warn("One-time password: {$password}");
+        $this->warn('Change it from your profile right after signing in.');
+    }
+
     return 0;
 })->purpose('Create the first dashboard owner account');
 
@@ -55,10 +62,10 @@ Schedule::call(fn () => DatabaseNotification::query()->whereNotNull('read_at')->
     ->name('notifications:prune-read');
 // data exports are kept for a week (App\Jobs\ExportPlatformData::KEEP_DAYS)
 Schedule::call(function () {
-    $disk = Storage::disk(ExportPlatformData::DISK);
+    $disk = Storage::disk(ExportPlatformData::disk());
     collect($disk->files(ExportPlatformData::DIRECTORY))
         ->filter(fn (string $path): bool => $disk->lastModified($path) < now()->subDays(ExportPlatformData::KEEP_DAYS)->getTimestamp())
         ->each(fn (string $path) => $disk->delete($path));
 })->daily()->name('exports:prune');
 // a database backup every night, kept 14 days in storage/app/private/backups — copy them off the server too
-Schedule::command('app:backup-database')->dailyAt('3:00')->withoutOverlapping();
+Schedule::command('app:backup-database')->dailyAt('3:00')->withoutOverlapping()->when(fn (): bool => config('database.backups'));

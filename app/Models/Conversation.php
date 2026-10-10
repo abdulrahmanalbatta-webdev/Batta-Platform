@@ -74,7 +74,7 @@ class Conversation extends Model
 
         $this->delete();
 
-        Storage::disk(ConversationMessage::ATTACHMENT_DISK)->delete($paths);
+        Storage::disk(ConversationMessage::attachmentDisk())->delete($paths);
     }
 
     public function isUnread(): bool

@@ -43,4 +43,13 @@ class CreateOwnerCommandTest extends TestCase
 
         $this->assertDatabaseMissing('users', ['email' => 'admin@batta.dev']);
     }
+
+    public function test_a_password_can_be_generated_where_nobody_types_one(): void
+    {
+        $this->artisan('app:create-owner', ['email' => 'admin@batta.dev', 'name' => 'عبدالرحمن البطة', '--generate-password' => true])
+            ->expectsOutputToContain('One-time password: ')
+            ->assertSuccessful();
+
+        $this->assertSame('owner', User::query()->sole()->role->value);
+    }
 }
