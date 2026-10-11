@@ -7,6 +7,7 @@ use App\Models\Activity;
 use App\Support\PlatformSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class SettingController extends Controller
 {
@@ -33,6 +34,13 @@ class SettingController extends Controller
             [],
             collect($definitions)->map(fn (array $definition): string => $definition['label'])->all(),
         );
+
+        // a new server or username drops the stored SMTP password: ask for it rather than lose it silently
+        $mailServerChanges = collect(['mail_host', 'mail_username'])->contains(fn (string $key): bool => array_key_exists($key, $validated) && $validated[$key] !== $settings->get($key));
+        $newHost = array_key_exists('mail_host', $validated) ? $validated['mail_host'] : $settings->get('mail_host');
+        if ($mailServerChanges && filled($newHost) && blank($validated['mail_password'] ?? null)) {
+            throw ValidationException::withMessages(['mail_password' => 'أدخل كلمة مرور SMTP مع تغيير الخادم أو اسم المستخدم (تُمسح المحفوظة عند تغييرهما).']);
+        }
 
         $settings->update($validated);
 

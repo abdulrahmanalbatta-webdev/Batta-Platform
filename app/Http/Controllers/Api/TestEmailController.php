@@ -23,6 +23,10 @@ class TestEmailController extends Controller
             throw ValidationException::withMessages(['mail_host' => 'البريد غير مربوط بعد: الرسائل تُكتب في السجل فقط. املأ "خادم SMTP" واحفظ التغييرات، ثم أعد الإرسال.']);
         }
 
+        if (config('mail.default') === 'smtp' && filled(config('mail.mailers.smtp.username')) && blank(config('mail.mailers.smtp.password'))) {
+            throw ValidationException::withMessages(['mail_host' => 'كلمة مرور SMTP غير محفوظة: أدخلها في حقل "كلمة المرور" واحفظ التغييرات، ثم أعد الإرسال.']);
+        }
+
         $email = $request->user()->email;
 
         try {
