@@ -87,6 +87,14 @@ php artisan optimize                  # config + routes + views cache
 
 **النسخ الاحتياطي**: `app:backup-database` كل ليلة الساعة 3 (`mysqldump` بلقطة وحدة متسقة، مضغوط) بـ `storage/app/private/backups`، وبيحذف الأقدم من 14 يوم. **انسخهم برّا الخادم** (rclone/S3 أو نسخ مزوّد الاستضافة)، لأن نسخة على نفس الخادم ما بتحمي من خرابه. نسخة البيانات من الإعدادات (ZIP/JSON) للنقل والأرشيف، مش بديل عن هاد.
 
+### على alwaysdata (مجاني) بالنشر التلقائي
+
+`.github/workflows/deploy-alwaysdata.yml` بينشر `main` على حساب alwaysdata بعد ما تنجح الاختبارات (أو يدوياً من تبويب Actions): بيدخل بـ SSH، بيسحب الكود، `composer install`، بيكتب `.env` من إعدادات GitHub (وبيحافظ على `APP_KEY` اللي على الخادم)، `migrate`، `optimize`. ما بيشتغل إلا لما يكون متغير `ALWAYSDATA_ACCOUNT` معرّف.
+
+- **Variables:** `ALWAYSDATA_ACCOUNT`، `DB_DATABASE`، `DB_USERNAME`، `SITE_URL`. **Secrets:** `ALWAYSDATA_SSH_PASSWORD`، `DB_PASSWORD` (حروف وأرقام بدون رموز `"` أو `$`).
+- مرة وحدة بلوحة alwaysdata: PHP 8.5، قاعدة MySQL ومستخدمها، كلمة سر SSH، الموقع **Type: PHP** و**Root directory: `/batta/public`**، ومهمتين مجدولتين كل دقيقة: `cd ~/batta && php artisan schedule:run` و`cd ~/batta && php artisan queue:work --stop-when-empty --max-time=50`.
+- حساب المالك مرة وحدة من Web SSH: `cd ~/batta && php artisan app:create-owner EMAIL "الاسم"`.
+
 ### على Laravel Cloud
 
 ملفات الخادم على Cloud بتنمسح مع كل نشر وما بتنشارك بين النسخ، فالملفات بتروح على تخزين Cloud (R2) عن طريق `league/flysystem-aws-s3-v3`:

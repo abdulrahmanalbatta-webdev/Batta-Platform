@@ -1,0 +1,100 @@
+name: deploy (alwaysdata)
+
+# Deploys main to the alwaysdata account once the tests pass (or by hand from the Actions tab).
+# Stays off until the repository variable ALWAYSDATA_ACCOUNT is set.
+#
+# Repository variables (Settings → Secrets and variables → Actions → Variables):
+#   ALWAYSDATA_ACCOUNT    the account name, e.g. abdulrhman-dashboard (SSH user, and the *.alwaysdata.net hosts)
+#   DB_DATABASE           e.g. abdulrhman-dashboard_batta
+#   DB_USERNAME           e.g. abdulrhman-dashboard_user
+#   SITE_URL              the public site, e.g. https://batta.vercel.app (allowed to call the API)
+# Repository secrets:
+#   ALWAYSDATA_SSH_PASSWORD   the SSH user's password (Remote access → SSH)
+#   DB_PASSWORD               the database user's password
+on:
+  workflow_run:
+    workflows: [tests]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-alwaysdata
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.ALWAYSDATA_ACCOUNT != '' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+
+    env:
+      ACCOUNT: ${{ vars.ALWAYSDATA_ACCOUNT }}
+      SSHPASS: ${{ secrets.ALWAYSDATA_SSH_PASSWORD }}
+
+    steps:
+      - name: Install sshpass
+        run: sudo apt-get update -q && sudo apt-get install -yq sshpass
+
+      # everything but APP_KEY, which is generated once on the server and kept from then on
+      - name: Write the production settings
+        env:
+          DB_DATABASE: ${{ vars.DB_DATABASE }}
+          DB_USERNAME: ${{ vars.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          umask 077
+          cat > deploy.env <<EOF
+          APP_NAME=Batta
+          APP_ENV=production
+          APP_DEBUG=false
+          APP_URL=https://${ACCOUNT}.alwaysdata.net
+          APP_LOCALE=ar
+          APP_FALLBACK_LOCALE=en
+          APP_MAINTENANCE_DRIVER=file
+          LOG_CHANNEL=stack
+          LOG_STACK=single
+          LOG_LEVEL=warning
+          DB_CONNECTION=mysql
+          DB_HOST=mysql-${ACCOUNT}.alwaysdata.net
+          DB_PORT=3306
+          DB_DATABASE=${DB_DATABASE}
+          DB_USERNAME=${DB_USERNAME}
+          DB_PASSWORD="${DB_PASSWORD}"
+          DB_BACKUPS=false
+          CORS_ALLOWED_ORIGINS=${SITE_URL:-*}
+          TRUSTED_PROXIES=*
+          SESSION_DRIVER=database
+          SESSION_LIFETIME=120
+          SESSION_ENCRYPT=true
+          SESSION_SECURE_COOKIE=true
+          FILESYSTEM_DISK=local
+          QUEUE_CONNECTION=database
+          CACHE_STORE=database
+          MAIL_MAILER=log
+          EOF
+
+      - name: Upload the settings and deploy
+        run: |
+          SSH="sshpass -e ssh -o StrictHostKeyChecking=accept-new ${ACCOUNT}@ssh-${ACCOUNT}.alwaysdata.net"
+          $SSH 'umask 077 && cat > ~/batta-deploy.env' < deploy.env
+          $SSH 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd ~
+          [ -d batta ] || git clone --quiet https://github.com/abdulrahmanalbatta-webdev/Batta-Platform.git batta
+          cd batta
+          git fetch --quiet origin main
+          git reset --quiet --hard origin/main
+          composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+
+          # keep the key the server already has; make one on the first deploy
+          key=$(grep -E '^APP_KEY=.+' .env 2>/dev/null || true)
+          mv ~/batta-deploy.env .env
+          if [ -n "$key" ]; then echo "$key" >> .env; else echo 'APP_KEY=' >> .env && php artisan key:generate --force; fi
+
+          php artisan migrate --force
+          [ -L public/storage ] || php artisan storage:link
+          php artisan optimize
+          php artisan queue:restart
+          echo "Deployed $(git rev-parse --short HEAD)"
+          REMOTE
