@@ -33,7 +33,7 @@ php artisan app:create-owner admin@batta.dev "عبدالرحمن البطة"
 
 ### عمليات بالخلفية
 
-- **الإيميلات** (رسائل الطلاب، الفواتير، تذكير الورش، الردود على المحادثات، وإيميلات التنبيهات) بتنبعت عن طريق الـ queue (`QUEUE_CONNECTION=database`)، فلازم يكون في worker شغال:
+- **الإيميلات** (رسائل الطلاب، تذكير الورش، الردود على المحادثات، وإيميلات التنبيهات) بتنبعت عن طريق الـ queue (`QUEUE_CONNECTION=database`)، فلازم يكون في worker شغال:
   محلياً `composer run dev` (بيشغّل السيرفر والـ queue والـ logs مع بعض) أو `php artisan queue:work` بنافذة لحاله، وعلى الخادم `queue:work` تحت Supervisor أو ما يشبهه.
 - **المقالات المجدولة** بتنشر بأمر `articles:publish-scheduled` كل دقيقة، وهذا يحتاج الـ scheduler:
   محلياً `php artisan schedule:work`، وعلى الخادم سطر cron واحد يشغّل `php artisan schedule:run` كل دقيقة.
