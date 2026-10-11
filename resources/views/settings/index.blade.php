@@ -47,7 +47,7 @@
 
         <!-- mail -->
         <div class="tab-panel card-body" data-panel-group="settings" data-panel="mail">
-          <p class="muted" style="margin-bottom:14px">للمالك فقط. خادم SMTP لكل رسائل المنصة (الدعوات، الفواتير، الردود، التنبيهات). اترك الخادم فارغاً لاستخدام إعدادات <span class="mono ltr">MAIL_*</span> في ملف <span class="mono ltr">.env</span>.</p>
+          <p class="muted" style="margin-bottom:14px">للمالك فقط. خادم SMTP لكل رسائل المنصة (الدعوات، استعادة كلمة المرور، الردود، التنبيهات). اترك الخادم فارغاً لاستخدام إعدادات <span class="mono ltr">MAIL_*</span> في ملف <span class="mono ltr">.env</span>.</p>
           <div class="form-grid">
             <div class="field"><label for="mailHost">خادم SMTP</label><input class="input ltr" id="mailHost" data-setting="mail_host" placeholder="smtp.example.com"></div>
             <div class="field"><label for="mailPort">المنفذ</label><input class="input ltr" id="mailPort" data-setting="mail_port" type="number" min="1" max="65535"></div>
