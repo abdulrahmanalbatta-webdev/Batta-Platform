@@ -112,6 +112,41 @@ class SettingControllerTest extends TestCase
         $this->assertSame('no-reply@batta.dev', config('mail.from.address'));
     }
 
+    public function test_the_test_email_says_so_when_mail_only_goes_to_the_log(): void
+    {
+        config(['mail.default' => 'log']);
+        $owner = User::factory()->owner()->create();
+
+        $this->actingAs($owner)->postJson(route('api.settings.test-email'))
+            ->assertJsonValidationErrors('mail_host');
+    }
+
+    public function test_a_new_mail_server_needs_its_password_with_it(): void
+    {
+        $owner = User::factory()->owner()->create();
+
+        $this->actingAs($owner)->putJson(route('api.settings.update'), ['mail_host' => 'smtp-relay.brevo.com', 'mail_username' => 'me@smtp-brevo.com'])
+            ->assertJsonValidationErrors('mail_password');
+        $this->assertNull(app(PlatformSettings::class)->get('mail_host'));
+
+        $this->actingAs($owner)->putJson(route('api.settings.update'), ['mail_host' => 'smtp-relay.brevo.com', 'mail_username' => 'me@smtp-brevo.com', 'mail_password' => 'xsmtpsib-key'])
+            ->assertOk();
+        $this->actingAs($owner)->putJson(route('api.settings.update'), ['mail_from_name' => 'Batta'])->assertOk();
+        $this->assertSame('xsmtpsib-key', app(PlatformSettings::class)->get('mail_password'));
+
+        // clearing the server goes back to .env, no password needed
+        $this->actingAs($owner)->putJson(route('api.settings.update'), ['mail_host' => null])->assertOk();
+    }
+
+    public function test_the_test_email_says_so_when_the_smtp_password_is_missing(): void
+    {
+        config(['mail.default' => 'smtp', 'mail.mailers.smtp.username' => 'me@smtp-brevo.com', 'mail.mailers.smtp.password' => null]);
+        $owner = User::factory()->owner()->create();
+
+        $this->actingAs($owner)->postJson(route('api.settings.test-email'))
+            ->assertJsonValidationErrors('mail_host');
+    }
+
     public function test_sends_a_test_email_to_the_member(): void
     {
         Mail::fake();
