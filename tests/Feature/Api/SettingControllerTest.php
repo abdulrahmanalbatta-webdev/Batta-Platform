@@ -112,6 +112,15 @@ class SettingControllerTest extends TestCase
         $this->assertSame('no-reply@batta.dev', config('mail.from.address'));
     }
 
+    public function test_the_test_email_says_so_when_mail_only_goes_to_the_log(): void
+    {
+        config(['mail.default' => 'log']);
+        $owner = User::factory()->owner()->create();
+
+        $this->actingAs($owner)->postJson(route('api.settings.test-email'))
+            ->assertJsonValidationErrors('mail_host');
+    }
+
     public function test_sends_a_test_email_to_the_member(): void
     {
         Mail::fake();

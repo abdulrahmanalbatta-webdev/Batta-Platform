@@ -18,6 +18,11 @@ class TestEmailController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // with no SMTP server (and MAIL_MAILER=log in .env) the message would only be written to the log
+        if (config('mail.default') === 'log') {
+            throw ValidationException::withMessages(['mail_host' => 'البريد غير مربوط بعد: الرسائل تُكتب في السجل فقط. املأ "خادم SMTP" واحفظ التغييرات، ثم أعد الإرسال.']);
+        }
+
         $email = $request->user()->email;
 
         try {
