@@ -8,6 +8,7 @@ use App\Support\PlatformSettings;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -60,6 +61,12 @@ class AppServiceProvider extends ServiceProvider
             fn (PersonalAccessToken $token, bool $isValid): bool => $isValid && ! ($token->tokenable instanceof Student && $token->tokenable->isSuspended()),
         );
 
+        // behind a load balancer or the host's proxy (TRUSTED_PROXIES), so HTTPS and the visitor's IP come from its
+        // headers; set here because the middleware callback in bootstrap/app.php runs before .env is loaded
+        if (filled(config('app.trusted_proxies'))) {
+            TrustProxies::at(config('app.trusted_proxies'));
+        }
+
         $this->applyPlatformSettings();
 
         // matches the hint on the profile and reset pages: 8+ characters with a number, an upper-case and a lower-case letter
@@ -110,6 +117,11 @@ class AppServiceProvider extends ServiceProvider
                 report($exception);
             }
         };
+
+        // config:cache (and optimize) would write the settings, the SMTP password included, into bootstrap/cache
+        if ($this->app->runningInConsole() && in_array($_SERVER['argv'][1] ?? null, ['config:cache', 'optimize'], true)) {
+            return;
+        }
 
         $apply(false);
         Queue::before(fn () => $apply(true));
