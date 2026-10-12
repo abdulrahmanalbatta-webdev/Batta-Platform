@@ -27,6 +27,24 @@ class CheckHealthCommandTest extends TestCase
             ->assertFailed();
     }
 
+    public function test_failed_jobs_show_what_failed_but_not_the_error_message(): void
+    {
+        DB::table('failed_jobs')->insert([
+            'uuid' => 'f1',
+            'connection' => 'database',
+            'queue' => 'default',
+            'payload' => json_encode(['displayName' => 'App\\Notifications\\StudentPasswordReset']),
+            'exception' => "Symfony\\Component\\Mailer\\Exception\\TransportException: 525 Unauthorized IP 203.0.113.7\n#0 trace",
+            'failed_at' => now(),
+        ]);
+
+        $this->artisan('app:health')
+            ->expectsOutputToContain('1 مهمة فشلت')
+            ->expectsOutputToContain('StudentPasswordReset ← Symfony\\Component\\Mailer\\Exception\\TransportException')
+            ->doesntExpectOutputToContain('203.0.113.7')
+            ->assertFailed();
+    }
+
     public function test_a_ready_platform_passes_without_printing_secrets(): void
     {
         User::factory()->owner()->create();

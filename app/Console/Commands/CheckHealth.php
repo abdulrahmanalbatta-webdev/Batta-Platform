@@ -13,6 +13,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Whether the live platform has what it needs to work: the scheduled tasks running, mail connected, the site
@@ -48,7 +49,12 @@ class CheckHealth extends Command
         );
 
         $failed = DB::table('failed_jobs')->count();
-        $this->check($failed === 0, 'لا مهام فاشلة', "{$failed} مهمة فشلت (آخرها ".DB::table('failed_jobs')->max('failed_at').'): راجع storage/logs.');
+        $this->check($failed === 0, 'لا مهام فاشلة', "{$failed} مهمة فشلت، آخرها:");
+        // what failed and the exception's class, never its message (it can carry addresses or server details)
+        DB::table('failed_jobs')->latest('failed_at')->limit(3)->get()->each(function (object $job): void {
+            $name = json_decode($job->payload, true)['displayName'] ?? '?';
+            $this->line("      {$job->failed_at}  ".class_basename($name).' ← '.Str::before(Str::before($job->exception, ':'), "\n"));
+        });
 
         $mailer = config('mail.default');
         $this->check(
