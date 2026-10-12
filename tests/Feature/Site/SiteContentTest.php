@@ -11,6 +11,7 @@ use App\Models\Review;
 use App\Models\Student;
 use App\Models\Tool;
 use App\Models\ToolCategory;
+use App\Models\User;
 use App\Models\Workshop;
 use App\Support\PlatformSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,6 +36,18 @@ class SiteContentTest extends TestCase
             ->assertJsonMissingPath('data.mail_password')
             ->assertDontSee('very-secret')
             ->assertCookieMissing(config('session.cookie'));
+    }
+
+    public function test_search_engine_verification_codes_reach_the_site_and_are_checked(): void
+    {
+        $owner = User::factory()->owner()->create();
+
+        $this->actingAs($owner)->putJson(route('api.settings.update'), ['google_site_verification' => 'abc"><script>'])->assertJsonValidationErrors('google_site_verification');
+        $this->actingAs($owner)->putJson(route('api.settings.update'), ['google_site_verification' => 'AbC-123_xyz456', 'bing_site_verification' => '1A2B3C4D5E6F7A8B'])->assertOk();
+
+        $this->getJson(route('site.settings'))
+            ->assertJsonPath('data.google_site_verification', 'AbC-123_xyz456')
+            ->assertJsonPath('data.bing_site_verification', '1A2B3C4D5E6F7A8B');
     }
 
     public function test_the_site_origin_may_call_the_api_cross_origin(): void
