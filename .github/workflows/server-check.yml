@@ -1,0 +1,25 @@
+name: server check (alwaysdata)
+
+# Runs "php artisan app:health" on the alwaysdata account over SSH, with the password already saved for the
+# deploy (secret ALWAYSDATA_SSH_PASSWORD), so nobody has to log in to Web SSH: Actions → server check → Run workflow.
+# The output prints no secrets (this repository is public, and so are its Actions logs).
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    if: vars.ALWAYSDATA_ACCOUNT != ''
+    runs-on: ubuntu-latest
+
+    env:
+      ACCOUNT: ${{ vars.ALWAYSDATA_ACCOUNT }}
+      SSHPASS: ${{ secrets.ALWAYSDATA_SSH_PASSWORD }}
+
+    steps:
+      - name: Install sshpass
+        run: sudo apt-get update -q && sudo apt-get install -yq sshpass
+
+      - name: Check the platform
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=accept-new "${ACCOUNT}@ssh-${ACCOUNT}.alwaysdata.net" \
+            'cd ~/batta && echo "Version: $(git rev-parse --short HEAD)" && php artisan app:health'

@@ -94,6 +94,7 @@ php artisan optimize                  # config + routes + views cache
 - **Variables:** `ALWAYSDATA_ACCOUNT`، `DB_DATABASE`، `DB_USERNAME`، `SITE_URL`. **Secrets:** `ALWAYSDATA_SSH_PASSWORD`، `DB_PASSWORD` (حروف وأرقام بدون رموز `"` أو `$`).
 - مرة وحدة بلوحة alwaysdata: PHP 8.5، قاعدة MySQL ومستخدمها، كلمة سر SSH، الموقع **Type: PHP** و**Root directory: `/batta/public`**، ومهمتين مجدولتين كل دقيقة: `cd ~/batta && php artisan schedule:run` و`cd ~/batta && php artisan queue:work --stop-when-empty --max-time=50`.
 - حساب المالك مرة وحدة من Web SSH: `cd ~/batta && php artisan app:create-owner EMAIL "الاسم"`.
+- **فحص السيرفر بدون Web SSH:** من GitHub ← Actions ← **server check (alwaysdata)** ← Run workflow، بيشغّل `php artisan app:health` على الخادم (المهام المجدولة، منفّذ المهام، البريد، رابط الموقع، حساب المالك) وبيطبع شو الناقص بدون أسرار. وبيشتغل كمان بآخر كل نشر.
 
 ### على Laravel Cloud
 

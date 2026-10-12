@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\CheckHealth;
 use App\Enums\Role;
 use App\Jobs\ExportPlatformData;
 use App\Models\Activity;
@@ -7,6 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -52,6 +54,8 @@ Artisan::command('app:create-owner {email} {name} {--generate-password}', functi
 })->purpose('Create the first dashboard owner account');
 
 // needs the scheduler running: "php artisan schedule:work" locally, a cron entry for "schedule:run" in production
+// app:health reads it to tell whether the scheduler's cron is running
+Schedule::call(fn () => Cache::forever(CheckHealth::HEARTBEAT, now()->toIso8601String()))->everyMinute()->name('scheduler:heartbeat');
 Schedule::command('articles:publish-scheduled')->everyMinute()->withoutOverlapping();
 // Sunday morning summary for the owner and admins (does nothing while switched off in the settings)
 Schedule::command('reports:weekly')->weeklyOn(0, '8:00');
