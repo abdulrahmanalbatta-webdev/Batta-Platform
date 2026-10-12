@@ -172,6 +172,21 @@ class SiteContentTest extends TestCase
         Storage::disk('public')->assertMissing($second);
     }
 
+    public function test_the_brand_name_and_logos_reach_the_site(): void
+    {
+        Storage::fake('public');
+        $editor = User::factory()->role(Role::Editor)->create();
+        $this->getJson(route('site.content'))->assertJsonPath('data.brand', ['name' => 'عبد الرحمن البطه', 'logo' => null, 'logo_dark' => null]);
+
+        $logo = $this->actingAs($editor)->postJson(route('api.site-images.store'), ['image' => $this->png('logo.png', 64)])->json('data.path');
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'brand'), ['value' => ['name' => 'Batta Academy', 'logo' => $logo, 'logo_dark' => null]])->assertOk();
+
+        $this->getJson(route('site.content'))
+            ->assertJsonPath('data.brand.name', 'Batta Academy')
+            ->assertJsonPath('data.brand.logo', Storage::disk('public')->url($logo))
+            ->assertJsonPath('data.brand.logo_dark', null);
+    }
+
     public function test_images_must_be_uploaded_ones(): void
     {
         $profile = SiteContent::defaults()['profile'];
