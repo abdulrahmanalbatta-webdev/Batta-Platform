@@ -106,4 +106,6 @@ jobs:
           php artisan queue:restart
           php artisan up
           echo "Deployed $(git rev-parse --short HEAD)"
+          # what still needs setting up on the server (scheduled tasks, mail…); never fails the deploy
+          php artisan app:health || true
           REMOTE
