@@ -480,6 +480,7 @@ if (id) {
 | POST | `project-requests` | `name`, `email`, `service`, `details` (+ `company`, `phone`, `budget`) ← عميل جديد بمرحلة "جديد" وتنبيه |
 | POST | `auth/register` | `name`, `email`, `phone` (واتساب مع مقدّمة الدولة)، `password` + `password_confirmation` (+ `country`, `device_name`). بينبّه الفريق ← `{token, data}`. بيرجع 403 لو التسجيل مسكّر من الإعدادات |
 | POST | `auth/login` | `email`, `password` (+ `device_name`) ← `{token, data}`. الحساب الموقوف 403 |
+| POST | `auth/social/{google\|facebook}` | `token` (access token من نافذة Google أو Facebook بالموقع) + `phone` للحساب الجديد (+ `device_name`). بيتأكد إنه التوكن صادر لتطبيقنا (Google `tokeninfo`، Facebook `debug_token` بالـ App Secret)، وبيلاقي الطالب بمعرّف الحساب عند المزوّد أو ببريده (وبيربطه). حساب جديد بدون `phone` ← 422 على `phone` والموقع بيطلبه وبيبعت نفس التوكن. الحساب الموقوف 403، والتسجيل المسكّر 403 للحسابات الجديدة، والمزوّد غير المضبوط بالإعدادات (الإعدادات ← تسجيل الدخول) 404 |
 | POST | `auth/forgot-password` | بيبعت رابط لـ `site_url/reset-password?token=…&email=…`. نفس الرد سواء البريد موجود أو لا |
 | POST | `auth/reset-password` | `token`, `email`, `password` + `password_confirmation`، وبيطلّع الطالب من كل أجهزته |
 
