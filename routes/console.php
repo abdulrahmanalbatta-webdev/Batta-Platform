@@ -57,6 +57,8 @@ Schedule::command('articles:publish-scheduled')->everyMinute()->withoutOverlappi
 Schedule::command('reports:weekly')->weeklyOn(0, '8:00');
 // activity older than a year (App\Models\Activity::KEEP_DAYS) and read notifications older than 90 days
 Schedule::command('model:prune', ['--model' => [Activity::class]])->daily();
+// students' sign-in tokens a day past their 30-day expiry
+Schedule::command('sanctum:prune-expired', ['--hours' => 24])->daily();
 Schedule::call(fn () => DatabaseNotification::query()->whereNotNull('read_at')->where('created_at', '<', now()->subDays(90))->delete())
     ->daily()
     ->name('notifications:prune-read');

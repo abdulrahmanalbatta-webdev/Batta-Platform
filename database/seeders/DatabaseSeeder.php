@@ -16,8 +16,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // sample accounts with a known password never go into a live database
+        if (app()->isProduction()) {
+            $this->command?->error('The sample data is for local use only; create the owner with app:create-owner.');
+
+            return;
+        }
+
         User::factory()->owner()->create([
-            'name' => 'عبدالرحمن البطة',
+            'name' => 'عبد الرحمن البطه',
             'email' => 'admin@batta.dev',
             'title' => 'مطوّر ويب ومدرّب',
         ]);
