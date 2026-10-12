@@ -15,12 +15,14 @@ use App\Http\Controllers\Site\MyWorkshopController;
 use App\Http\Controllers\Site\ProjectRequestController;
 use App\Http\Controllers\Site\RegisteredStudentController;
 use App\Http\Controllers\Site\SettingsController;
+use App\Http\Controllers\Site\SocialLoginController;
 use App\Http\Controllers\Site\StatsController;
 use App\Http\Controllers\Site\StudentNewPasswordController;
 use App\Http\Controllers\Site\StudentPasswordResetLinkController;
 use App\Http\Controllers\Site\StudentTokenController;
 use App\Http\Controllers\Site\ToolController;
 use App\Http\Controllers\Site\WorkshopController;
+use App\Support\SocialAccounts;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -60,6 +62,7 @@ Route::middleware('throttle:site-forms')->group(function () {
 });
 
 Route::post('/auth/login', [StudentTokenController::class, 'store'])->middleware('throttle:student-login')->name('auth.login');
+Route::post('/auth/social/{provider}', [SocialLoginController::class, 'store'])->whereIn('provider', SocialAccounts::PROVIDERS)->middleware('throttle:site-forms')->name('auth.social');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [StudentTokenController::class, 'destroy'])->name('auth.logout');

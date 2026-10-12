@@ -20,7 +20,7 @@ use Laravel\Sanctum\HasApiTokens;
  * A learner on the public site. Signs in there through the site API with a Sanctum token (routes/site-api.php).
  */
 #[Fillable(['name', 'email', 'phone', 'country'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'google_id', 'facebook_id'])]
 class Student extends Authenticatable
 {
     /** @use HasFactory<StudentFactory> */
@@ -167,6 +167,6 @@ class Student extends Authenticatable
      */
     protected function activityIgnoredAttributes(): array
     {
-        return ['password', 'remember_token'];
+        return ['password', 'remember_token', 'google_id', 'facebook_id'];
     }
 }

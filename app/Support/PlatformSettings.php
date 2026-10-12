@@ -87,6 +87,12 @@ class PlatformSettings
             'ga_property_id' => ['label' => 'رقم الموقع (Property ID)', 'default' => null, 'rules' => ['nullable', 'string', 'regex:/^[0-9]{5,20}$/']],
             'ga_credentials' => ['label' => 'مفتاح حساب الخدمة', 'default' => null, 'rules' => ['nullable', 'string', 'max:10000', new GoogleServiceAccountKey], 'secret' => true, 'owner' => true],
 
+            // signing in on the site with Google and Facebook: the IDs are public (the site's buttons use them),
+            // the Facebook secret checks the tokens the site sends; empty = that button is hidden
+            'google_client_id' => ['label' => 'معرّف عميل Google (Client ID)', 'default' => null, 'rules' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9-]+\.apps\.googleusercontent\.com$/'], 'public' => true],
+            'facebook_app_id' => ['label' => 'معرّف تطبيق Facebook (App ID)', 'default' => null, 'rules' => ['nullable', 'string', 'regex:/^[0-9]{5,25}$/'], 'public' => true],
+            'facebook_app_secret' => ['label' => 'المفتاح السري لتطبيق Facebook (App Secret)', 'default' => null, 'rules' => $secret, 'secret' => true, 'owner' => true],
+
             // team notifications
             'weekly_report' => ['label' => 'التقرير الأسبوعي', 'default' => true, 'rules' => $bool],
 

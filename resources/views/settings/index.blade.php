@@ -20,6 +20,7 @@
         <button class="on" data-tab="general" role="tab">عام</button>
         <button data-tab="mail" role="tab">البريد</button>
         <button data-tab="analytics" role="tab">الإحصاءات</button>
+        <button data-tab="social" role="tab">تسجيل الدخول</button>
         <button data-tab="notifications" role="tab">الإشعارات</button>
         <button data-tab="team" role="tab">الفريق</button>
         <button data-tab="security" role="tab">الأمان</button>
@@ -81,6 +82,23 @@
               <li>في <span class="ltr">Google Cloud Console</span> أنشئ مشروعاً (أو اختر مشروعاً) وفعّل <span class="ltr">Google Analytics Data API</span>.</li>
               <li>من <span class="ltr">IAM &amp; Admin ← Service accounts</span> أنشئ حساب خدمة، ثم من تبويب <span class="ltr">Keys</span> أضف مفتاحاً بصيغة JSON وانسخ محتوى الملف هنا.</li>
               <li>في Google Analytics: الإدارة ← إدارة الوصول إلى الموقع، أضف بريد حساب الخدمة (ينتهي بـ <span class="ltr">iam.gserviceaccount.com</span>) بدور <b>Viewer</b>.</li>
+            </ol>
+          </details>
+        </div>
+
+        <!-- social: "continue with Google / Facebook" on the site's sign-in and sign-up pages -->
+        <div class="tab-panel card-body" data-panel-group="settings" data-panel="social">
+          <p class="muted" style="margin-bottom:14px">أزرار "المتابعة بحساب Google" و"المتابعة بحساب Facebook" في صفحتي الدخول والتسجيل بالموقع. يظهر كل زر بعد تعبئة بياناته، ويبقى الدخول بالبريد وكلمة المرور كما هو. الحساب الجديد يُطلب منه رقم واتساب مرة واحدة.</p>
+          <div class="form-grid">
+            <div class="field full"><label for="googleClient">معرّف عميل Google (Client ID)</label><input class="input ltr" id="googleClient" data-setting="google_client_id" placeholder="1234567890-abc123.apps.googleusercontent.com" autocomplete="off"></div>
+            <div class="field"><label for="facebookApp">معرّف تطبيق Facebook (App ID)</label><input class="input ltr" id="facebookApp" data-setting="facebook_app_id" placeholder="123456789012345" inputmode="numeric" autocomplete="off"></div>
+            <div class="field"><label for="facebookSecret">المفتاح السري لتطبيق Facebook (App Secret) — للمالك فقط</label><input class="input ltr" id="facebookSecret" type="password" data-secret="facebook_app_secret" autocomplete="new-password"></div>
+          </div>
+          <details style="margin-top:20px">
+            <summary style="cursor:pointer;font-weight:700;color:var(--fg)">من أين أحصل عليها؟</summary>
+            <ol class="muted" style="margin:10px 0 0;padding-inline-start:20px;line-height:1.9">
+              <li><b>Google:</b> في <span class="ltr">Google Cloud Console ← APIs &amp; Services</span> اضبط <span class="ltr">OAuth consent screen</span> (External)، ثم من <span class="ltr">Credentials ← Create credentials ← OAuth client ID</span> اختر <span class="ltr">Web application</span> وأضف رابط الموقع في <span class="ltr">Authorized JavaScript origins</span>، وانسخ الـ <span class="ltr">Client ID</span>.</li>
+              <li><b>Facebook:</b> في <span class="ltr">developers.facebook.com ← My Apps ← Create App</span> اختر <span class="ltr">Authenticate and request data from users with Facebook Login</span>، وأضف نطاق الموقع في <span class="ltr">App settings ← Basic ← App domains</span> ورابط سياسة الخصوصية، ثم انسخ <span class="ltr">App ID</span> و<span class="ltr">App Secret</span> وانشر التطبيق (<span class="ltr">Live</span>).</li>
             </ol>
           </details>
         </div>
