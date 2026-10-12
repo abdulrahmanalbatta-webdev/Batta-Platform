@@ -5,6 +5,11 @@ name: server check (alwaysdata)
 # The output prints no secrets (this repository is public, and so are its Actions logs).
 on:
   workflow_dispatch:
+    inputs:
+      retry_failed:
+        description: 'Retry the failed jobs first (e.g. emails that failed before mail was set up)'
+        type: boolean
+        default: false
 
 jobs:
   check:
@@ -20,6 +25,8 @@ jobs:
         run: sudo apt-get update -q && sudo apt-get install -yq sshpass
 
       - name: Check the platform
+        env:
+          RETRY: ${{ inputs.retry_failed && 'php artisan queue:retry all && php artisan queue:work --stop-when-empty --max-time=50 &&' || '' }}
         run: |
           sshpass -e ssh -o StrictHostKeyChecking=accept-new "${ACCOUNT}@ssh-${ACCOUNT}.alwaysdata.net" \
-            'cd ~/batta && echo "Version: $(git rev-parse --short HEAD)" && php artisan app:health'
+            "cd ~/batta && echo \"Version: \$(git rev-parse --short HEAD)\" && ${RETRY} php artisan app:health"
