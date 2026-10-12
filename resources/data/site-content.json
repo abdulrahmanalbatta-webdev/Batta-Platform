@@ -1,4 +1,9 @@
 {
+  "brand": {
+    "name": "عبد الرحمن البطه",
+    "logo": null,
+    "logo_dark": null
+  },
   "announcement": {
     "enabled": true,
     "text": "دفعة \"برنامج المطوّر المستقل\" تبدأ 15 نوفمبر، وبقي 7 مقاعد فقط.",
