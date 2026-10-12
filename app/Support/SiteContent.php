@@ -74,6 +74,15 @@ class SiteContent
         $long = fn (string $label, int $max = 1000, bool $required = true): array => ['type' => 'textarea', 'label' => $label, 'max' => $max, 'required' => $required];
         $strings = fn (string $label, int $items, int $max = 120): array => ['type' => 'strings', 'label' => $label, 'max_items' => $items, 'max' => $max];
         $block = fn (string $label, array $fields): array => ['type' => 'object', 'label' => $label, 'fields' => $fields];
+        $legal = fn (string $label, string $path): array => ['group' => 'legal', 'label' => $label, 'hint' => "صفحة {$path} في الموقع.", 'type' => 'object', 'fields' => [
+            'title' => $text('العنوان', 80),
+            'updated' => $text('تاريخ آخر تحديث', 40, false),
+            'intro' => $long('المقدمة', 1500),
+            'sections' => ['type' => 'list', 'label' => 'الأقسام', 'max_items' => 20, 'title' => 'title', 'item' => [
+                'title' => $text('العنوان', 120),
+                'paragraphs' => ['type' => 'strings', 'label' => 'النص — فقرة لكل سطر', 'max_items' => 12, 'max' => 2000, 'long' => true],
+            ]],
+        ]];
         $intro = fn (string $label, bool $withText = true): array => $block($label, [
             'eyebrow' => $text('العنوان الصغير', 40),
             'title' => $text('العنوان', 120),
@@ -286,6 +295,10 @@ class SiteContent
                     'quote_by' => $text('صاحب الاقتباس', 80),
                 ]),
             ]],
+
+            // الخصوصية والشروط: صفحتا /privacy و/terms (روابطهما في التذييل وصفحة التسجيل، ويطلبهما Google وFacebook للدخول بحساباتهما)
+            'privacy' => $legal('سياسة الخصوصية', '/privacy'),
+            'terms' => $legal('الشروط والأحكام', '/terms'),
         ];
     }
 
@@ -296,7 +309,7 @@ class SiteContent
      */
     public static function groups(): array
     {
-        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'work' => 'الآراء والأسئلة', 'texts' => 'نصوص الصفحات'];
+        return ['home' => 'الرئيسية', 'about' => 'عنك', 'services' => 'الخدمات والباقات', 'work' => 'الآراء والأسئلة', 'texts' => 'نصوص الصفحات', 'legal' => 'الخصوصية والشروط'];
     }
 
     /**

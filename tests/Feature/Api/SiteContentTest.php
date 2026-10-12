@@ -187,6 +187,19 @@ class SiteContentTest extends TestCase
             ->assertJsonPath('data.brand.logo_dark', null);
     }
 
+    public function test_the_privacy_and_terms_pages_reach_the_site_and_are_editable(): void
+    {
+        $this->getJson(route('site.content'))
+            ->assertJsonPath('data.privacy.title', 'سياسة الخصوصية')
+            ->assertJsonPath('data.terms.title', 'الشروط والأحكام');
+
+        $privacy = SiteContent::defaults()['privacy'];
+        $privacy['sections'] = [['title' => 'حذف بياناتك', 'paragraphs' => ['راسلنا لحذف حسابك.']]];
+        $this->actingAs(User::factory()->role(Role::Editor)->create())->putJson(route('api.site-content.update', 'privacy'), ['value' => $privacy])->assertOk();
+
+        $this->getJson(route('site.content'))->assertJsonPath('data.privacy.sections', [['title' => 'حذف بياناتك', 'paragraphs' => ['راسلنا لحذف حسابك.']]]);
+    }
+
     public function test_images_must_be_uploaded_ones(): void
     {
         $profile = SiteContent::defaults()['profile'];
