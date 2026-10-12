@@ -87,6 +87,11 @@ class PlatformSettings
             'ga_property_id' => ['label' => 'رقم الموقع (Property ID)', 'default' => null, 'rules' => ['nullable', 'string', 'regex:/^[0-9]{5,20}$/']],
             'ga_credentials' => ['label' => 'مفتاح حساب الخدمة', 'default' => null, 'rules' => ['nullable', 'string', 'max:10000', new GoogleServiceAccountKey], 'secret' => true, 'owner' => true],
 
+            // ownership of the site for Google Search Console and Bing Webmaster Tools: the site's build writes them
+            // into every page as <meta name="google-site-verification"> / <meta name="msvalidate.01">
+            'google_site_verification' => ['label' => 'كود تحقق Google Search Console', 'default' => null, 'rules' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{10,100}$/'], 'public' => true],
+            'bing_site_verification' => ['label' => 'كود تحقق Bing Webmaster Tools', 'default' => null, 'rules' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{10,100}$/'], 'public' => true],
+
             // signing in on the site with Google and Facebook: the IDs are public (the site's buttons use them),
             // the Facebook secret checks the tokens the site sends; empty = that button is hidden
             'google_client_id' => ['label' => 'معرّف عميل Google (Client ID)', 'default' => null, 'rules' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9-]+\.apps\.googleusercontent\.com$/'], 'public' => true],
