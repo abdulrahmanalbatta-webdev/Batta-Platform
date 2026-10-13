@@ -25,7 +25,7 @@ class ImportContentCommandTest extends TestCase
         File::put($this->path.'/articles/start-laravel.md', "---\ntitle: كيف تبدأ Laravel\ncategory: tutorials\nexcerpt: \"خطوات عملية\"\nmeta_description: دليل للمبتدئين\n---\n\n## أول خطوة\n\nثبّت PHP.\n");
         File::put($this->path.'/articles/broken.md', "---\ntitle: بدون تصنيف\n---\nنص");
         File::put($this->path.'/tools.json', json_encode([
-            ['category' => 'المحررات', 'name' => 'VS Code', 'short' => 'VS', 'color' => '#007ACC', 'why' => 'محرر خفيف بإضافات لكل شيء', 'since' => 2018, 'url' => 'https://code.visualstudio.com'],
+            ['category' => 'المحررات', 'name' => 'VS Code', 'short' => 'VS', 'color' => '#007ACC', 'why' => 'محرر خفيف بإضافات لكل شيء', 'since' => 2018, 'url' => 'https://code.visualstudio.com', 'is_affiliate' => true],
             ['category' => 'المحررات', 'name' => 'Bad', 'short' => 'TOOLONG', 'color' => 'blue', 'why' => '', 'since' => 1],
         ]));
     }
@@ -53,6 +53,7 @@ class ImportContentCommandTest extends TestCase
         $tool = Tool::query()->sole();
         $this->assertSame('VS Code', $tool->name);
         $this->assertFalse($tool->is_published);
+        $this->assertTrue($tool->is_affiliate);
         $this->assertSame('المحررات', $tool->category->name);
     }
 
