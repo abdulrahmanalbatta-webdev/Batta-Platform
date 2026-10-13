@@ -1,1 +1,156 @@
-[]
+[
+  {
+    "category": "إضافات VS Code",
+    "name": "Live Server",
+    "short": "LS",
+    "color": "#5C2D91",
+    "why": "يحدّث الصفحة تلقائياً مع كل حفظ أثناء تطوير HTML وCSS",
+    "since": 2023,
+    "url": "https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer"
+  },
+  {
+    "category": "إضافات VS Code",
+    "name": "Prettier",
+    "short": "Pr",
+    "color": "#F7B93E",
+    "why": "ينسّق الكود تلقائياً عند الحفظ ليبقى مرتباً وموحّداً في كل المشروع",
+    "since": 2023,
+    "url": "https://prettier.io"
+  },
+  {
+    "category": "إضافات VS Code",
+    "name": "ESLint",
+    "short": "ES",
+    "color": "#4B32C3",
+    "why": "يكشف أخطاء JavaScript والممارسات الضعيفة أثناء الكتابة قبل التشغيل",
+    "since": 2023,
+    "url": "https://eslint.org"
+  },
+  {
+    "category": "إضافات VS Code",
+    "name": "Tailwind CSS IntelliSense",
+    "short": "TW",
+    "color": "#06B6D4",
+    "why": "إكمال تلقائي لكلاسات Tailwind مع معاينة الألوان والقيم داخل المحرر",
+    "since": 2023,
+    "url": "https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss"
+  },
+  {
+    "category": "إضافات VS Code",
+    "name": "Auto Rename Tag",
+    "short": "AR",
+    "color": "#E44D26",
+    "why": "يعدّل وسم الإغلاق تلقائياً عند تعديل وسم الفتح في HTML وVue",
+    "since": 2023,
+    "url": "https://marketplace.visualstudio.com/items?itemName=formulahendry.auto-rename-tag"
+  },
+  {
+    "category": "إضافات VS Code",
+    "name": "Error Lens",
+    "short": "EL",
+    "color": "#E51400",
+    "why": "يعرض الأخطاء والتحذيرات بجانب السطر نفسه فتراها فوراً دون البحث عنها",
+    "since": 2023,
+    "url": "https://marketplace.visualstudio.com/items?itemName=usernamehw.errorlens"
+  },
+  {
+    "category": "إضافات VS Code",
+    "name": "GitLens",
+    "short": "GL",
+    "color": "#2A9D8F",
+    "why": "يوضّح من عدّل كل سطر ومتى ولماذا، ويسهّل تتبّع تاريخ الكود",
+    "since": 2023,
+    "url": "https://www.gitkraken.com/gitlens"
+  },
+  {
+    "category": "إضافات VS Code",
+    "name": "Vue - Official",
+    "short": "Vu",
+    "color": "#42B883",
+    "why": "الدعم الرسمي لملفات Vue: تلوين وإكمال تلقائي وفحص أنواع دقيق",
+    "since": 2023,
+    "url": "https://marketplace.visualstudio.com/items?itemName=Vue.volar"
+  },
+  {
+    "category": "إضافات VS Code",
+    "name": "Laravel (VS Code)",
+    "short": "LV",
+    "color": "#FF2D20",
+    "why": "الإضافة الرسمية لـ Laravel: إكمال للمسارات والإعدادات والقوالب والانتقال إليها",
+    "since": 2023,
+    "url": "https://marketplace.visualstudio.com/items?itemName=laravel.vscode-laravel"
+  },
+  {
+    "category": "إضافات VS Code",
+    "name": "PHP Intelephense",
+    "short": "PH",
+    "color": "#777BB4",
+    "why": "إكمال ذكي وفحص أخطاء وتنقّل سريع في كود PHP",
+    "since": 2023,
+    "url": "https://intelephense.com"
+  },
+  {
+    "category": "إضافات Chrome",
+    "name": "Fake Filler",
+    "short": "FF",
+    "color": "#F97316",
+    "why": "يملأ النماذج ببيانات وهمية بضغطة لاختبارها بسرعة",
+    "since": 2023,
+    "url": "https://fakefiller.com"
+  },
+  {
+    "category": "إضافات Chrome",
+    "name": "Vue.js devtools",
+    "short": "VD",
+    "color": "#42B883",
+    "why": "يفحص مكوّنات Vue وحالتها ومساراتها مباشرة من المتصفح",
+    "since": 2023,
+    "url": "https://devtools.vuejs.org"
+  },
+  {
+    "category": "إضافات Chrome",
+    "name": "Wappalyzer",
+    "short": "Wa",
+    "color": "#4608AD",
+    "why": "يكشف التقنيات التي بُني بها أي موقع: الإطار والاستضافة وأدوات التحليل",
+    "since": 2023,
+    "url": "https://www.wappalyzer.com"
+  },
+  {
+    "category": "إضافات Chrome",
+    "name": "ColorZilla",
+    "short": "CZ",
+    "color": "#E2231A",
+    "why": "يلتقط أي لون من الصفحة ويعطيك قيمته مباشرة لاستخدامها في CSS",
+    "since": 2023,
+    "url": "https://www.colorzilla.com"
+  },
+  {
+    "category": "إضافات Chrome",
+    "name": "WhatFont",
+    "short": "WF",
+    "color": "#222222",
+    "why": "يعرّفك على الخط المستخدم في أي نص بمجرد المرور عليه",
+    "since": 2023,
+    "url": "https://chengyinliu.com/whatfont.html"
+  },
+  {
+    "category": "موارد التصميم",
+    "name": "Hero Patterns",
+    "short": "HP",
+    "color": "#9C92AC",
+    "why": "خلفيات بنقوش SVG مجانية قابلة للتخصيص تضيف لمسة احترافية لتصميمك",
+    "since": 2023,
+    "url": "https://heropatterns.com"
+  },
+  {
+    "category": "الذكاء الاصطناعي",
+    "name": "Manus AI",
+    "short": "MA",
+    "color": "#111111",
+    "why": "وكيل ذكاء اصطناعي ينفّذ مهام كاملة: بحث، وتحليل، ونماذج أولية بسرعة",
+    "since": 2023,
+    "url": "https://manus.im/app?code=UMILPMED2VTCWGH",
+    "is_affiliate": true
+  }
+]

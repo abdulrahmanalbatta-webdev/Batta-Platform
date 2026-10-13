@@ -24,7 +24,7 @@ use Illuminate\Validation\Rule;
  * whatever was edited, published or deleted in the dashboard is never touched again. Runs on every deploy.
  *
  * content/articles/*.md: a "---" header of key: value lines (title, slug, category, excerpt, meta_title,
- * meta_description), then the Markdown body. content/tools.json: [{category, name, short, color, why, since, url}].
+ * meta_description), then the Markdown body. content/tools.json: [{category, name, short, color, why, since, url, is_affiliate?}].
  */
 #[Signature('content:import {--path= : The content folder (default: the repository\'s content/)}')]
 #[Description('Add new articles and tools from the content/ folder as drafts')]
@@ -96,6 +96,7 @@ class ImportContent extends Command
             'why' => ['required', 'string', 'max:120'],
             'since' => ['required', 'integer', 'between:1990,2100'],
             'url' => ['nullable', 'url:http,https', 'max:255'],
+            'is_affiliate' => ['sometimes', 'boolean'],
         ]);
         if ($validator->fails()) {
             $this->warn("{$tool['name']}: ".$validator->errors()->first());
