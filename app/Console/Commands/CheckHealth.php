@@ -79,14 +79,45 @@ class CheckHealth extends Command
         $this->line('  تحديث الموقع فوراً بعد النشر: '.(filled($settings->get('site_rebuild_token')) ? 'مفعّل' : 'غير مضبوط (كل 6 ساعات)'));
         $this->line('  Google Analytics: '.(filled($settings->get('ga_measurement_id')) ? 'الموقع يرسل الزيارات' : 'غير مضبوط').($analytics->configured() ? '، واللوحة تقرأ التقارير' : ''));
 
-        $log = storage_path('logs/laravel-'.now()->format('Y-m-d').'.log');
-        $errors = is_file($log) ? substr_count((string) file_get_contents($log), '.ERROR:') : 0;
-        $this->line("  أخطاء في سجل اليوم: {$errors}");
+        $errors = $this->todaysErrors();
+        $this->line('  أخطاء في سجل اليوم: '.count($errors));
+        foreach (array_slice($errors, -5) as $error) {
+            $this->line("      {$error}");
+        }
 
         $this->line('');
         $this->problems === 0 ? $this->info('كل شيء جاهز.') : $this->warn("{$this->problems} مشكلة تحتاج إصلاحاً.");
 
         return $this->problems === 0 ? self::SUCCESS : self::FAILURE;
+    }
+
+    /**
+     * Today's logged errors as "time  exception class ← file:line", never the message (it can carry addresses,
+     * queries or server details).
+     *
+     * @return list<string>
+     */
+    private function todaysErrors(): array
+    {
+        $log = storage_path('logs/laravel-'.now()->format('Y-m-d').'.log');
+        if (! is_file($log)) {
+            return [];
+        }
+
+        $entries = preg_split('/^(?=\[\d{4}-\d\d-\d\d[ T])/m', (string) file_get_contents($log), flags: PREG_SPLIT_NO_EMPTY);
+
+        return collect($entries)
+            ->filter(fn (string $entry): bool => preg_match('/^\[[^\]]+\] \w+\.ERROR:/', $entry) === 1)
+            ->map(function (string $entry): string {
+                preg_match('/^\[(?:\d{4}-\d\d-\d\d[ T])?(\d\d:\d\d:\d\d)/', $entry, $time);
+                if (preg_match('/\[object\] \(([\w\\\\]+)\(code: [^)]*\): .* at (\S+\.php):(\d+)\)\s*\[stacktrace\]/s', $entry, $exception) !== 1) {
+                    return ($time[1] ?? '?').'  خطأ بلا استثناء (الرسالة مخفية)';
+                }
+
+                return ($time[1] ?? '?').'  '.str_replace('\\\\', '\\', $exception[1]).' ← '.Str::after($exception[2], base_path().'/').':'.$exception[3];
+            })
+            ->values()
+            ->all();
     }
 
     private function check(bool $passes, string $ok, string $problem): void
