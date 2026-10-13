@@ -176,15 +176,16 @@ class SiteContentTest extends TestCase
     {
         Storage::fake('public');
         $editor = User::factory()->role(Role::Editor)->create();
-        $this->getJson(route('site.content'))->assertJsonPath('data.brand', ['name' => 'عبد الرحمن البطه', 'logo' => null, 'logo_dark' => null]);
+        $this->getJson(route('site.content'))->assertJsonPath('data.brand', ['name' => 'عبد الرحمن البطه', 'logo' => null, 'logo_dark' => null, 'logo_has_name' => false]);
 
         $logo = $this->actingAs($editor)->postJson(route('api.site-images.store'), ['image' => $this->png('logo.png', 64)])->json('data.path');
-        $this->actingAs($editor)->putJson(route('api.site-content.update', 'brand'), ['value' => ['name' => 'Batta Academy', 'logo' => $logo, 'logo_dark' => null]])->assertOk();
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'brand'), ['value' => ['name' => 'Batta Academy', 'logo' => $logo, 'logo_dark' => null, 'logo_has_name' => true]])->assertOk();
 
         $this->getJson(route('site.content'))
             ->assertJsonPath('data.brand.name', 'Batta Academy')
             ->assertJsonPath('data.brand.logo', Storage::disk('public')->url($logo))
-            ->assertJsonPath('data.brand.logo_dark', null);
+            ->assertJsonPath('data.brand.logo_dark', null)
+            ->assertJsonPath('data.brand.logo_has_name', true);
     }
 
     public function test_the_privacy_and_terms_pages_reach_the_site_and_are_editable(): void

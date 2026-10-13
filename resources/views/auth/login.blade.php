@@ -6,7 +6,7 @@
 @section('content')
   <div class="auth">
     <section class="auth-form">
-      <a href="{{ route('dashboard') }}" style="display:inline-flex"><img src="{{ asset('assets/dashboard/img/logo.png') }}" alt="Batta" style="height:34px;width:auto"></a>
+      <a href="{{ route('dashboard') }}" style="display:inline-flex"><img src="{{ asset('assets/dashboard/img/lockup.png') }}" alt="{{ config('app.name') }}" style="height:44px;width:auto"></a>
       <div class="inner">
         <div>
           <h1 style="font-size:28px">مرحباً بعودتك 👋</h1>
@@ -35,7 +35,7 @@
 
     <aside class="auth-side">
       <div class="inner">
-        <img src="{{ asset('assets/dashboard/img/logo-white.png') }}" alt="" style="height:40px;width:auto;align-self:flex-start">
+        <img src="{{ asset('assets/dashboard/img/lockup-white.png') }}" alt="" style="height:52px;width:auto;align-self:flex-start">
         <h2>كل منصتك في لوحة واحدة: الدورات، الورش، الطلاب والتسجيلات.</h2>
         <p style="opacity:.75">تابع التسجيلات لحظياً، ردّ على طلابك، وأدر طلبات المشاريع من مكان واحد.</p>
         <div style="display:flex;gap:28px;flex-wrap:wrap">
