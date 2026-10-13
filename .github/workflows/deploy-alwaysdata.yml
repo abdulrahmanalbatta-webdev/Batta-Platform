@@ -101,6 +101,8 @@ jobs:
           if [ -n "$key" ]; then echo "$key" >> .env; else echo 'APP_KEY=' >> .env && php artisan key:generate --force; fi
 
           php artisan migrate --force
+          # new articles and tools from content/ arrive as drafts for the owner to review and publish
+          php artisan content:import
           [ -L public/storage ] || php artisan storage:link
           php artisan optimize
           php artisan queue:restart
