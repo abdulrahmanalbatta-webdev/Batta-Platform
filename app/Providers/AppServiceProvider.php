@@ -2,8 +2,17 @@
 
 namespace App\Providers;
 
+use App\Enums\ArticleStatus;
+use App\Jobs\RebuildSite;
+use App\Models\Article;
+use App\Models\Course;
+use App\Models\LearningPath;
+use App\Models\SiteBlock;
 use App\Models\Student;
+use App\Models\Tool;
+use App\Models\ToolCategory;
 use App\Models\User;
+use App\Models\Workshop;
 use App\Support\PlatformSettings;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
@@ -68,6 +77,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->applyPlatformSettings();
+        $this->rebuildSiteOnContentChanges();
 
         // matches the hint on the profile and reset pages: 8+ characters with a number, an upper-case and a lower-case letter
         Password::defaults(function (): Password {
@@ -95,6 +105,21 @@ class AppServiceProvider extends ServiceProvider
                 default => $message,
             };
         });
+    }
+
+    /**
+     * What the public site shows changed: rebuild its ready-made pages (App\Jobs\RebuildSite). Drafts don't count.
+     */
+    private function rebuildSiteOnContentChanges(): void
+    {
+        // live now, or its status just changed (published → draft takes it off the site)
+        Article::saved(fn (Article $article) => ($article->status === ArticleStatus::Published || $article->wasChanged('status')) && RebuildSite::soon());
+        Article::deleted(fn (Article $article) => $article->status === ArticleStatus::Published && RebuildSite::soon());
+
+        foreach ([Course::class, Workshop::class, LearningPath::class, Tool::class, ToolCategory::class, SiteBlock::class] as $model) {
+            $model::saved(fn () => RebuildSite::soon());
+            $model::deleted(fn () => RebuildSite::soon());
+        }
     }
 
     /**

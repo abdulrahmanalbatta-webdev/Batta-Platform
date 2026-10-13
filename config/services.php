@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // the public site is rebuilt (its GitHub Actions deploy workflow) after content changes, so search
+    // engines and AI crawlers get the new pages at once; the token is a dashboard setting (site_rebuild_token)
+    'site_deploy' => [
+        'repository' => env('SITE_REPOSITORY', 'abdulrahmanalbatta-webdev/Batta-Website'),
+        'workflow' => env('SITE_DEPLOY_WORKFLOW', 'deploy-vercel.yml'),
+        'ref' => env('SITE_DEPLOY_REF', 'main'),
+    ],
+
 ];

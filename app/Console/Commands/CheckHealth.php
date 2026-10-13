@@ -76,6 +76,7 @@ class CheckHealth extends Command
         $this->line('اختياري:');
         $this->line('  الدخول بـ Google: '.($social->enabled('google') ? 'مفعّل' : 'غير مضبوط'));
         $this->line('  الدخول بـ Facebook: '.($social->enabled('facebook') ? 'مفعّل' : 'غير مضبوط'));
+        $this->line('  تحديث الموقع فوراً بعد النشر: '.(filled($settings->get('site_rebuild_token')) ? 'مفعّل' : 'غير مضبوط (كل 6 ساعات)'));
         $this->line('  Google Analytics: '.(filled($settings->get('ga_measurement_id')) ? 'الموقع يرسل الزيارات' : 'غير مضبوط').($analytics->configured() ? '، واللوحة تقرأ التقارير' : ''));
 
         $log = storage_path('logs/laravel-'.now()->format('Y-m-d').'.log');
