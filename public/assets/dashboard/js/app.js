@@ -282,8 +282,8 @@
     const sidebar = `
       <aside class="sidebar" id="sidebar" aria-label="القائمة الجانبية">
         <a class="sb-brand" href="${url('dashboard')}">
-          <img src="${asset('img/logo-white.png')}" alt="">
-          <span class="sb-text"><b>${esc(CFG.app_name)}</b><small>لوحة التحكم</small></span>
+          <img class="sb-mark" src="${asset('img/logo-white.png')}" alt="">
+          <img class="sb-lockup" src="${asset('img/lockup-white.png')}" alt="${esc(CFG.app_name)}">
         </a>
         <nav class="sb-nav">${navHTML}</nav>
         <div class="sb-foot">

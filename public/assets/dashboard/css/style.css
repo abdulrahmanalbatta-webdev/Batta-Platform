@@ -137,6 +137,9 @@ button { cursor: pointer; }
   border-bottom: 1px solid var(--ink-line);
 }
 .sb-brand img { width: 36px; height: 36px; object-fit: contain; }
+/* the logo with the name drawn in; the collapsed rail shows the mark alone */
+.sb-brand img.sb-lockup { width: auto; height: 44px; }
+.sb-brand .sb-mark { display: none; }
 .sb-brand b { display: block; color: #fff; font-size: 15.5px; line-height: 1.3; }
 .sb-brand small { font-size: 11.5px; color: var(--ink-text); }
 .sb-nav {
@@ -1277,6 +1280,8 @@ button { cursor: pointer; }
   .sb-collapsed { --sidebar-w: 84px; }
   .sb-collapsed .sb-text { opacity: 0; transition-delay: 0s; transition-duration: 0.1s; }
   .sb-collapsed .sb-brand { padding-inline: 24px; }
+  .sb-collapsed .sb-brand .sb-lockup { display: none; }
+  .sb-collapsed .sb-brand .sb-mark { display: block; }
   .sb-collapsed .sb-link { padding-inline: 18px; }
   .sb-collapsed .sb-link .count {
     position: absolute;

@@ -2,7 +2,8 @@
   "brand": {
     "name": "عبد الرحمن البطه",
     "logo": null,
-    "logo_dark": null
+    "logo_dark": null,
+    "logo_has_name": false
   },
   "announcement": {
     "enabled": false,
