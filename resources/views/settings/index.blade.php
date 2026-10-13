@@ -44,6 +44,9 @@
             <div class="setting-row"><div><b>التعليقات</b><p>تعليقات الطلاب وردودهم على المقالات والدورات والورش، مع مراجعتها قبل النشر.</p></div><label class="switch"><input type="checkbox" data-setting="article_comments"><span class="track"></span></label></div>
           </div>
           <p class="muted" style="font-size:12.5px;margin-top:14px">هذه الإعدادات يقرأها الموقع العام من <span class="mono ltr">/api/v1/settings</span>.</p>
+          <div class="form-grid" style="margin-top:22px">
+            <div class="field full"><label for="siteRebuild">رمز GitHub لتحديث الموقع فوراً — للمالك فقط</label><input class="input ltr" id="siteRebuild" type="password" data-secret="site_rebuild_token" autocomplete="new-password"><small class="muted">مع هذا الرمز يُعاد بناء الموقع تلقائياً بعد دقيقتين من نشر مقال أو تعديل دورة أو ورشة أو مسار أو أداة أو نصوص الموقع، فتصل للبحث والذكاء الاصطناعي فوراً. بدونه: كل 6 ساعات. من GitHub ← Settings ← Developer settings ← Fine-grained tokens: مستودع <span class="mono ltr">Batta-Website</span> فقط، وصلاحية <b>Actions: Read and write</b>.</small></div>
+          </div>
         </div>
 
         <!-- mail -->

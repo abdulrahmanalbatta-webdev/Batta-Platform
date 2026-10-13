@@ -92,6 +92,10 @@ class PlatformSettings
             'google_site_verification' => ['label' => 'كود تحقق Google Search Console', 'default' => null, 'rules' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{10,100}$/'], 'public' => true],
             'bing_site_verification' => ['label' => 'كود تحقق Bing Webmaster Tools', 'default' => null, 'rules' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{10,100}$/'], 'public' => true],
 
+            // a GitHub token allowed to run the site's deploy workflow (Actions: write on that repository only), so
+            // published content reaches the site's ready-made pages within minutes (App\Jobs\RebuildSite)
+            'site_rebuild_token' => ['label' => 'رمز GitHub لتحديث الموقع', 'default' => null, 'rules' => $secret, 'secret' => true, 'owner' => true],
+
             // signing in on the site with Google and Facebook: the IDs are public (the site's buttons use them),
             // the Facebook secret checks the tokens the site sends; empty = that button is hidden
             'google_client_id' => ['label' => 'معرّف عميل Google (Client ID)', 'default' => null, 'rules' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9-]+\.apps\.googleusercontent\.com$/'], 'public' => true],
