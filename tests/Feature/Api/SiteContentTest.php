@@ -147,7 +147,7 @@ class SiteContentTest extends TestCase
             ->assertJsonPath('data.texts_general.maintenance', SiteContent::defaults()['texts_general']['maintenance']);
     }
 
-    public function test_the_cutout_photo_is_uploaded_shown_as_a_url_and_deleted_when_dropped(): void
+    public function test_an_image_field_is_uploaded_shown_as_a_url_and_deleted_when_dropped(): void
     {
         Storage::fake('public');
         $editor = User::factory()->role(Role::Editor)->create();
@@ -156,35 +156,35 @@ class SiteContentTest extends TestCase
         $first = $upload();
         $second = $upload();
 
-        $profile = SiteContent::defaults()['profile'];
-        $profile['cutout'] = $first;
-        $this->actingAs($editor)->putJson(route('api.site-content.update', 'profile'), ['value' => $profile])->assertOk();
+        $brand = SiteContent::defaults()['brand'];
+        $brand['logo'] = $first;
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'brand'), ['value' => $brand])->assertOk();
 
-        $this->getJson(route('site.content'))->assertJsonPath('data.profile.cutout', Storage::disk('public')->url($first));
-        $this->actingAs($editor)->getJson(route('api.site-content.show'))->assertJsonPath('data.profile.cutout', $first);
+        $this->getJson(route('site.content'))->assertJsonPath('data.brand.logo', Storage::disk('public')->url($first));
+        $this->actingAs($editor)->getJson(route('api.site-content.show'))->assertJsonPath('data.brand.logo', $first);
 
-        $profile['cutout'] = $second;
-        $this->actingAs($editor)->putJson(route('api.site-content.update', 'profile'), ['value' => $profile])->assertOk();
+        $brand['logo'] = $second;
+        $this->actingAs($editor)->putJson(route('api.site-content.update', 'brand'), ['value' => $brand])->assertOk();
         Storage::disk('public')->assertMissing($first);
         Storage::disk('public')->assertExists($second);
 
-        $this->actingAs($editor)->deleteJson(route('api.site-content.destroy', 'profile'))->assertOk();
+        $this->actingAs($editor)->deleteJson(route('api.site-content.destroy', 'brand'))->assertOk();
         Storage::disk('public')->assertMissing($second);
     }
 
-    public function test_the_words_behind_the_home_photo_reach_the_site_and_stay_three_at_most(): void
+    public function test_what_you_offer_around_the_home_logo_reaches_the_site_and_stays_six_at_most(): void
     {
         $editor = User::factory()->role(Role::Editor)->create();
-        $this->getJson(route('site.content'))->assertJsonPath('data.hero.backdrop', ['DEVELOPER', 'AL BATTA', 'MENTOR']);
+        $this->getJson(route('site.content'))->assertJsonPath('data.hero.hubs', ['تطوير مواقع', 'متاجر إلكترونية', 'لوحات تحكم', 'دورات برمجة', 'ورش عمل', 'مسارات تعلّم']);
 
         $this->actingAs($editor)
-            ->putJson(route('api.site-content.update', 'hero'), ['value' => ['words' => ['موقعك'], 'backdrop' => ['A', 'B', 'C', 'D']]])
+            ->putJson(route('api.site-content.update', 'hero'), ['value' => ['words' => ['موقعك'], 'hubs' => array_fill(0, 7, 'خدمة')]])
             ->assertUnprocessable();
         $this->actingAs($editor)
-            ->putJson(route('api.site-content.update', 'hero'), ['value' => ['words' => ['موقعك'], 'backdrop' => ['CODER', 'BATTA']]])
+            ->putJson(route('api.site-content.update', 'hero'), ['value' => ['words' => ['موقعك'], 'hubs' => ['تطوير مواقع', 'ورش عمل']]])
             ->assertOk();
 
-        $this->getJson(route('site.content'))->assertJsonPath('data.hero.backdrop', ['CODER', 'BATTA']);
+        $this->getJson(route('site.content'))->assertJsonPath('data.hero.hubs', ['تطوير مواقع', 'ورش عمل']);
     }
 
     public function test_the_brand_name_and_logos_reach_the_site(): void
@@ -218,22 +218,20 @@ class SiteContentTest extends TestCase
 
     public function test_images_must_be_uploaded_ones(): void
     {
-        $profile = SiteContent::defaults()['profile'];
-        $profile['cutout'] = '../../.env';
+        $brand = SiteContent::defaults()['brand'];
+        $brand['logo'] = '../../.env';
 
-        $this->actingAs(User::factory()->role(Role::Editor)->create())->putJson(route('api.site-content.update', 'profile'), ['value' => $profile])
-            ->assertJsonValidationErrors('value.cutout');
+        $this->actingAs(User::factory()->role(Role::Editor)->create())->putJson(route('api.site-content.update', 'brand'), ['value' => $brand])
+            ->assertJsonValidationErrors('value.logo');
     }
 
-    public function test_a_profile_saved_before_the_cutout_existed_has_none(): void
+    public function test_a_hero_saved_before_the_offer_list_existed_gets_the_original_list(): void
     {
-        $profile = SiteContent::defaults()['profile'];
-        unset($profile['cutout']);
-        SiteBlock::query()->create(['key' => 'profile', 'value' => $profile]);
+        SiteBlock::query()->create(['key' => 'hero', 'value' => ['words' => ['موقعك']]]);
 
         $this->getJson(route('site.content'))
-            ->assertJsonPath('data.profile.cutout', null)
-            ->assertJsonPath('data.profile.name', $profile['name']);
+            ->assertJsonPath('data.hero.hubs', SiteContent::defaults()['hero']['hubs'])
+            ->assertJsonPath('data.hero.words', ['موقعك']);
     }
 
     /**

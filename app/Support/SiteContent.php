@@ -103,9 +103,9 @@ class SiteContent
                 'link' => $text('الرابط', 255, false, 'صفحة في الموقع مثل /courses، أو رابط كامل'),
                 'link_label' => $text('نص الرابط', 40, false),
             ]],
-            'hero' => ['group' => 'home', 'label' => 'العنوان الرئيسي', 'hint' => 'الكلمات التي تتبدّل في عنوان الصفحة الرئيسية، والكلمات الكبيرة خلف صورتك.', 'type' => 'object', 'fields' => [
+            'hero' => ['group' => 'home', 'label' => 'العنوان الرئيسي', 'hint' => 'الكلمات التي تتبدّل في عنوان الصفحة الرئيسية، وما تقدّمه حول شعارك بجانبه.', 'type' => 'object', 'fields' => [
                 'words' => $strings('الكلمات المتبدّلة', 8, 30),
-                'backdrop' => $strings('الكلمات الكبيرة خلف صورتك (الثانية بالأزرق)', 3, 14),
+                'hubs' => $strings('ما تقدّمه (حول شعارك في أعلى الرئيسية)', 6, 24),
             ]],
             'technologies' => ['group' => 'about', 'label' => 'شريط الأدوات (صفحة من أنا)', 'type' => 'tags', 'options' => self::TECHNOLOGIES, 'max_items' => 30],
             'reasons' => ['group' => 'home', 'label' => 'لماذا تعمل معي', 'type' => 'strings', 'max_items' => 12, 'max' => 160],
@@ -114,10 +114,8 @@ class SiteContent
             'profile' => ['group' => 'about', 'label' => 'التعريف', 'type' => 'object', 'fields' => [
                 'name' => $text('الاسم', 60),
                 'role' => $text('المسمّى', 80),
-                'available' => $text('حالة التوفّر (بجانب صورتك في الرئيسية)', 60, false, 'مثل: متاح لمشاريع جديدة. اتركه فارغاً لإخفائه'),
                 'short' => $long('النبذة القصيرة (الرئيسية)', 600),
                 'story' => ['type' => 'strings', 'label' => 'القصة (صفحة من أنا) — فقرة لكل سطر', 'max_items' => 8, 'max' => 1000, 'long' => true],
-                'cutout' => ['type' => 'image', 'label' => 'صورتك في أعلى الرئيسية', 'hint' => 'PNG أو WebP شفافة بدون خلفية (من remove.bg مثلاً)، من الخصر أو الصدر للأعلى، وتظهر أمام الكلمات الكبيرة. فارغة: يظهر أول حرف من اسمك.'],
             ]],
             'highlights' => ['group' => 'about', 'label' => 'ماذا أفعل', 'type' => 'list', 'max_items' => 6, 'title' => 'title', 'item' => [
                 'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],
