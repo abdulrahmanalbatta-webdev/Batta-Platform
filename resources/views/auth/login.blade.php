@@ -38,11 +38,6 @@
         <img src="{{ asset('assets/dashboard/img/lockup-white.png') }}" alt="" style="height:52px;width:auto;align-self:flex-start">
         <h2>كل منصتك في لوحة واحدة: الدورات، الورش، الطلاب والتسجيلات.</h2>
         <p style="opacity:.75">تابع التسجيلات لحظياً، ردّ على طلابك، وأدر طلبات المشاريع من مكان واحد.</p>
-        <div style="display:flex;gap:28px;flex-wrap:wrap">
-          <div><b style="font-size:26px;color:#fff;display:block">2,300+</b><small style="opacity:.7">طالب</small></div>
-          <div><b style="font-size:26px;color:#fff;display:block">7</b><small style="opacity:.7">دورات</small></div>
-          <div><b style="font-size:26px;color:#fff;display:block">4.9★</b><small style="opacity:.7">متوسط التقييم</small></div>
-        </div>
       </div>
     </aside>
   </div>
