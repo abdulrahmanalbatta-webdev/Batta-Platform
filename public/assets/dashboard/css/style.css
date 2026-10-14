@@ -1131,7 +1131,8 @@ button { cursor: pointer; }
   .chat.has-active .chat-list, .chat:not(.has-active) .chat-main { display: none; }
   .chat-back { display: grid !important; }
   .chat-head { padding-inline: 12px; }
-  .notif-menu { width: calc(100vw - 32px); }
+  /* the bell isn't at the screen's edge, so the list anchored to it ran off the screen: pin it under the top bar instead */
+  .notif-menu { position: fixed; top: calc(var(--topbar-h) + 8px); inset-inline: 16px; width: auto; max-height: calc(100vh - var(--topbar-h) - 32px); overflow-y: auto; }
   .auth { grid-template-columns: minmax(0, 1fr); }
   .auth-side { display: none; }
   .stat-row { grid-template-columns: repeat(3, minmax(0, 1fr)); padding-inline: 16px; }
