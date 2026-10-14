@@ -11,7 +11,7 @@
       <a href="{{ route('login') }}" style="display:inline-flex"><img src="{{ asset('assets/dashboard/img/lockup.png') }}" alt="{{ config('app.name') }}" style="height:44px;width:auto"></a>
       <div class="inner">
         <div>
-          <h1 style="font-size:28px">{{ $invite ? 'أهلاً بك في الفريق 👋' : 'كلمة مرور جديدة' }}</h1>
+          <h1 style="font-size:28px">{{ $invite ? 'أهلاً بك في الفريق' : 'كلمة مرور جديدة' }}</h1>
           <p class="muted">{{ $invite ? 'اختر كلمة مرور لحسابك لتبدأ استخدام لوحة التحكم.' : 'اختر كلمة مرور جديدة لحسابك.' }}</p>
         </div>
         <form id="resetForm" novalidate style="display:flex;flex-direction:column;gap:16px" data-token="{{ $token }}" data-invite="{{ $invite ? '1' : '0' }}">
