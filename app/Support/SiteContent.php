@@ -292,8 +292,6 @@ class SiteContent
                         'icon' => ['type' => 'icon', 'label' => 'الأيقونة'],
                         'text' => $text('النص', 80),
                     ]],
-                    'quote' => $long('الاقتباس', 300),
-                    'quote_by' => $text('صاحب الاقتباس', 80),
                 ]),
             ]],
 
