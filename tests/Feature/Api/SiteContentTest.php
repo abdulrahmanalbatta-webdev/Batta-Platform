@@ -172,6 +172,21 @@ class SiteContentTest extends TestCase
         Storage::disk('public')->assertMissing($second);
     }
 
+    public function test_the_words_behind_the_home_photo_reach_the_site_and_stay_three_at_most(): void
+    {
+        $editor = User::factory()->role(Role::Editor)->create();
+        $this->getJson(route('site.content'))->assertJsonPath('data.hero.backdrop', ['DEVELOPER', 'AL BATTA', 'MENTOR']);
+
+        $this->actingAs($editor)
+            ->putJson(route('api.site-content.update', 'hero'), ['value' => ['words' => ['موقعك'], 'backdrop' => ['A', 'B', 'C', 'D']]])
+            ->assertUnprocessable();
+        $this->actingAs($editor)
+            ->putJson(route('api.site-content.update', 'hero'), ['value' => ['words' => ['موقعك'], 'backdrop' => ['CODER', 'BATTA']]])
+            ->assertOk();
+
+        $this->getJson(route('site.content'))->assertJsonPath('data.hero.backdrop', ['CODER', 'BATTA']);
+    }
+
     public function test_the_brand_name_and_logos_reach_the_site(): void
     {
         Storage::fake('public');
