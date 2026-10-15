@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\RetriesDelivery;
 use App\Support\AppUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,7 +14,7 @@ use Illuminate\Notifications\Notification;
  */
 class EmailChanged extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RetriesDelivery;
 
     public function __construct(public string $name, public string $newEmail) {}
 

@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\User;
+use App\Notifications\Concerns\RetriesDelivery;
 use App\Support\AppUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,7 +15,7 @@ use Illuminate\Notifications\Notification;
  */
 class WeeklyReport extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RetriesDelivery;
 
     /**
      * @param  array<string, mixed>  $report  RegistrationsReport::build(7)
