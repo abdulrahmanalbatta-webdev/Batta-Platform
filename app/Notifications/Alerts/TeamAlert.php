@@ -4,6 +4,7 @@ namespace App\Notifications\Alerts;
 
 use App\Enums\AlertType;
 use App\Models\User;
+use App\Notifications\Concerns\RetriesDelivery;
 use App\Support\AppUrl;
 use App\Support\PlatformSettings;
 use Illuminate\Bus\Queueable;
@@ -17,7 +18,7 @@ use Illuminate\Notifications\Notification;
  */
 abstract class TeamAlert extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RetriesDelivery;
 
     /**
      * Skip the alert if its subject is deleted before the queue sends the email.

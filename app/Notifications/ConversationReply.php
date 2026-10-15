@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\ConversationMessage;
+use App\Notifications\Concerns\RetriesDelivery;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Attachment;
@@ -14,7 +15,7 @@ use Illuminate\Notifications\Notification;
  */
 class ConversationReply extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RetriesDelivery;
 
     /**
      * Skip the email if the message is deleted before the queue sends it.
