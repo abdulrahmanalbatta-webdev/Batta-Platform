@@ -9,7 +9,6 @@ use App\Models\Article;
 use App\Models\Course;
 use App\Models\Lead;
 use App\Models\Review;
-use App\Models\Student;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
@@ -21,13 +20,12 @@ class StatsController extends Controller
     public const CACHE_SECONDS = 600;
 
     /**
-     * The real numbers the site shows in its stats strips: students, published courses, delivered projects
+     * The real numbers the site shows in its stats strips (no student count; that stays private): published courses, delivered projects
      * (won leads), published articles, and the average of the published reviews.
      */
     public function __invoke(): JsonResponse
     {
         $stats = Cache::remember('site.stats', self::CACHE_SECONDS, fn (): array => [
-            'students' => Student::query()->count(),
             'courses' => Course::query()->published()->count(),
             'projects' => Lead::query()->where('stage', LeadStage::Won)->count(),
             'articles' => Article::query()->published()->count(),

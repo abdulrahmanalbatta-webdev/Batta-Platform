@@ -105,7 +105,7 @@ class Course extends Model
     }
 
     /**
-     * The numbers a course card shows: enrolments, and the count and average of published reviews.
+     * The numbers a course card shows: the count and average of published reviews.
      *
      * @param  Builder<Course>  $query
      */
@@ -113,7 +113,7 @@ class Course extends Model
     {
         $published = fn ($reviews) => $reviews->where('status', ReviewStatus::Published);
 
-        $query->withCount(['enrollments', 'reviews' => $published])
+        $query->withCount(['reviews' => $published])
             ->withAvg(['reviews' => $published], 'rating');
     }
 }

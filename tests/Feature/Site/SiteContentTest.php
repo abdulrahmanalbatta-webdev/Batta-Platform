@@ -74,7 +74,7 @@ class SiteContentTest extends TestCase
         $response->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.title', 'Laravel من الصفر')
-            ->assertJsonPath('data.0.students', 1)
+            ->assertJsonMissingPath('data.0.students')
             ->assertJsonPath('data.0.rating', 4)
             ->assertJsonPath('data.0.reviews', 1)
             ->assertJsonPath('data.0.outcomes', ['مشروع منشور'])
@@ -177,6 +177,6 @@ class SiteContentTest extends TestCase
 
         $this->getJson(route('site.stats'))
             ->assertOk()
-            ->assertExactJson(['data' => ['students' => 3 + 3 /* the reviews' students */, 'courses' => 2, 'projects' => 1, 'articles' => 1, 'reviews' => 2, 'rating' => 4.5]]);
+            ->assertExactJson(['data' => ['courses' => 2, 'projects' => 1, 'articles' => 1, 'reviews' => 2, 'rating' => 4.5]]);
     }
 }

@@ -70,7 +70,7 @@ class MyCourseController extends Controller
 
         return response()->json([
             'message' => 'تم تسجيلك في الدورة.',
-            'data' => (new CourseResource($course->loadCount('enrollments')))->resolve($request),
+            'data' => (new CourseResource($course))->resolve($request),
         ], $enrollment->wasRecentlyCreated ? 201 : 200);
     }
 
