@@ -43,7 +43,6 @@ class CourseResource extends JsonResource
             'category' => $this->category->value,
             'category_label' => $this->category->label(),
             'has_certificate' => $this->has_certificate,
-            'students' => (int) ($this->enrollments_count ?? $this->enrollments()->count()),
             'rating' => round((float) ($this->reviews_avg_rating ?? 0), 1),
             'reviews' => (int) ($this->reviews_count ?? 0),
             'cover_url' => $this->cover_url,

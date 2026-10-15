@@ -55,7 +55,7 @@ class RegistrationTest extends TestCase
         $response->assertCreated()
             ->assertJsonPath('message', 'تم تسجيلك في الدورة.')
             ->assertJsonPath('data.slug', 'laravel')
-            ->assertJsonPath('data.students', 1);
+            ->assertJsonMissingPath('data.students');
         $this->assertDatabaseHas('enrollments', ['student_id' => $student->id, 'course_id' => $course->id]);
         Notification::assertSentTo([$owner, $admin, $support], RegistrationReceived::class,
             fn (RegistrationReceived $alert): bool => $alert->student->is($student) && $alert->item->is($course));
