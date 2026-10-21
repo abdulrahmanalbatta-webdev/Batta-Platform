@@ -101,7 +101,7 @@ abstract class TeamAlert extends Notification implements ShouldQueue
 
     private function url(): string
     {
-        $routes = ['leads' => 'leads.index', 'reviews' => 'reviews.index', 'comments' => 'comments.index', 'messages' => 'messages.index', 'students' => 'students.index'];
+        $routes = ['leads' => 'leads.index', 'reviews' => 'reviews.index', 'comments' => 'comments.index', 'messages' => 'messages.index', 'students' => 'students.index', 'mentorship' => 'mentorship.index'];
 
         return AppUrl::route($routes[$this->page()], $this->params());
     }

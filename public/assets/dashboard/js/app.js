@@ -139,6 +139,7 @@
   const newLeads = COUNTS.leads || 0;
   const pendingReviews = COUNTS.reviews || 0;
   const pendingComments = COUNTS.comments || 0;
+  const mentorshipWaiting = COUNTS.mentorship || 0;
 
   const NAV = [
     { label: 'الرئيسية', items: [
@@ -155,6 +156,7 @@
     ] },
     { label: 'العملاء', items: [
       { page: 'leads', href: url('leads'), icon: 'briefcase', label: 'طلبات المشاريع', count: newLeads },
+      { page: 'mentorship', href: url('mentorship'), icon: 'award', label: 'الإرشاد', count: mentorshipWaiting, requires: 'manage_mentorship' },
     ] },
     { label: 'المجتمع', items: [
       { page: 'students', href: url('students'), icon: 'users', label: 'الطلاب' },
@@ -270,6 +272,7 @@
       <div class="sb-group">
         <div class="sb-label">${g.label}</div>
         ${g.items
+          .filter((it) => !it.requires || can(it.requires))
           .map((it) => {
             const active = it.page === page || (it.also || []).includes(page);
             const count = it.count ? `<span class="count ${it.hot ? 'hot' : ''}">${it.count}</span>` : '';
@@ -474,6 +477,7 @@
     reviews: ['star', 'c-amber'],
     comments: ['chat', 'c-amber'],
     messages: ['chat', 'c-violet'],
+    mentorship: ['award', 'c-violet'],
     export: ['download', 'c-blue'],
   };
   let notifications = [];
@@ -846,6 +850,7 @@
     'منشورة': 'success', 'منشور': 'success', 'مكتمل': 'success', 'نشط': 'success', 'مفتوحة': 'success', 'مقبول': 'success',
     'مسودة': '', 'غير نشط': '', 'منتهية': '', 'منتهي': '',
     'قيد المراجعة': 'warning', 'بانتظار المراجعة': 'warning', 'معلّق': 'warning', 'مجدول': 'info', 'مكتملة': 'violet',
+    'جديد': 'info', 'بانتظار الدفع': 'warning', 'بانتظار مراجعة الدفع': 'warning', 'مدفوع': 'success', 'تم تحديد الموعد': 'info',
     'مسترد': 'violet', 'فشل': 'danger', 'موقوف': 'danger', 'مخفي': 'danger', 'مرفوض': 'danger',
   };
   const badge = (status) => `<span class="badge dot ${STATUS_TONE[status] ?? ''}">${esc(status)}</span>`;

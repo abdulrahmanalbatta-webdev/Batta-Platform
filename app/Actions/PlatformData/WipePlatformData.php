@@ -4,6 +4,7 @@ namespace App\Actions\PlatformData;
 
 use App\Models\Activity;
 use App\Models\ConversationMessage;
+use App\Models\MentorshipRequest;
 use App\Models\Student;
 use App\Models\User;
 use App\Support\DashboardSummary;
@@ -45,6 +46,7 @@ class WipePlatformData
         Storage::disk('public')->deleteDirectory('articles');
         Storage::disk('public')->deleteDirectory('tools');
         Storage::disk(ConversationMessage::attachmentDisk())->deleteDirectory('conversations');
+        Storage::disk(MentorshipRequest::proofDisk())->deleteDirectory('mentorship');
 
         Cache::forget(DashboardSummary::CACHE_KEY);
         foreach (RegistrationsReport::PERIODS as $days) {

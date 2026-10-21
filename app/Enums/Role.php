@@ -76,6 +76,14 @@ enum Role: string
     }
 
     /**
+     * The paid mentorship: reviewing requests and payment receipts, and its settings.
+     */
+    public function canManageMentorship(): bool
+    {
+        return $this === self::Owner;
+    }
+
+    /**
      * Exporting or wiping all of the platform's data.
      */
     public function canManagePlatformData(): bool

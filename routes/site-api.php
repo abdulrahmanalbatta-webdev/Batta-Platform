@@ -9,7 +9,9 @@ use App\Http\Controllers\Site\ContentController;
 use App\Http\Controllers\Site\CourseController;
 use App\Http\Controllers\Site\CourseReviewController;
 use App\Http\Controllers\Site\LearningPathController;
+use App\Http\Controllers\Site\MentorshipController;
 use App\Http\Controllers\Site\MyCourseController;
+use App\Http\Controllers\Site\MyMentorshipController;
 use App\Http\Controllers\Site\MyReviewController;
 use App\Http\Controllers\Site\MyWorkshopController;
 use App\Http\Controllers\Site\ProjectRequestController;
@@ -51,6 +53,7 @@ Route::get('/workshops/{key}/comments', [CommentController::class, 'index'])->de
 Route::get('/paths', [LearningPathController::class, 'index'])->name('paths.index');
 Route::get('/paths/{slug}', [LearningPathController::class, 'show'])->name('paths.show');
 Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
+Route::get('/mentorship', MentorshipController::class)->name('mentorship');
 Route::post('/tools/{tool}/click', [ToolController::class, 'click'])->whereNumber('tool')->name('tools.click');
 
 Route::middleware('throttle:site-forms')->group(function () {
@@ -78,6 +81,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me/workshops', [MyWorkshopController::class, 'index'])->name('me.workshops.index');
     Route::post('/me/workshops/{workshop}', [MyWorkshopController::class, 'store'])->whereNumber('workshop')->middleware('throttle:site-forms')->name('me.workshops.store');
     Route::delete('/me/workshops/{workshop}', [MyWorkshopController::class, 'destroy'])->whereNumber('workshop')->name('me.workshops.destroy');
+    // the paid mentorship: apply, follow the request, send the payment receipt
+    Route::get('/me/mentorship', [MyMentorshipController::class, 'show'])->name('me.mentorship.show');
+    Route::post('/me/mentorship', [MyMentorshipController::class, 'store'])->middleware('throttle:site-forms')->name('me.mentorship.store');
+    Route::post('/me/mentorship/proof', [MyMentorshipController::class, 'proof'])->middleware('throttle:site-forms')->name('me.mentorship.proof');
     Route::put('/me/courses/{slug}/review', [MyReviewController::class, 'update'])->name('me.courses.review');
     Route::post('/articles/{key}/comments', [CommentController::class, 'store'])->defaults('type', 'article')->middleware('throttle:site-forms')->name('articles.comments.store');
     Route::post('/courses/{key}/comments', [CommentController::class, 'store'])->defaults('type', 'course')->middleware('throttle:site-forms')->name('courses.comments.store');

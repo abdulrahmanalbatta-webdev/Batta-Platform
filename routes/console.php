@@ -1,9 +1,11 @@
 <?php
 
 use App\Console\Commands\CheckHealth;
+use App\Enums\MentorshipStatus;
 use App\Enums\Role;
 use App\Jobs\ExportPlatformData;
 use App\Models\Activity;
+use App\Models\MentorshipRequest;
 use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Notifications\DatabaseNotification;
@@ -73,5 +75,18 @@ Schedule::call(function () {
         ->filter(fn (string $path): bool => $disk->lastModified($path) < now()->subDays(ExportPlatformData::KEEP_DAYS)->getTimestamp())
         ->each(fn (string $path) => $disk->delete($path));
 })->daily()->name('exports:prune');
+// accepted mentorship requests whose payment window passed: closed, and the seat freed
+Schedule::command('mentorship:expire-payments')->everyFiveMinutes()->withoutOverlapping();
+// payment receipts of finished mentorship requests are kept 6 months (MentorshipRequest::KEEP_PROOF_MONTHS)
+Schedule::call(function () {
+    MentorshipRequest::query()
+        ->whereIn('status', [MentorshipStatus::Completed, MentorshipStatus::Rejected, MentorshipStatus::Expired])
+        ->whereNotNull('proof_path')
+        ->where('updated_at', '<', now()->subMonths(MentorshipRequest::KEEP_PROOF_MONTHS))
+        ->each(function (MentorshipRequest $request): void {
+            $request->deleteProof();
+            $request->forceFill(['proof_path' => null])->saveQuietly();
+        });
+})->daily()->name('mentorship:prune-receipts');
 // a database backup every night, kept 14 days in storage/app/private/backups — copy them off the server too
 Schedule::command('app:backup-database')->dailyAt('3:00')->withoutOverlapping()->when(fn (): bool => config('database.backups'));

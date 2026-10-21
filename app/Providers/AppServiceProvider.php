@@ -55,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('moderate-reviews', fn (User $user): bool => $user->role->canModerateReviews());
         Gate::define('manage-leads', fn (User $user): bool => $user->role->canManageLeads());
         Gate::define('manage-settings', fn (User $user): bool => $user->role->canManageSettings());
+        Gate::define('manage-mentorship', fn (User $user): bool => $user->role->canManageMentorship());
         Gate::define('manage-platform-data', fn (User $user): bool => $user->role->canManagePlatformData());
 
         // 300 calls a minute per member (per address before sign-in): far above normal use, low enough to stop scripts
