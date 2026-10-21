@@ -34,6 +34,7 @@ class MentorshipRequestResource extends JsonResource
             'price' => $this->price,
             'goal' => $this->goal,
             'decision_note' => in_array($this->status, [MentorshipStatus::Rejected, MentorshipStatus::Accepted], true) ? $this->decision_note : null,
+            'accepted_at' => $this->accepted_at?->toIso8601String(),
             'payment_due_at' => $this->payment_due_at?->toIso8601String(),
             'wallets' => $awaitsPayment ? app(MentorshipSettings::class)->wallets() : [],
             'proof_uploaded_at' => $this->proof_uploaded_at?->toIso8601String(),
