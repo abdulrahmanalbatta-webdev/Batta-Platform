@@ -142,7 +142,7 @@ class MentorshipTest extends TestCase
             ->assertJsonPath('data.status', 'accepted')
             ->assertJsonPath('data.wallets.0.number', '0599000000');
 
-        $this->post(route('site.me.mentorship.proof'), ['proof' => UploadedFile::fake()->create('receipt.pdf', 120, 'application/pdf'), 'transaction_ref' => 'TX-778'], [...$headers, 'Accept' => 'application/json'])
+        $this->post(route('site.me.mentorship.proof'), ['proof' => UploadedFile::fake()->createWithContent('receipt.pdf', "%PDF-1.4\n%test receipt\n"), 'transaction_ref' => 'TX-778'], [...$headers, 'Accept' => 'application/json'])
             ->assertOk()
             ->assertJsonPath('data.status', 'proof_submitted')
             ->assertJsonPath('data.wallets', []);
@@ -153,11 +153,42 @@ class MentorshipTest extends TestCase
         Notification::assertSentTo($owner, MentorshipRequested::class, fn (MentorshipRequested $alert): bool => $alert->receipt);
     }
 
+    public function test_the_receipt_also_comes_as_a_data_url(): void
+    {
+        Storage::fake(MentorshipRequest::proofDisk());
+        $request = MentorshipRequest::factory()->accepted()->create();
+        // a 1×1 PNG
+        $png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+        $this->postJson(route('site.me.mentorship.proof'), ['proof' => "data:image/png;base64,{$png}", 'proof_name' => 'إشعار.png'], $this->signIn($request->student))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'proof_submitted');
+
+        $request->refresh();
+        $this->assertStringEndsWith('.png', $request->proof_path);
+        $this->assertSame('إشعار.png', $request->proof_name);
+        Storage::disk(MentorshipRequest::proofDisk())->assertExists($request->proof_path);
+    }
+
+    public function test_a_receipt_is_judged_by_its_bytes_not_its_label(): void
+    {
+        $request = MentorshipRequest::factory()->accepted()->create();
+
+        $this->postJson(route('site.me.mentorship.proof'), ['proof' => 'data:image/png;base64,'.base64_encode('<?php echo 1;')], $this->signIn($request->student))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('proof');
+
+        $this->postJson(route('site.me.mentorship.proof'), ['proof' => 'not a file'], $this->signIn($request->student))
+            ->assertJsonValidationErrors('proof');
+
+        $this->assertSame(MentorshipStatus::Accepted, $request->fresh()->status);
+    }
+
     public function test_no_receipt_after_the_payment_window_closed(): void
     {
         $request = MentorshipRequest::factory()->accepted()->create(['payment_due_at' => now()->subMinute()]);
 
-        $this->post(route('site.me.mentorship.proof'), ['proof' => UploadedFile::fake()->create('receipt.pdf', 120, 'application/pdf')], [...$this->signIn($request->student), 'Accept' => 'application/json'])
+        $this->post(route('site.me.mentorship.proof'), ['proof' => UploadedFile::fake()->createWithContent('receipt.pdf', "%PDF-1.4\n%test receipt\n")], [...$this->signIn($request->student), 'Accept' => 'application/json'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('proof');
     }
