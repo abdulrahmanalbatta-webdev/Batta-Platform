@@ -13,6 +13,7 @@ enum AlertType: string
     case Comments = 'comments';
     case Messages = 'messages';
     case Students = 'students';
+    case Mentorship = 'mentorship';
 
     /**
      * Whether members of this role receive this alert.
@@ -24,6 +25,7 @@ enum AlertType: string
             self::Reviews, self::Comments => $role->canModerateReviews(),
             self::Messages => $role->canAnswerMessages(),
             self::Students, self::Registrations => $role->canManageStudents(),
+            self::Mentorship => $role->canManageMentorship(),
         };
     }
 

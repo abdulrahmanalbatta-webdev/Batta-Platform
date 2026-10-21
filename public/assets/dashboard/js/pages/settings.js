@@ -48,6 +48,7 @@ document.addEventListener('app:ready', () => {
     comments: ['تعليق بانتظار المراجعة', 'بريد عند وصول تعليق جديد على مقال أو دورة أو ورشة.'],
     messages: ['رسائل الطلاب والعملاء', 'بريد عند وصول رسالة جديدة.'],
     students: ['طالب جديد أنشأ حساباً في الموقع', 'بريد فيه اسمه ورقم واتساب للتواصل معه.'],
+    mentorship: ['طلبات الإرشاد', 'بريد عند وصول طلب إرشاد جديد، أو إشعار تحويل بانتظار المراجعة.'],
   };
   const prefs = App.user?.email_preferences || {};
   $('#notifPrefs').innerHTML = Object.entries(prefs)

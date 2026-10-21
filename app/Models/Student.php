@@ -59,7 +59,11 @@ class Student extends Authenticatable
             }
         });
 
-        static::deleting(fn (Student $student) => $student->tokens()->delete());
+        static::deleting(function (Student $student): void {
+            $student->tokens()->delete();
+            // the rows go with the student (cascade); their payment receipts would stay on the disk
+            $student->mentorshipRequests()->each(fn (MentorshipRequest $request) => $request->deleteProof());
+        });
     }
 
     /**
@@ -92,6 +96,14 @@ class Student extends Authenticatable
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    /**
+     * @return HasMany<MentorshipRequest, $this>
+     */
+    public function mentorshipRequests(): HasMany
+    {
+        return $this->hasMany(MentorshipRequest::class);
     }
 
     /**

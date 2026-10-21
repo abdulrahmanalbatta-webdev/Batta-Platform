@@ -23,6 +23,10 @@ use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\DataWipeController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\LearningPathController;
+use App\Http\Controllers\Api\MentorshipProofController;
+use App\Http\Controllers\Api\MentorshipRequestController;
+use App\Http\Controllers\Api\MentorshipRequestStatusController;
+use App\Http\Controllers\Api\MentorshipSettingsController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\NotificationReadController;
@@ -162,6 +166,15 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('can:manage-leads')->group(function () {
         Route::apiResource('leads', LeadController::class)->only(['store', 'update', 'destroy']);
+    });
+
+    // the paid mentorship: requests, payment receipts and its settings, owner only (Role::canManageMentorship)
+    Route::middleware('can:manage-mentorship')->group(function () {
+        Route::apiResource('mentorship-requests', MentorshipRequestController::class)->only(['index', 'update', 'destroy']);
+        Route::put('/mentorship-requests/{mentorship_request}/status', [MentorshipRequestStatusController::class, 'update'])->name('mentorship-requests.status.update');
+        Route::get('/mentorship-requests/{mentorship_request}/proof', [MentorshipProofController::class, 'show'])->name('mentorship-requests.proof');
+        Route::get('/mentorship-settings', [MentorshipSettingsController::class, 'show'])->name('mentorship-settings.show');
+        Route::put('/mentorship-settings', [MentorshipSettingsController::class, 'update'])->name('mentorship-settings.update');
     });
 
     // the public site's own content (announcement, about, services, case studies…): members read, content editors change it

@@ -46,6 +46,7 @@ class UserResource extends JsonResource
                 'moderate_reviews' => $this->role->canModerateReviews(),
                 'manage_leads' => $this->role->canManageLeads(),
                 'manage_settings' => $this->role->canManageSettings(),
+                'manage_mentorship' => $this->role->canManageMentorship(),
                 'manage_platform_data' => $this->role->canManagePlatformData(),
             ],
             'can' => [

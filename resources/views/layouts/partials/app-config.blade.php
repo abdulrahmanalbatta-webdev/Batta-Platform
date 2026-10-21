@@ -27,6 +27,7 @@
             'article-edit' => route('articles.edit', '__ID__'),
             'tools' => route('tools.index'),
             'leads' => route('leads.index'),
+            'mentorship' => route('mentorship.index'),
             'students' => route('students.index'),
             'site-content' => route('site-content.index'),
             'messages' => route('messages.index'),

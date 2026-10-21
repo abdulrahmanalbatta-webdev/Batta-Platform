@@ -42,6 +42,7 @@ Route::middleware('auth')->prefix('dashboard')->group(function () {
     Route::view('/site-content', 'site-content.index')->name('site-content.index');
 
     Route::view('/leads', 'leads.index')->name('leads.index');
+    Route::view('/mentorship', 'mentorship.index')->middleware('can:manage-mentorship')->name('mentorship.index');
 
     // community
     Route::view('/students', 'students.index')->name('students.index');

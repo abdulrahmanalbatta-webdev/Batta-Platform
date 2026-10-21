@@ -13,6 +13,7 @@ final class PlatformTables
         'workshop_registrations',
         'reviews',
         'comments',
+        'mentorship_requests',
         'conversation_messages',
         'conversations',
         'students',
