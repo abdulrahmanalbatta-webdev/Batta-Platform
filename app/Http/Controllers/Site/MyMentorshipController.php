@@ -14,6 +14,7 @@ use App\Support\TeamAlerts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -94,8 +95,19 @@ class MyMentorshipController extends Controller
     }
 
     /**
+     * Receipt types and the extension they're stored under.
+     */
+    private const PROOF_TYPES = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'application/pdf' => 'pdf'];
+
+    private const PROOF_MAX_BYTES = 5 * 1024 * 1024;
+
+    /**
      * Send the payment receipt (an image or a PDF) for an accepted request, before the payment window closes.
      * Sending another replaces the first.
+     *
+     * The site sends it inside the JSON body as a data URL ("data:image/jpeg;base64,…") with its file name:
+     * the host's firewall turns down every cross-site multipart upload with a 403 before it reaches the app.
+     * A regular file upload is still accepted.
      *
      * @throws ValidationException
      */
@@ -105,9 +117,12 @@ class MyMentorshipController extends Controller
         $student = $request->user();
 
         $validated = $request->validate([
-            'proof' => ['required', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp,pdf'],
+            'proof' => ['required'],
+            'proof_name' => ['nullable', 'string', 'max:200'],
             'transaction_ref' => ['nullable', 'string', 'max:100'],
         ], [], ['proof' => 'إشعار التحويل', 'transaction_ref' => 'رقم العملية']);
+
+        [$contents, $extension, $name] = $this->receipt($request, $validated);
 
         $mentorship = $student->mentorshipRequests()->latest('id')->first();
 
@@ -115,12 +130,14 @@ class MyMentorshipController extends Controller
             throw ValidationException::withMessages(['proof' => 'لا يوجد طلب بانتظار الدفع، أو انتهت مهلة رفع الإشعار.']);
         }
 
-        $file = $validated['proof'];
+        $path = "mentorship/{$mentorship->id}/".Str::random(40).".{$extension}";
+        Storage::disk(MentorshipRequest::proofDisk())->put($path, $contents);
+
         $mentorship->deleteProof();
         $mentorship->forceFill([
             'status' => MentorshipStatus::ProofSubmitted,
-            'proof_path' => $file->store("mentorship/{$mentorship->id}", MentorshipRequest::proofDisk()),
-            'proof_name' => Str::limit(basename($file->getClientOriginalName()), 200, ''),
+            'proof_path' => $path,
+            'proof_name' => Str::limit(basename($name), 200, ''),
             'transaction_ref' => $validated['transaction_ref'] ?? null,
             'proof_uploaded_at' => now(),
             'decision_note' => null,
@@ -132,5 +149,42 @@ class MyMentorshipController extends Controller
             'message' => 'وصل إشعار التحويل، وسأراجعه وأؤكّد لك الدفع قريباً.',
             'data' => (new MentorshipRequestResource($mentorship))->resolve($request),
         ]);
+    }
+
+    /**
+     * The receipt's bytes, extension and name, from a data URL or an uploaded file. Its real type is read from
+     * the bytes themselves, whatever the data URL or the file name claims.
+     *
+     * @param  array{proof: mixed, proof_name?: ?string}  $validated
+     * @return array{string, string, string}
+     *
+     * @throws ValidationException
+     */
+    private function receipt(Request $request, array $validated): array
+    {
+        $invalid = fn (string $message) => ValidationException::withMessages(['proof' => $message]);
+
+        if ($request->hasFile('proof')) {
+            $file = $request->file('proof');
+            $contents = (string) file_get_contents($file->getRealPath());
+            $name = $file->getClientOriginalName();
+        } elseif (is_string($validated['proof']) && preg_match('/^data:[a-z\/+.-]+;base64,([A-Za-z0-9+\/=\s]+)$/', $validated['proof'], $match)) {
+            $contents = (string) base64_decode($match[1], true);
+            $name = $validated['proof_name'] ?? 'receipt';
+        } else {
+            throw $invalid('أرفق صورة إشعار التحويل أو ملف PDF.');
+        }
+
+        if ($contents === '' || strlen($contents) > self::PROOF_MAX_BYTES) {
+            throw $invalid('حجم الإشعار يجب ألا يتجاوز 5 ميغابايت.');
+        }
+
+        $type = (new \finfo(FILEINFO_MIME_TYPE))->buffer($contents);
+
+        if (! isset(self::PROOF_TYPES[$type])) {
+            throw $invalid('الإشعار يجب أن يكون صورة (JPG أو PNG أو WebP) أو ملف PDF.');
+        }
+
+        return [$contents, self::PROOF_TYPES[$type], $name];
     }
 }
